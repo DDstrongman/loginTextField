@@ -1,0 +1,9 @@
+platform :ios, '7.0'
+
+pod 'pop'
+pod 'RZTransitions'
+pod 'ADTransitionController'
+pod 'Masonry'
+pod 'AFNetworking'
+
+pod 'IQKeyboardManager'
