@@ -17,8 +17,9 @@
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier{
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
-        self.iconImageView=[[PAImageView alloc] initWithFrame:CGRectMake(10, 10, 50,50)];
+        self.iconImageView=[[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 50,50)];
         self.iconImageView.contentMode=UIViewContentModeScaleAspectFit;
+        [self.iconImageView imageWithRound];
         [self addSubview:self.iconImageView];
         
         self.descriptionText=[[UILabel alloc] initWithFrame:CGRectMake(70, 44, ViewWidth-70-30, 15)];

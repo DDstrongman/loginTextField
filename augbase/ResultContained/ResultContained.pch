@@ -17,6 +17,9 @@
     //aotolayout第三方库
     #import "Masonry.h"
     #import "ACMacros.h"
+    //加入自定义的category
+    #import "CategoryGlobalSupport.pch"
+
 #define  ViewHeight [[UIScreen mainScreen] bounds].size.height
 #define  ViewWidth [[UIScreen mainScreen] bounds].size.width
 #define countAgainNumber 30.0 //手机注册验证码的倒计时时间

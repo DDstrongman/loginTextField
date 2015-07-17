@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "ChineseInclude.h"
 #import "PinYinForObjc.h"
-#import "PAImageView.h"
 #import "MessTableViewCell.h"
 
 #import "RootViewController.h"

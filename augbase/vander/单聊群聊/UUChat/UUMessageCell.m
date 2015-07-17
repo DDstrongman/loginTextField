@@ -184,7 +184,7 @@
     
     if (message.from == UUMessageFromMe) {
         self.btnContent.isMyMessage = YES;
-        [self.btnContent setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        [self.btnContent setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         self.btnContent.contentEdgeInsets = UIEdgeInsetsMake(ChatContentTop, ChatContentRight, ChatContentBottom, ChatContentLeft);
     }else{
         self.btnContent.isMyMessage = NO;

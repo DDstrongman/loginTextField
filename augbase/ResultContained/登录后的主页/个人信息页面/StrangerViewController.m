@@ -117,6 +117,7 @@
     if (indexPath.section == 0&&indexPath.row == 0) {
         cell = [tableView dequeueReusableCellWithIdentifier:@"showinfocell" forIndexPath:indexPath];
         ((UIImageView *)[cell.contentView viewWithTag:1]).image = _strangerImage;
+        [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
         ((UILabel *)[cell.contentView viewWithTag:2]).text = _strangerName;
         ((UILabel *)[cell.contentView viewWithTag:3]).text = _strangerRelative;
         ((UILabel *)[cell.contentView viewWithTag:4]).text = _strangerDescribe;

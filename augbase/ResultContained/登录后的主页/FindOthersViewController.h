@@ -9,10 +9,15 @@
 #import <UIKit/UIKit.h>
 
 #import "ContactPersonDetailViewController.h"
+#import "NewFriendNoticeViewController.h"
+#import "ContactNewsViewController.h"
+#import "AddFriendByButtonViewController.h"
+#import "ContactGroupViewController.h"
 
 @interface FindOthersViewController : UIViewController<UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate,UISearchDisplayDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *contactsTableview;
+@property (nonatomic,strong) UIView *navigationBar;
 
 //@property (nonatomic,strong) IBOutlet UISearchBar *searchBar;
 

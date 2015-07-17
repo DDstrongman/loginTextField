@@ -21,10 +21,19 @@
 
 -(void)viewWillAppear:(BOOL)animated{
 //    [[IQKeyboardManager sharedManager] setEnable:YES];
+    self.navigationController.navigationBarHidden = NO;
+    UIButton *sendReportButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
+    [sendReportButton setBackgroundImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
+    [sendReportButton addTarget:self action:@selector(sendReport) forControlEvents:UIControlEventTouchUpInside];
+    [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendReportButton]];
+}
+
+#pragma 发送举报到后端，需要网络交互
+-(void)sendReport{
+    NSLog(@"发送举报给后端，alertview提示发送成功");
 }
 
 #pragma mark - Table view data source
-
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 2;
 }

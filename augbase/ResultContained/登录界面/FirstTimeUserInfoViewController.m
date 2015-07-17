@@ -46,9 +46,10 @@
     [_finishRegistButton.layer setCornerRadius:10.0];
     [self.view addSubview:_finishRegistButton];
     
-    _cameraImageView = [[PAImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+    _cameraImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
     _cameraImageView.center = CGPointMake(56.25, 56.25);
     _cameraImageView.image = [UIImage imageNamed:@"take"];
+    [_cameraImageView imageWithRound];
     [_userImageView addSubview:_cameraImageView];
     
     [_finishRegistButton mas_makeConstraints:^(MASConstraintMaker *make) {        make.height.equalTo(@50);

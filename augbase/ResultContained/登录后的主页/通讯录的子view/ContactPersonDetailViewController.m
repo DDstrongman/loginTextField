@@ -77,6 +77,7 @@
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
             cell = [tableView dequeueReusableCellWithIdentifier:@"showinfocell" forIndexPath:indexPath];
+            [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
         }else{
             cell = [tableView dequeueReusableCellWithIdentifier:@"privatenotecell" forIndexPath:indexPath];
         }
@@ -155,6 +156,15 @@
 -(void)darkMenuBool:(id)sender{
     NSLog(@"加入切换判断和响应");
     darkMenu = [((UISwitch*)sender) isOn];
+}
+
+#pragma 发送消息和删除好友的响应函数
+-(void)sendMess{
+    NSLog(@"发送消息");
+}
+
+-(void)deleteFriend{
+    NSLog(@"删除好友");
 }
 
 #pragma 需要加入传必要的值过去

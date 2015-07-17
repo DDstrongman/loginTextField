@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "ZHPickView.h"
 #import "ImageViewLabelTextFieldView.h"
-#import "PAImageView.h"
 #import "IQKeyboardManager.h"
 
 @interface FirstTimeUserInfoViewController : UIViewController<ZHPickViewDelegate>
@@ -18,8 +17,8 @@
 @property (nonatomic,strong) IBOutlet UILabel *titleLabel;
 
 @property (nonatomic,strong) ZHPickView *pickview;
-@property (nonatomic,strong) IBOutlet PAImageView *userImageView;
-@property (nonatomic,strong) PAImageView *cameraImageView;
+@property (nonatomic,strong) IBOutlet UIImageView *userImageView;
+@property (nonatomic,strong) UIImageView *cameraImageView;
 
 @property (nonatomic,strong) ImageViewLabelTextFieldView *nameView;
 @property (nonatomic,strong) ImageViewLabelTextFieldView *sexAndAgeView;

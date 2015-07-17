@@ -41,7 +41,15 @@
     searchDisplayController.searchResultsDelegate = self;
     
      _contactsTableview.tableHeaderView = mySearchBar;
-    dataArray = [@[@"百度",@"六六",@"谷歌",@"苹果",@"and",@"table",@"view",@"and",@"and",@"苹果IOS",@"谷歌android",@"微软",@"微软WP",@"table",@"table",@"table",@"六六",@"六六",@"六六",@"table",@"table",@"table"]mutableCopy];
+    dataArray = [@[@"咨询",@"群组",@"等待验证好友",@"苹果",@"小月",@"小月打飞机",@"小月达飞机",@"小月你好帅！",@"and",@"苹果IOS",@"谷歌android",@"微软",@"微软WP",@"table",@"table",@"table",@"六六",@"六六",@"六六",@"table",@"table",@"table"]mutableCopy];
+    [self initNavigationBar];
+    [_contactsTableview mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(_navigationBar.mas_bottom).with.offset(0);
+//        make.top.equalTo(@66);
+        make.bottom.equalTo(@0);
+        make.left.equalTo(@0);
+        make.right.equalTo(@0);
+    }];
 }
 
 //#pragma 去掉statebar
@@ -51,20 +59,20 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
-    [self initNavigationBar];
 }
 
 #pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
 -(void)initNavigationBar{
-    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
-    navigationBar.backgroundColor = [UIColor whiteColor];
-    
+    _navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
+    _navigationBar.backgroundColor = [UIColor whiteColor];
+    //test
+    _navigationBar.backgroundColor = themeColor;
     //title
     UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
     titleLabel.center = CGPointMake(ViewWidth/2, 22);
     titleLabel.text = NSLocalizedString(@"发现", @"");
     titleLabel.textAlignment = NSTextAlignmentCenter;
-    [navigationBar addSubview:titleLabel];
+    [_navigationBar addSubview:titleLabel];
     
     //去登陆界面
     UIButton *addFriendButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
@@ -74,14 +82,17 @@
     [addFriendButton setImage:[UIImage imageNamed:@"add_friend"] forState:UIControlStateNormal];
     
     [addFriendButton addTarget:self action:@selector(addFriend) forControlEvents:UIControlEventTouchUpInside];
-    [navigationBar addSubview:addFriendButton];
+    [_navigationBar addSubview:addFriendButton];
     
-    [self.view addSubview:navigationBar];
+    [self.view addSubview:_navigationBar];
 }
 
 #pragma 添加朋友的功能需要实现
 -(void)addFriend{
     NSLog(@"添加朋友的功能需要实现");
+    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    AddFriendByButtonViewController *afbbv = [main instantiateViewControllerWithIdentifier:@"addfriendbybutton"];
+    [self.navigationController pushViewController:afbbv animated:YES];
 }
 
 #pragma mark - Table view data source
@@ -98,37 +109,39 @@
         if (section == 0) {
             return 3;
         }else{
-            return dataArray.count;
+            return dataArray.count-3;
         }
     }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 50;
+    return 70;
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-//    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
-//    [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-//
-//    return cell;
-    
-    static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-    }
     if (tableView == self.searchDisplayController.searchResultsTableView) {
+        static NSString *CellIdentifier = @"Cell";
+        UITableViewCell *cell;
+        cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+        }
         cell.imageView.image = [UIImage imageNamed:@"icon.jpg"];
         cell.textLabel.text = searchResults[indexPath.row];
+        return cell;
     }
     else {
-        cell.imageView.image = [UIImage imageNamed:@"icon.jpg"];
-        cell.textLabel.text = dataArray[indexPath.row];
+        UITableViewCell *cellContact;
+        cellContact = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
+        //    [cellContact setSelectionStyle:UITableViewCellSelectionStyleNone];
+        
+        ((UIImageView *)[cellContact.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
+        [((UIImageView *)[cellContact.contentView viewWithTag:1]) imageWithRound];
+        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = dataArray[indexPath.row];
+        return cellContact;
     }
-    return cell;
     
 }
 
@@ -137,9 +150,27 @@
     
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
-    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-    [self.navigationController pushViewController:cpdv animated:YES];
+    if (indexPath.section == 0) {
+        if (indexPath.row == 0) {
+            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            ContactNewsViewController *cnv = [main instantiateViewControllerWithIdentifier:@"contactnews"];
+            [self.navigationController pushViewController:cnv animated:YES];
+//            ContactNewsViewController *cnv = [[ContactNewsViewController alloc]init];
+//            [self.navigationController pushViewController:cnv animated:YES];
+        }else if (indexPath.row == 1){
+            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            ContactGroupViewController *cgv = [main instantiateViewControllerWithIdentifier:@"contantgroup"];
+            [self.navigationController pushViewController:cgv animated:YES];
+        }else{
+            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            NewFriendNoticeViewController *nfnv = [main instantiateViewControllerWithIdentifier:@"addfriendnotice"];
+            [self.navigationController pushViewController:nfnv animated:YES];
+        }
+    }else{
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        [self.navigationController pushViewController:cpdv animated:YES];
+    }
 }
 
 #pragma mark ---deit delete---
