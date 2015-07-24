@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "StrangerViewController.h"
 
-@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
+@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 
 
 @property (nonatomic,strong) IBOutlet UITableView *similarFriendTable;

@@ -11,12 +11,11 @@
 @interface ShowAllMessageViewController ()
 
 {
-//    UIView *userView;
-//    BOOL showUserView;
-    NSMutableArray *dataArray;
-    NSMutableArray *searchResults;
-    UISearchBar *mySearchBar;
-    UISearchDisplayController *searchDisplayController;
+    NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *searchResults;//搜索结果的数组
+    UISearchBar *mySearchBar;//ui，仅仅是个ui
+    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
 }
 
 @end
@@ -29,22 +28,33 @@
     _messageTableview.dataSource = self;
 //    _messageTableview.frame = CGRectMake(0, 0, ViewWidth, ViewHeight-44-44);
     
-    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, 320, 40)];
+    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
     mySearchBar.delegate = self;
     [mySearchBar setPlaceholder:@"搜索列表"];
     
-    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
-    searchDisplayController.active = NO;
-    searchDisplayController.searchResultsDataSource = self;
-    searchDisplayController.searchResultsDelegate = self;
+//    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
+//    searchDisplayController.active = NO;
+//    searchDisplayController.searchResultsDataSource = self;
+//    searchDisplayController.searchResultsDelegate = self;
     
-    _messageTableview.tableHeaderView = mySearchBar;
+//    _messageTableview.tableHeaderView = mySearchBar;
+    
+    
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.active = NO;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _messageTableview.tableHeaderView = searchViewController.searchBar;
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
     dataArray = [@[@"百度",@"六六",@"谷歌",@"苹果"]mutableCopy];
-    
-//    userView = [[UIView alloc]initWithFrame:CGRectMake(-ViewWidth/2, 44, ViewWidth/2, ViewHeight - 44)];
-//    userView.backgroundColor = [UIColor blackColor];
-//    [self.view addSubview:userView];
-    //    showUserView = NO;
+    if (!searchResults) {
+        searchResults = dataArray;
+    }
     
 }
 
@@ -64,7 +74,7 @@
     UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
 //    navigationBar.layer.borderWidth = 0.5;
 //    navigationBar.layer.borderColor = themeColor.CGColor;
-    navigationBar.backgroundColor = navigationColor;
+    navigationBar.backgroundColor = themeColor;
     
 //    //左侧头像按钮，点击打开用户相关选项
 //    UIButton *userButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
@@ -139,6 +149,24 @@
     
 }
 
+#pragma searcheViewController的delegate
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+    //谓词检测
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:
+                              @"self contains [cd] %@", searchController.searchBar.text];
+    if ([searchController.searchBar.text isEqualToString:@""]){
+        searchResults = dataArray;
+        [_messageTableview reloadData];
+    }else{
+        //将所有和搜索有关的内容存储到arr数组
+        searchResults = [NSMutableArray arrayWithArray:
+                         [dataArray filteredArrayUsingPredicate:predicate]];
+        //重新加载数据
+        [_messageTableview reloadData];
+    }
+}
+
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 2;
@@ -147,9 +175,10 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (section == 0) {
         NSLog(@"此处隐藏了我的医生一栏，以后需要加入,即将2变为3");
-        return 2;//隐藏了我的医生一栏，以后需要加入
+#warning 此处隐藏了我的医生一栏，以后需要加入,即将2变为3
+        return titleDataArray.count-1;//隐藏了我的医生一栏，以后需要加入
     }else{
-        return dataArray.count;
+        return searchResults.count;
     }
 }
 
@@ -171,7 +200,7 @@
             case 0:{
                 cell.iconImageView.image = [UIImage imageNamed:@"groups"];
                 cell.iconImageView.backgroundColor = themeColor;
-                cell.titleText.text = NSLocalizedString(@"群助手", @"");
+                cell.titleText.text = titleDataArray[indexPath.row];
                 cell.descriptionText.text = NSLocalizedString(@"小月你又打飞机", @"");//测试用，以后改为传来的讯息,以下同
                 cell.timeText.text = @"18:00";
             }
@@ -188,7 +217,7 @@
         }
     }else{
         cell.iconImageView.image = [UIImage imageNamed:@"test"];
-        cell.titleText.text = NSLocalizedString(@"小月", @"");
+        cell.titleText.text = searchResults[indexPath.row];
         cell.descriptionText.text = @"小月你又打飞机";
         cell.timeText.text = @"18:00";
     }

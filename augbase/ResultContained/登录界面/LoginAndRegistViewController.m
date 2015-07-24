@@ -28,7 +28,7 @@
     [self.navigationItem setLeftBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:loginButton]];
     
     _phoneNumberView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 134, ViewWidth-120+12, 50)];
-    _phoneNumberView.contentTextField.placeholder = NSLocalizedString(@"请输入手机号码", @"");
+    _phoneNumberView.contentTextField.placeholder = NSLocalizedString(@"请输入手机号码（11位）", @"");
     _phoneNumberView.contentTextField.keyboardType = UIKeyboardTypeNumberPad;
 //    _phoneNumberView.contentTextField.textAlignment = NSTextAlignmentCenter;
     [_phoneNumberView.contentTextField addTarget:self action:@selector(confirmPhonenumber) forControlEvents:UIControlEventEditingChanged];

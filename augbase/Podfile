@@ -5,5 +5,7 @@ pod 'RZTransitions'
 pod 'ADTransitionController'
 pod 'Masonry'
 pod 'AFNetworking'
+pod 'MBProgressHUD'
+pod 'FMDB'
 
 pod 'IQKeyboardManager'

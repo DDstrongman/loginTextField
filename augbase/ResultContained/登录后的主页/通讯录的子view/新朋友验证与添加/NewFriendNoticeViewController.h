@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "AddFriendConfirmViewController.h"
 
-@interface NewFriendNoticeViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
+@interface NewFriendNoticeViewController : UIViewController<UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 
 @property (nonatomic,strong) IBOutlet UITableView *addFriendNotictTable;
 //@property (nonatomic) BOOL confirmAddMessOrNot;//确定添加后的返回属性,NO则不管，yes则刷新table默认设为no；

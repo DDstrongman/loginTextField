@@ -51,8 +51,8 @@
     _loginButton = [[UIButton alloc]init];
     _loginButton.backgroundColor = grayBackColor;
     [_loginButton setTitle:NSLocalizedString(@"登录", @"") forState:UIControlStateNormal];
-    [_loginButton.layer setMasksToBounds:YES];
-    [_loginButton.layer setCornerRadius:10.0];
+    [_loginButton viewWithRadis:10.0];
+    [_loginButton addTarget:self action:@selector(gotoMainView) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:_loginButton];
     //autolayout
     [_loginButton mas_makeConstraints:^(MASConstraintMaker *make) {        make.height.equalTo(@50);
@@ -64,13 +64,18 @@
     _thirdLoginButton.layer.borderWidth = 1.0;
     _thirdLoginButton.layer.borderColor = themeColor.CGColor;
     [_thirdLoginButton setTintColor:themeColor];
-    [_thirdLoginButton.layer setMasksToBounds:YES];
-    [_thirdLoginButton.layer setCornerRadius:10.0];
+    [_thirdLoginButton viewWithRadis:10.0];
 }
 
+-(void)gotoMainView{
+    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
+    [self.navigationController pushViewController:tabbarController animated:YES];
+}
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
+    [self.navigationController.navigationBar setTintColor:themeColor];
     //初始化
     //    [_userNameText becomeFirstResponder];
     _userNameView.contentTextField.placeholder = NSLocalizedString(@"手机号／用户名", @"");

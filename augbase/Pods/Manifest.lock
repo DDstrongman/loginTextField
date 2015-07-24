@@ -21,24 +21,34 @@ PODS:
   - AFNetworking/UIKit (2.5.4):
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
+  - FMDB (2.5):
+    - FMDB/standard (= 2.5)
+  - FMDB/common (2.5)
+  - FMDB/standard (2.5):
+    - FMDB/common
   - IQKeyboardManager (3.2.4)
   - Masonry (0.6.2)
+  - MBProgressHUD (0.9.1)
   - pop (1.0.7)
   - RZTransitions (1.1.1)
 
 DEPENDENCIES:
   - ADTransitionController
   - AFNetworking
+  - FMDB
   - IQKeyboardManager
   - Masonry
+  - MBProgressHUD
   - pop
   - RZTransitions
 
 SPEC CHECKSUMS:
   ADTransitionController: 72299d31488bcbe59fb87c483a89a637ebc819f8
   AFNetworking: 05edc0ac4c4c8cf57bcf4b84be5b0744b6d8e71e
+  FMDB: 96e8f1bcc1329e269330f99770ad4285d9003e52
   IQKeyboardManager: 555b1231fefafb21b19278d7cca72986a27b748b
   Masonry: 362e8a1cc0beada4a4c4832d5e863da2a51533be
+  MBProgressHUD: c47f2c166c126cf2ce36498d80f33e754d4e93ad
   pop: 628ffc631644601567ee8bfaaaea493ebd7d0923
   RZTransitions: d3a1ad40f580eaee5aeecd55688e4280e8dca976
 

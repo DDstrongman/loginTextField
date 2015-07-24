@@ -15,10 +15,11 @@
 @interface FindOthersViewController ()
 
 {
-    NSMutableArray *dataArray;
-    NSMutableArray *searchResults;
-    UISearchBar *mySearchBar;
-    UISearchDisplayController *searchDisplayController;
+    NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *searchResults;//搜索结果的数组
+    UISearchBar *mySearchBar;//ui，仅仅是个ui
+    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
 }
 
 @end
@@ -30,19 +31,34 @@
     _contactsTableview.delegate = self;
     _contactsTableview.dataSource = self;
     
+    self.navigationController.navigationBarHidden = YES;
+    [self initNavigationBar];
     
     mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
     mySearchBar.delegate = self;
     [mySearchBar setPlaceholder:@"搜索列表"];
     
-    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
-    searchDisplayController.active = NO;
-    searchDisplayController.searchResultsDataSource = self;
-    searchDisplayController.searchResultsDelegate = self;
+//    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
+//    searchDisplayController.active = NO;
+//    searchDisplayController.searchResultsDataSource = self;
+//    searchDisplayController.searchResultsDelegate = self;
     
-     _contactsTableview.tableHeaderView = mySearchBar;
-    dataArray = [@[@"咨询",@"群组",@"等待验证好友",@"苹果",@"小月",@"小月打飞机",@"小月达飞机",@"小月你好帅！",@"and",@"苹果IOS",@"谷歌android",@"微软",@"微软WP",@"table",@"table",@"table",@"六六",@"六六",@"六六",@"table",@"table",@"table"]mutableCopy];
-    [self initNavigationBar];
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.active = NO;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _contactsTableview.tableHeaderView = searchViewController.searchBar;
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+//    @"咨询",@"群组",@"等待验证好友",
+    titleDataArray = [@[NSLocalizedString(@"咨询", @""),NSLocalizedString(@"群组", @""),NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
+    dataArray = [@[@"苹果",@"小月",@"小月打飞机",@"小月达飞机",@"小月你好帅！",@"and",@"苹果IOS",@"谷歌android",@"微软",@"微软WP",@"table",@"table",@"table",@"六六",@"六六",@"六六",@"table",@"table",@"table"]mutableCopy];
+    if (!searchResults) {
+        searchResults = dataArray;
+    }
     [_contactsTableview mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.equalTo(_navigationBar.mas_bottom).with.offset(0);
 //        make.top.equalTo(@66);
@@ -59,6 +75,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
+//    [self initNavigationBar];
 }
 
 #pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
@@ -95,6 +112,24 @@
     [self.navigationController pushViewController:afbbv animated:YES];
 }
 
+#pragma searcheViewController的delegate
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+    //谓词检测
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:
+                              @"self contains [cd] %@", searchController.searchBar.text];
+    if ([searchController.searchBar.text isEqualToString:@""]){
+        searchResults = dataArray;
+        [_contactsTableview reloadData];
+    }else{
+        //将所有和搜索有关的内容存储到arr数组
+        searchResults = [NSMutableArray arrayWithArray:
+                         [dataArray filteredArrayUsingPredicate:predicate]];
+        //重新加载数据
+        [_contactsTableview reloadData];
+    }
+}
+
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 2;
@@ -102,15 +137,10 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     // Return the number of rows in the section.
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    if (section == 0) {
+        return titleDataArray.count;
+    }else{
         return searchResults.count;
-    }
-    else {
-        if (section == 0) {
-            return 3;
-        }else{
-            return dataArray.count-3;
-        }
     }
 }
 
@@ -121,28 +151,18 @@
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
-        static NSString *CellIdentifier = @"Cell";
-        UITableViewCell *cell;
-        cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-        if (cell == nil) {
-            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-        }
-        cell.imageView.image = [UIImage imageNamed:@"icon.jpg"];
-        cell.textLabel.text = searchResults[indexPath.row];
-        return cell;
-    }
-    else {
-        UITableViewCell *cellContact;
-        cellContact = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
-        //    [cellContact setSelectionStyle:UITableViewCellSelectionStyleNone];
-        
-        ((UIImageView *)[cellContact.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
-        [((UIImageView *)[cellContact.contentView viewWithTag:1]) imageWithRound];
-        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = dataArray[indexPath.row];
-        return cellContact;
-    }
+    UITableViewCell *cellContact;
+    cellContact = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
+    //    [cellContact setSelectionStyle:UITableViewCellSelectionStyleNone];
     
+    ((UIImageView *)[cellContact.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
+    [((UIImageView *)[cellContact.contentView viewWithTag:1]) imageWithRound];
+    if (indexPath.section == 0) {
+        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
+    }else{
+        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = searchResults[indexPath.row];
+    }
+    return cellContact;
 }
 
 #pragma 需要加入传必要的值过去

@@ -17,15 +17,26 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = NSLocalizedString(@"举报", @"");
+    _reportTable.delegate = self;
+    _reportTable.dataSource = self;
+    [_reportTable mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.equalTo(@0);
+        make.top.equalTo(@0);
+        make.left.equalTo(@0);
+        make.right.equalTo(@0);
+    }];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-//    [[IQKeyboardManager sharedManager] setEnable:YES];
+    [[IQKeyboardManager sharedManager] setEnable:YES];
     self.navigationController.navigationBarHidden = NO;
-    UIButton *sendReportButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
-    [sendReportButton setBackgroundImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
+    UIButton *sendReportButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 45, 22)];
+    [sendReportButton setTitle:NSLocalizedString(@"发送", @"") forState:UIControlStateNormal];
+    [sendReportButton setTitleColor:themeColor forState:UIControlStateNormal];
+    sendReportButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
     [sendReportButton addTarget:self action:@selector(sendReport) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendReportButton]];
+    [self.navigationController.navigationBar setTintColor:themeColor];
 }
 
 #pragma 发送举报到后端，需要网络交互
@@ -114,11 +125,14 @@
     if (section == 0) {
         return nil;
     }else{
-        UILabel *remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 15)];
+        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 15)];
+        headerView.backgroundColor = grayBackColor;
+        UILabel *remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(10, 0, ViewWidth-10, 15)];
         remindLabel.font = [UIFont systemFontOfSize:13.0];
         remindLabel.text = NSLocalizedString(@"补充说明", @"");
         remindLabel.backgroundColor = grayBackColor;
-        return remindLabel;
+        [headerView addSubview:remindLabel];
+        return headerView;
     }
     //    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     //    headerView.backgroundColor = [UIColor lightGrayColor];

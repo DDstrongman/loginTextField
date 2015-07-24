@@ -8,9 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
-//#import "IQKeyboardManager.h"
+#import "IQKeyboardManager.h"
 
-@interface ReportTableViewController : UITableViewController
+@interface ReportTableViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
 
+@property (nonatomic,strong)IBOutlet UITableView *reportTable;
 
 @end

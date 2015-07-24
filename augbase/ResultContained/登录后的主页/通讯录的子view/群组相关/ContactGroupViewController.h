@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "ContactGroupDetailViewController.h"
 
-@interface ContactGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
+@interface ContactGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 
 
 @property (nonatomic,strong) IBOutlet UITableView *contactGroupTable;

@@ -30,7 +30,7 @@
     _registViewThree = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 184, ViewWidth-120+12, 50)];
     
     _registViewOne.contentTextField.placeholder = NSLocalizedString(@"手机号码", @"");
-    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码", @"");
+    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码（4位）", @"");
     _registViewThree.contentTextField.placeholder = NSLocalizedString(@"密码", @"");
     
     twoRightButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 40, 30)];

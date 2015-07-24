@@ -8,15 +8,21 @@
 
 #import <UIKit/UIKit.h>
 
-@interface CaseViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIScrollViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate>
+#import "KRLCollectionViewGridLayout.h"
+#import "OcrResultGroupViewController.h"
 
-@property (nonatomic,strong) IBOutlet UITableView *titleTable;
+#import "OcrTextResultViewController.h"
 
-@property (nonatomic,strong) IBOutlet UIScrollView *resultScroller;
-@property (nonatomic,strong) IBOutlet UITableView *firstTable;
-@property (nonatomic,strong) IBOutlet UITableView *secondTable;
-@property (nonatomic,strong) IBOutlet UITableView *thirdTable;
-@property (nonatomic,strong) IBOutlet UITableView *forthTable;
+#import "HistoryViewController.h"
+#import "BasicsituationViewController.h"
+
+//#import "HistoryViewController.h"
+
+@interface CaseViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate>
+
+//上方两个image的button和对应下方的button
+@property (nonatomic,strong) IBOutlet UIButton *cameraNewButton;
+@property (nonatomic,strong) IBOutlet UIButton *checkResultButton;
 
 //此处的collectionview只是代替显示，在主体项目中已经实现（manage里的view）
 @property (nonatomic,strong) IBOutlet UICollectionView *settingCollection;

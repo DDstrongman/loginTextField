@@ -14,7 +14,7 @@
 #import "AddFriendByButtonViewController.h"
 #import "ContactGroupViewController.h"
 
-@interface FindOthersViewController : UIViewController<UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate,UISearchDisplayDelegate>
+@interface FindOthersViewController : UIViewController<UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 
 @property (nonatomic,strong) IBOutlet UITableView *contactsTableview;
 @property (nonatomic,strong) UIView *navigationBar;

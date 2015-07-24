@@ -21,13 +21,7 @@
 #import "HASmallCollectionViewController.h"
 
 
-@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate,HATransitionControllerDelegate,UINavigationControllerDelegate>
-
-{
-//    NSMutableArray *dataArray;
-//    NSMutableArray *searchResults;
-//    UISearchDisplayController *searchDisplayController;
-}
+@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *messageTableview;
 

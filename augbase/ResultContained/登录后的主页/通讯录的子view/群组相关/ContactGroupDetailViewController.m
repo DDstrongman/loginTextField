@@ -36,7 +36,28 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 100;
+    switch (indexPath.row) {
+        case 0:
+            return 95;
+            break;
+            
+        case 1:
+            return 185;
+            break;
+            
+        case 2:
+            return 100;
+            break;
+            
+        case 3:
+            return 90;
+            break;
+            
+        default:
+            return 45;
+            break;
+    }
+
 }
 
 #pragma 此处需要加入showDetal为YES的cell，即显示病种和用药的cell，暂未加入
@@ -47,6 +68,7 @@
         [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     }else if (indexPath.row == 1){
         cell = [tableView dequeueReusableCellWithIdentifier:@"groupmembercell" forIndexPath:indexPath];
+        ((UILabel *)[cell.contentView viewWithTag:10]).text = NSLocalizedString(@"群成员", @"");
         [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:2]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:3]) imageWithRound];
@@ -55,6 +77,8 @@
         [((UIImageView *)[cell.contentView viewWithTag:6]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:7]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:8]) imageWithRound];
+        float spaceGap = (ViewWidth-200-30)/3;
+        NSLog(@"spaceGap=== %f",spaceGap);
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     }else if (indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
@@ -88,6 +112,11 @@
 #pragma 需要加上cell的群消息判断，cell可根据［uitableview cellforindex］获取
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
+    if (indexPath.row == 1) {
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        ContactGroupMemberDetailViewController *cgmv = [main instantiateViewControllerWithIdentifier:@"contactgroupmemberdetail"];
+        [self.navigationController pushViewController:cgmv animated:YES];
+    }
 }
 
 #pragma 添加头和尾

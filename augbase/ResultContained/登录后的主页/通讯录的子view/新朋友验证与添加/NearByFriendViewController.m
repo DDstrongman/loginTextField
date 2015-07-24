@@ -10,6 +10,13 @@
 
 @interface NearByFriendViewController ()
 
+{
+    NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *searchResults;//搜索结果的数组
+    UISearchBar *mySearchBar;//ui，仅仅是个ui
+    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+}
+
 @end
 
 @implementation NearByFriendViewController
@@ -18,6 +25,21 @@
     [super viewDidLoad];
     _nearbyFriendTable.delegate = self;
     _nearbyFriendTable.dataSource = self;
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.active = NO;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _nearbyFriendTable.tableHeaderView = searchViewController.searchBar;
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+    dataArray = [@[@"上海大三阳战友群",@"上海大三阳战友群",@"上海大三阳战友群"]mutableCopy];
+    if (!searchResults) {
+        searchResults = dataArray;
+    }
+
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -25,13 +47,25 @@
     self.title = NSLocalizedString(@"附近好友", @"");
 }
 
+#pragma searcheViewController的delegate
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+    //谓词检测
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:
+                              @"self contains [cd] %@", searchController.searchBar.text];
+    //将所有和搜索有关的内容存储到arr数组
+    searchResults = [NSMutableArray arrayWithArray:
+                     [dataArray filteredArrayUsingPredicate:predicate]];
+    //重新加载数据
+    [_nearbyFriendTable reloadData];
+}
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 4;
+    return searchResults.count;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{

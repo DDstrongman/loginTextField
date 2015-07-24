@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "ContactGroupMemberDetailViewController.h"
 
 @interface ContactGroupDetailViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 

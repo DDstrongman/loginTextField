@@ -33,7 +33,9 @@
 
 #import "RZTransitionsManager.h"
 #import "RZTransitionsNavigationController.h"
-#import "ViewController.h"
+#import "OcrTextResultViewController.h"
+
+#import "LoginViewController.h"
 
 @interface AppDelegate ()
 
@@ -45,7 +47,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.    
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    ViewController *rootViewController = [story instantiateViewControllerWithIdentifier:@"rootview"];
+    LoginViewController *rootViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
     
     RZTransitionsNavigationController* rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:rootViewController];
     
@@ -53,8 +55,6 @@
     self.window.rootViewController = rootNavController  ;
     [self.window makeKeyAndVisible];
 
-    
-    
     return YES;
 }
 

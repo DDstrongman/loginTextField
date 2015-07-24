@@ -12,9 +12,13 @@
 
 {
     NSInteger noticeNumber;//获取的通知数目，网络获取
-    NSArray *dataArray;//获取的各个人相似数的数组
+    NSArray *dataOfSimilarArray;//获取的各个人相似数的数组
     NSArray *userArray;//获取发送信息的人name
     NSArray *boolAddArray;//每个通知添加与否的数组
+    NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *searchResults;//搜索结果的数组
+    UISearchBar *mySearchBar;//ui，仅仅是个ui
+    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
 }
 
 @end
@@ -25,13 +29,28 @@
     [super viewDidLoad];
     _addFriendNotictTable.delegate = self;
     _addFriendNotictTable.dataSource = self;
+    
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.active = NO;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _addFriendNotictTable.tableHeaderView = searchViewController.searchBar;
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+    dataArray = [@[@"上海大三阳战友群",@"上海大三阳战友群",@"上海大三阳战友群"]mutableCopy];
+    if (!searchResults) {
+        searchResults = dataArray;
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     NSLog(@"需要加入获取的通知数目，网络获取，测试用均取数组第一个");
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"新的朋友", @"");
-    dataArray = [NSArray arrayWithObjects:@"83%",@"63%",@"43%",nil];
+    dataOfSimilarArray = [NSArray arrayWithObjects:@"83%",@"63%",@"43%",nil];
     userArray = [NSArray arrayWithObjects:@"小月打飞机",@"小月打飞机",@"小月打飞机",nil];
     boolAddArray = [NSArray arrayWithObjects:@NO,@NO,@NO,nil];
     noticeNumber = dataArray.count;
@@ -41,13 +60,26 @@
 //    }
 }
 
+#pragma searcheViewController的delegate
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+    //谓词检测
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:
+                              @"self contains [cd] %@", searchController.searchBar.text];
+    //将所有和搜索有关的内容存储到arr数组
+    searchResults = [NSMutableArray arrayWithArray:
+                     [dataArray filteredArrayUsingPredicate:predicate]];
+    //重新加载数据
+    [_addFriendNotictTable reloadData];
+}
+
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return noticeNumber;//获取的通知数目，网络获取
+    return searchResults.count;//获取的通知数目，网络获取
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
