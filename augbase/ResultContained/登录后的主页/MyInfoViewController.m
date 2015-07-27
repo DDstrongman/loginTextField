@@ -159,6 +159,7 @@
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     UIViewController *infoSetting = [story instantiateViewControllerWithIdentifier:@"infosetting"];
     [self.navigationController pushViewController:infoSetting animated:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark ---deit delete---

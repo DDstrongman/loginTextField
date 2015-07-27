@@ -64,8 +64,9 @@
     //谓词检测
     NSPredicate *predicate = [NSPredicate predicateWithFormat:
                               @"self contains [cd] %@", searchController.searchBar.text];
-    if ([searchController.searchBar.text isEqual:@""]) {
+    if ([searchController.searchBar.text isEqualToString:@""]){
         searchResults = dataArray;
+        [_newsTable reloadData];
     }else{
         //将所有和搜索有关的内容存储到arr数组
         searchResults = [NSMutableArray arrayWithArray:

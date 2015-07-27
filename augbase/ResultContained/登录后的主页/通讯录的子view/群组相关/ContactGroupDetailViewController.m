@@ -86,10 +86,11 @@
         cell = [tableView dequeueReusableCellWithIdentifier:@"jiongroupcell" forIndexPath:indexPath];
     }
     //    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+//    cell.selectionStyle = UITableViewCellSelectionStyleNone;
 //    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
 //    ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"上海大三阳战友群", @"");
-//    [((UIButton *)[cell.contentView viewWithTag:6]) addTarget:self action:@selector(jionGroup:) forControlEvents:UIControlEventTouchUpInside];
+    //    [((UIButton *)[cell.contentView viewWithTag:6]) addTarget:self action:@selector(jionGroup:) forControlEvents:UIControlEventTouchUpInside];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
     return cell;
 }
 
@@ -117,6 +118,7 @@
         ContactGroupMemberDetailViewController *cgmv = [main instantiateViewControllerWithIdentifier:@"contactgroupmemberdetail"];
         [self.navigationController pushViewController:cgmv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾

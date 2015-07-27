@@ -11,9 +11,6 @@
     #import <QuartzCore/QuartzCore.h>
     #import <ADTransitionController.h>
     #import <POP/POP.h>
-    //聊天栏的category
-    #import "UIImage+StrethImage.h"
-    #import "NSString+DocumentPath.h"
     //aotolayout第三方库
     #import "Masonry.h"
     #import "ACMacros.h"
@@ -38,6 +35,6 @@
 //黑色，用于显示标题的黑色
 #define blackTitleColor [UIColor colorWithRed:50/255.0 green:50/255.0 blue:50/255.0 alpha:1.0]
 //白色，主要用于自定义的
-#define navigationColor [UIColor whiteColor]navigationbar的背景色
+#define navigationColor [UIColor whiteColor]//navigationbar的背景色
 
 #endif

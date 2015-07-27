@@ -13,6 +13,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 
 {
     KRLCollectionViewGridLayout *lineLayout;
+    NSMutableArray *ocrGroupTitleArray;//ocr图片结果分组
 }
 
 @end
@@ -45,6 +46,8 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     _ocrResultCollection.translatesAutoresizingMaskIntoConstraints = NO;
     
     [_ocrResultCollection registerClass:[Cell1 class]forCellWithReuseIdentifier:cellReuseIdOcrResult];
+    
+    ocrGroupTitleArray = [@[@"识别失败",@"识别中",@"识别成功"]mutableCopy];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -56,7 +59,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 
 #pragma collectionview的delegate,section需要网络获取数目
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    return 4;
+    return 3;
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
@@ -92,6 +95,15 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
         forv.failedImage = ((Cell1 *)[_ocrResultCollection cellForItemAtIndexPath:indexPath]).imageView.image;
         [self.navigationController pushViewController:forv animated:YES];
     }
+    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+}
+
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
+    UICollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:
+                                            UICollectionElementKindSectionHeader withReuseIdentifier:@"ocrgroupresultheader" forIndexPath:indexPath];
+    ((UILabel *)[headerView viewWithTag:1]).text = ocrGroupTitleArray[indexPath.section];
+    headerView.backgroundColor = themeColor;
+    return headerView;
 }
 
 @end

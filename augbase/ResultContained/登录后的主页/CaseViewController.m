@@ -12,6 +12,7 @@
 
 {
     KRLCollectionViewGridLayout *lineLayout;
+    NSMutableArray *titleDataArray;//官方提供的选项的名称数组
 }
 
 @end
@@ -44,11 +45,19 @@
     _settingCollection.translatesAutoresizingMaskIntoConstraints = NO;
     [_checkResultButton imageWithRedNumber:4];
     [_checkResultButton addTarget:self action:@selector(gotoOcrTextResult) forControlEvents:UIControlEventTouchUpInside];
+    [_cameraNewButton addTarget:self action:@selector(cameRaNewResult:) forControlEvents:UIControlEventTouchUpInside];
+    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"小易课堂", @""),NSLocalizedString(@"问卷", @"")]mutableCopy];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
     [self initNavigationBar];
+}
+
+#pragma 上方两个大按钮的响应函数
+-(void)cameRaNewResult:(UIButton *)sender{
+    CameraViewController *cvc = [[CameraViewController alloc]init];
+    [self.navigationController pushViewController:cvc animated:YES];
 }
 
 -(void)gotoOcrTextResult{
@@ -61,46 +70,13 @@
 -(void)initNavigationBar{
     UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
     navigationBar.backgroundColor = themeColor;
-//    //左侧头像按钮，点击打开用户相关选项
-//    UIButton *userButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-//    userButton.center = CGPointMake(20, 22);
-//    
-//    userButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-//    [userButton setImage:[UIImage imageNamed:@"test"] forState:UIControlStateNormal];
-//    
-//    [userButton addTarget:self action:@selector(openUser) forControlEvents:UIControlEventTouchUpInside];
-//    
-//    [navigationBar addSubview:userButton];
-    
     //title
     UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
     titleLabel.center = CGPointMake(ViewWidth/2, 22);
     titleLabel.text = NSLocalizedString(@"病历", @"");
     titleLabel.textAlignment = NSTextAlignmentCenter;
     [navigationBar addSubview:titleLabel];
-    
-//    //去登陆界面
-//    UIButton *cameraButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-//    cameraButton.center = CGPointMake(ViewWidth-20, 22);
-//    
-//    cameraButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-//    [cameraButton setImage:[UIImage imageNamed:@"test"] forState:UIControlStateNormal];
-//    
-//    [cameraButton addTarget:self action:@selector(openCamera) forControlEvents:UIControlEventTouchUpInside];
-//    //    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:cameraButton];
-//    [navigationBar addSubview:cameraButton];
-    
     [self.view addSubview:navigationBar];
-}
-
-#pragma 打开用户相关界面，左侧抽屉显示，view暂时未做
--(void)openUser{
-    NSLog(@"打开用户界面");
-}
-
-#pragma 打开cameraview拍摄化验单等,cameraview已写好
--(void)openCamera{
-    NSLog(@"打开拍照界面");
 }
 
 #pragma collectionview的delegate
@@ -109,7 +85,7 @@
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return 5;
+    return titleDataArray.count;
 }
 
 
@@ -118,19 +94,7 @@
     cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"casechoosecell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
     [((UIImageView *)[cell.contentView viewWithTag:4]) setTintColor:grayBackColor];
-    if (indexPath.row == 0) {
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"原始报告", @"");
-    }else if (indexPath.row ==1){
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"确诊病情", @"");
-    }else if (indexPath.row ==2){
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"用药记录", @"");
-    }else if (indexPath.row ==3){
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"小易课堂", @"");
-    }else if (indexPath.row ==4){
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"问卷", @"");
-    }else{
-        
-    }
+    ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
     return cell;
 }
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
@@ -147,6 +111,7 @@
         HistoryViewController *hvc = [[HistoryViewController alloc]init];
         [self.navigationController pushViewController:hvc animated:YES];
     }
+    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }
 
 

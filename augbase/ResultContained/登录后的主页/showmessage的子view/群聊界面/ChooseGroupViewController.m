@@ -10,22 +10,73 @@
 
 @interface ChooseGroupViewController ()
 
+{
+    NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *searchResults;//搜索结果的数组
+    UISearchBar *mySearchBar;//ui，仅仅是个ui
+    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+}
+
 @end
 
 @implementation ChooseGroupViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    _groupTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 350)];
+    _groupTable = [[UITableView alloc]init];
     _groupTable.delegate = self;
     _groupTable.dataSource = self;
     [self.view addSubview:_groupTable];
     self.view.backgroundColor = grayBackColor;
+    
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.active = NO;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    searchViewController.hidesNavigationBarDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _groupTable.tableHeaderView = searchViewController.searchBar;
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+#warning 此处的array需要网络获取
+//    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
+    dataArray = [@[@"小月",@"娄sir",@"老王",@"红包"]mutableCopy];
+    if (!searchResults) {
+        searchResults = dataArray;
+    }
+    _groupTable.tableFooterView = [[UIView alloc]initWithFrame:CGRectZero];
+    [_groupTable mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(@0);
+        make.bottom.equalTo(@0);
+        make.left.equalTo(@0);
+        make.right.equalTo(@0);
+    }];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"群助手", @"");
+}
+
+#pragma searcheViewController的delegate
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
+{
+    //谓词检测
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:
+                              @"self contains [cd] %@", searchController.searchBar.text];
+    if ([searchController.searchBar.text isEqualToString:@""]){
+        searchResults = dataArray;
+        [_groupTable reloadData];
+    }else{
+        //将所有和搜索有关的内容存储到arr数组
+        searchResults = [NSMutableArray arrayWithArray:
+                         [dataArray filteredArrayUsingPredicate:predicate]];
+        //重新加载数据
+        [_groupTable reloadData];
+    }
 }
 
 #pragma mark - Table view data source
@@ -34,7 +85,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 5;//此处的数字应为网络获取的群数目
+    return dataArray.count;//此处的数字应为网络获取的群数目
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -51,7 +102,7 @@
         cell = [[MessTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
     }
     cell.iconImageView.image = [UIImage imageNamed:@"test"];
-    cell.titleText.text = NSLocalizedString(@"小月", @"");
+    cell.titleText.text = dataArray[indexPath.row];
     cell.descriptionText.text = @"小月你又打飞机";
     cell.timeText.text = @"18:00";
     return cell;
@@ -62,6 +113,7 @@
     RootViewController *rtv = [[RootViewController alloc]init];
     rtv.privateOrNot = 1;//群聊
     [self.navigationController pushViewController:rtv animated:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark ---deit delete---

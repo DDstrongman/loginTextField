@@ -46,6 +46,7 @@
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
     searchViewController.dimsBackgroundDuringPresentation = NO;
+    searchViewController.hidesNavigationBarDuringPresentation = NO;
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
@@ -191,6 +192,7 @@
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark ---deit delete---

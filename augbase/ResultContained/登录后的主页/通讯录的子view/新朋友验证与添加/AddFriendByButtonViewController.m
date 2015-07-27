@@ -96,7 +96,7 @@
     }else{
         
     }
-        
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];    
 }
 
 #pragma 添加头和尾

@@ -164,6 +164,7 @@
         UIViewController *rpdv = [story instantiateViewControllerWithIdentifier:@"reportdisturb"];
         [self.navigationController pushViewController:rpdv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾

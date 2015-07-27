@@ -15,6 +15,7 @@
 
 #import "HistoryViewController.h"
 #import "BasicsituationViewController.h"
+#import "CameraViewController.h"
 
 //#import "HistoryViewController.h"
 

@@ -10,7 +10,7 @@
 #import "MessTableViewCell.h"
 #import "RootViewController.h"
 
-@interface ChooseGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate>
+@interface ChooseGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 
 @property (nonatomic,strong) UITableView *groupTable;
 @property (nonatomic,strong) UISearchBar *searchGroup;

@@ -15,8 +15,9 @@
 @property (nonatomic,strong) UILabel *titleLabel;
 @property (nonatomic,strong) UIButton *imageButton;
 @property (nonatomic,strong) UILabel *timeLabel;
+@property (nonatomic,strong) UIView *labelButtonView;//存放labelButton的view，需要自适应高度来显示各个labelButton;
 @property (nonatomic,strong) UIButton *labelButton;
-@property (nonatomic,strong) UIImageView *titleImageView;
+@property (nonatomic,strong) UIImageView *articleImageView;
 @property (nonatomic,strong) UILabel *detailLabel;
 
 @end

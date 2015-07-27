@@ -28,6 +28,7 @@
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
     searchViewController.dimsBackgroundDuringPresentation = NO;
+    searchViewController.hidesNavigationBarDuringPresentation = NO;
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
@@ -52,11 +53,16 @@
     //谓词检测
     NSPredicate *predicate = [NSPredicate predicateWithFormat:
                               @"self contains [cd] %@", searchController.searchBar.text];
-    //将所有和搜索有关的内容存储到arr数组
-    searchResults = [NSMutableArray arrayWithArray:
-                     [dataArray filteredArrayUsingPredicate:predicate]];
-    //重新加载数据
-    [_similarFriendTable reloadData];
+    if ([searchController.searchBar.text isEqualToString:@""]){
+        searchResults = dataArray;
+        [_similarFriendTable reloadData];
+    }else{
+        //将所有和搜索有关的内容存储到arr数组
+        searchResults = [NSMutableArray arrayWithArray:
+                         [dataArray filteredArrayUsingPredicate:predicate]];
+        //重新加载数据
+        [_similarFriendTable reloadData];
+    }
 }
 
 #pragma mark - Table view data source
@@ -103,6 +109,7 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾

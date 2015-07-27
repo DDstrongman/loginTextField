@@ -14,6 +14,16 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>Pods-CocoaAsyncSocket.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>Pods-CocoaLumberjack.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods-FMDB.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -39,6 +49,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>Pods-XMPPFramework.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods-pop.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -52,47 +67,62 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>0180E1B40BD365C962E468B9</key>
+		<key>1CA5CF083D2FBADBA3683947</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>111A7E590A31BB37F8B53AE0</key>
+		<key>4C1CF193D986CE32F38AA9C7</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>192FC52369F830B2D489C5FD</key>
+		<key>5B22E8F72A5F9A4E33848000</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>333761CEF8A394F888849D32</key>
+		<key>5E43CE1E1233FF174A2D1FED</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>33F45084955A3A57C3CB1BCC</key>
+		<key>8CC01DEA956F64CBB89A9161</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>91E3F997F113CA05A267FA2E</key>
+		<key>907815BA4E243CC4BAB384CF</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>C1367645D7B62D497187CB99</key>
+		<key>AD36FE2FC6539EF222E5BE23</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>E606DFAF20B32E8CF0DC4256</key>
+		<key>B15C0F6C7A0F39A65132CA55</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>F7706C8D9C133346176EAFEE</key>
+		<key>B9DA24E76080706662A41928</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C02ABBAC0F3DC85E3155046E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>F1CC608108D127F7CCB7C2EE</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>F6DB62671DA67A76B56176FF</key>
 		<dict>
 			<key>primary</key>
 			<true/>

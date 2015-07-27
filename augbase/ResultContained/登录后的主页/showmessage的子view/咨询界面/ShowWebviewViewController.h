@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ShowWebviewViewController : UIViewController
+@interface ShowWebviewViewController : UIViewController<UIWebViewDelegate>
+
+@property (nonatomic,strong) UIWebView *webView;
 
 @end

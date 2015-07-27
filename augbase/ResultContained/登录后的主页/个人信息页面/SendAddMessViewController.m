@@ -106,6 +106,7 @@
             }else{
                 cell.textLabel.text = NSLocalizedString(@"隐藏用药与病历信息", @"");
             }
+            cell.textLabel.tag = 1;
             UISwitch *showOrNot = [[UISwitch alloc]init];
             [showOrNot setOn:showOrNotBool];
             [showOrNot addTarget:self action:@selector(changeShowBool:) forControlEvents:UIControlEventValueChanged];
@@ -124,6 +125,7 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾
@@ -139,8 +141,12 @@
 }
 
 -(void)changeShowBool:(UISwitch *)sender{
+    if (!showOrNotBool) {
+        ((UITableViewCell *)sender.superview).textLabel.text = NSLocalizedString(@"显示用药与病历信息", @"");
+    }else{
+        ((UITableViewCell *)sender.superview).textLabel.text = NSLocalizedString(@"隐藏用药与病历信息", @"");
+    }
     showOrNotBool = [sender isOn];
-    [_sendMessTable reloadData];
 }
 
 @end

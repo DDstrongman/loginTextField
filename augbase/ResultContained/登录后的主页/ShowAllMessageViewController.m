@@ -28,9 +28,9 @@
     _messageTableview.dataSource = self;
 //    _messageTableview.frame = CGRectMake(0, 0, ViewWidth, ViewHeight-44-44);
     
-    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
-    mySearchBar.delegate = self;
-    [mySearchBar setPlaceholder:@"搜索列表"];
+//    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
+//    mySearchBar.delegate = self;
+//    [mySearchBar setPlaceholder:@"搜索列表"];
     
 //    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
 //    searchDisplayController.active = NO;
@@ -43,6 +43,7 @@
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
     searchViewController.dimsBackgroundDuringPresentation = NO;
+    searchViewController.hidesNavigationBarDuringPresentation = NO;
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
@@ -245,6 +246,7 @@
         
         [self.navigationController pushViewController:rtv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark ---deit delete---

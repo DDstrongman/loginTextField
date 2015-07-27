@@ -66,8 +66,44 @@
     UITableViewCell *cell;
     if (indexPath.row == 0) {
         cell = [tableView dequeueReusableCellWithIdentifier:@"titlecell" forIndexPath:indexPath];
+        [[cell.contentView viewWithTag:1] imageWithRound:NO];
+        
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"小月达尔比", @"");
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"小月达尔比", @"");
     }else if(indexPath.row == 1){
         cell = [tableView dequeueReusableCellWithIdentifier:@"groupmembercell" forIndexPath:indexPath];
+        ((UILabel *)[cell.contentView viewWithTag:10]).text = NSLocalizedString(@"群成员", @"");
+        [[cell.contentView viewWithTag:1] imageWithRound:NO];
+        [[cell.contentView viewWithTag:2] imageWithRound:NO];
+        [[cell.contentView viewWithTag:3] imageWithRound:NO];
+        [[cell.contentView viewWithTag:4] imageWithRound:NO];
+        [[cell.contentView viewWithTag:5] imageWithRound:NO];
+        [[cell.contentView viewWithTag:6] imageWithRound:NO];
+        [[cell.contentView viewWithTag:7] imageWithRound:NO];
+        [[cell.contentView viewWithTag:8] imageWithRound:NO];
+        NSInteger space =(NSInteger)(ViewWidth - 30*2-50*4 - 20)/3;
+        NSLog(@"space === %ld",(long)space);
+        [[cell.contentView viewWithTag:2] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:1].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:3] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:2].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:4] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:3].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:6] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:5].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:7] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:6].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:8] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:7].mas_right).with.offset(space);
+        }];
+        UIImageView *tailImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 8, 15)];
+        tailImageView.image = [UIImage imageNamed:@"goin"];
+        cell.accessoryView = tailImageView;
     }else if(indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
     }else if(indexPath.row == 5){
@@ -78,7 +114,7 @@
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
         }
     }
-    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+//    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.layer.borderWidth = 0.5;
     cell.layer.borderColor = grayBackColor.CGColor;
     return cell;
@@ -91,6 +127,7 @@
         GroupMemberViewController *gmv = [main instantiateViewControllerWithIdentifier:@"groupmemberdetail"];
         [self.navigationController pushViewController:gmv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾

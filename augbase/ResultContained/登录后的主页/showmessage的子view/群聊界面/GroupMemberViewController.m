@@ -56,6 +56,7 @@
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     StrangerViewController *svc = [main instantiateViewControllerWithIdentifier:@"stranger"];
     [self.navigationController pushViewController:svc animated:YES];
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾

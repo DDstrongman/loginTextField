@@ -177,6 +177,7 @@
         ReportTableViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"reportdisturb"];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma mark ---deit delete---

@@ -52,7 +52,6 @@
     _galleryImages = @[@"Image", @"Image1", @"Image2", @"Image3", @"Image4"];
     _slide = 0;
     
-    
     // Init mainView
     _mainView = [[UIView alloc] initWithFrame:self.view.bounds];
     _mainView.clipsToBounds = YES;
