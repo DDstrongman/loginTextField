@@ -52,8 +52,6 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    [self.navigationController.navigationBar setBarTintColor:[UIColor whiteColor]];
-    [self.navigationController.navigationBar setTintColor:themeColor];
     self.title = NSLocalizedString(@"原始报告", @"");
 }
 

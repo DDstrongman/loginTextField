@@ -10,12 +10,19 @@
 
 @interface ReportTableViewController ()
 
+{
+    NSMutableArray *dataArray;//举报title的数组
+}
+
 @end
 
 @implementation ReportTableViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    dataArray = [@[NSLocalizedString(@"色情低俗", @""),NSLocalizedString(@"广告骚扰", @""),NSLocalizedString(@"政治敏感", @""),NSLocalizedString(@"欺诈骗钱", @""),NSLocalizedString(@"谣言", @""),NSLocalizedString(@"违法", @"")]mutableCopy];
+    
     self.title = NSLocalizedString(@"举报", @"");
     _reportTable.delegate = self;
     _reportTable.dataSource = self;
@@ -36,7 +43,6 @@
     sendReportButton.titleLabel.font = [UIFont systemFontOfSize:17.0];
     [sendReportButton addTarget:self action:@selector(sendReport) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendReportButton]];
-    [self.navigationController.navigationBar setTintColor:themeColor];
 }
 
 #pragma 发送举报到后端，需要网络交互
@@ -51,7 +57,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 6;
+        return dataArray.count;
     }else{
         return 1;
     }
@@ -71,35 +77,7 @@
     if (indexPath.section == 0) {
         cell = [tableView dequeueReusableCellWithIdentifier:@"choosecell" forIndexPath:indexPath];
         cell.tag = (indexPath.row*10+10);
-        switch (indexPath.row) {
-            case 0:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"色情低俗", @"");
-            }
-                break;
-            case 1:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"广告骚扰", @"");
-            }
-                break;
-            case 2:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"政治敏感", @"");
-            }
-                break;
-            case 3:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"欺诈骗钱", @"");
-            }
-                break;
-            case 4:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"谣言", @"");
-            }
-                break;
-            case 5:{
-                ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"违法", @"");
-            }
-                break;
-                
-            default:
-                break;
-        }
+        ((UILabel *)[cell.contentView viewWithTag:1]).text = dataArray[indexPath.row];
     }else{
         cell = [tableView dequeueReusableCellWithIdentifier:@"detailcell" forIndexPath:indexPath];
     }

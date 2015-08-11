@@ -8,11 +8,14 @@
 
 #import "CaseViewController.h"
 
+#import "MyDoctorRootViewController.h"
+
 @interface CaseViewController ()
 
 {
     KRLCollectionViewGridLayout *lineLayout;
     NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *imageNameArray;//cell图片名称数组
 }
 
 @end
@@ -25,12 +28,12 @@
     lineLayout=[[KRLCollectionViewGridLayout alloc] init];
     
     //改变layout属性：
-    lineLayout.sectionInset = UIEdgeInsetsMake(1, 1, 1, 1);
+    lineLayout.sectionInset = UIEdgeInsetsMake(0, 0, 0,0);
     lineLayout.numberOfItemsPerLine = 1;
-    lineLayout.interitemSpacing = 2;
-    lineLayout.lineSpacing = 2;
-    lineLayout.aspectRatio = 1.0/0.15;
-    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 44);
+    lineLayout.interitemSpacing = 0.2;
+    lineLayout.lineSpacing = 0.2;
+    lineLayout.aspectRatio = 1.0/0.15;//长宽比例
+    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 39);
     
     _settingCollection.collectionViewLayout = lineLayout;
     _settingCollection.alwaysBounceVertical = YES;
@@ -39,19 +42,25 @@
     
     [_settingCollection setClipsToBounds:YES];
     
-    _settingCollection.backgroundColor = grayBackColor;
+    _settingCollection.backgroundColor = grayBackgroundLightColor;
     _settingCollection.pagingEnabled = NO;
     
     _settingCollection.translatesAutoresizingMaskIntoConstraints = NO;
     [_checkResultButton imageWithRedNumber:4];
     [_checkResultButton addTarget:self action:@selector(gotoOcrTextResult) forControlEvents:UIControlEventTouchUpInside];
     [_cameraNewButton addTarget:self action:@selector(cameRaNewResult:) forControlEvents:UIControlEventTouchUpInside];
-    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"小易课堂", @""),NSLocalizedString(@"问卷", @"")]mutableCopy];
+    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"小易课堂", @""),NSLocalizedString(@"问卷", @"")]mutableCopy];
+    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"class",@"patients_c2"]mutableCopy];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
     [self initNavigationBar];
+    
+    UIImage* imageNormal = [UIImage imageNamed:@"case_history_off"];
+    UIImage* imageSelected = [UIImage imageNamed:@"case_history_on"];
+    self.tabBarItem.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    self.tabBarItem.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
 }
 
 #pragma 上方两个大按钮的响应函数
@@ -68,12 +77,13 @@
 
 #pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
 -(void)initNavigationBar{
-    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
-    navigationBar.backgroundColor = themeColor;
+    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 66)];
+    navigationBar.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"nav"]];
     //title
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
-    titleLabel.center = CGPointMake(ViewWidth/2, 22);
+    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 22, 80, 30)];
+    titleLabel.center = CGPointMake(ViewWidth/2, 22+22);
     titleLabel.text = NSLocalizedString(@"病历", @"");
+    titleLabel.textColor = [UIColor whiteColor];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     [navigationBar addSubview:titleLabel];
     [self.view addSubview:navigationBar];
@@ -93,8 +103,13 @@
     UICollectionViewCell *cell;
     cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"casechoosecell" forIndexPath:indexPath];
     cell.backgroundColor = [UIColor whiteColor];
+    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:imageNameArray[indexPath.row]];
     [((UIImageView *)[cell.contentView viewWithTag:4]) setTintColor:grayBackColor];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
+    ((UILabel *)[cell.contentView viewWithTag:3]).textColor = grayLabelColor;
+    cell.layer.borderWidth = 0.25;
+    cell.layer.borderColor = lightGrayBackColor.CGColor;
+
     return cell;
 }
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
@@ -110,6 +125,9 @@
     }else if (indexPath.row == 2){
         HistoryViewController *hvc = [[HistoryViewController alloc]init];
         [self.navigationController pushViewController:hvc animated:YES];
+    }else if (indexPath.row == 3){
+        MyDoctorRootViewController *mdrv = [[MyDoctorRootViewController alloc]init];
+        [self.navigationController pushViewController:mdrv animated:YES];
     }
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }

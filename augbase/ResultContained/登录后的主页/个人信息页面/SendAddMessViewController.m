@@ -8,6 +8,8 @@
 
 #import "SendAddMessViewController.h"
 
+#import "XMPPSupportClass.h"
+
 @interface SendAddMessViewController ()
 
 {
@@ -50,9 +52,13 @@
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendMessButton]];
 }
 
-#pragma 删除好友
+#pragma 添加好友
 -(void)sendAddFriend{
     NSLog(@"发送加好友信息");
+#warning 此处添加好友需要加入jid判定
+    [[XMPPSupportClass ShareInstance] addfriend:@"182572"];
+    [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 #pragma mark - Table view data source
@@ -82,7 +88,6 @@
             cell.textLabel.text = NSLocalizedString(@"附加验证信息", @"");
         }
             break;
-            
         case 1:
         {
             UITextField *inputMess = [[UITextField alloc]initWithFrame:CGRectMake(15, 0, cell.frame.size.width-30, 30)];
@@ -92,13 +97,11 @@
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         }
             break;
-         
         case 2:
         {
             cell.textLabel.text = NSLocalizedString(@"是否向对方显示你的用药与病历", @"");
         }
             break;
-            
         case 3:
         {
             if (showOrNotBool) {
@@ -113,7 +116,6 @@
             cell.accessoryView = showOrNot;
         }
             break;
-            
         default:
             break;
     }

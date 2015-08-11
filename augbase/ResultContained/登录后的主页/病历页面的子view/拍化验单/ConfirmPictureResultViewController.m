@@ -7,6 +7,7 @@
 //
 
 #import "ConfirmPictureResultViewController.h"
+#import "XMPPSupportClass.h"
 
 @interface ConfirmPictureResultViewController ()
 
@@ -47,9 +48,10 @@
             break;
         case 4:
         {
-//            [self.navigationController popToViewController:<#(UIViewController *)#> animated:YES];
+            [self.navigationController popToRootViewControllerAnimated:YES];
 #warning 同时加入异步上传拍摄图片的网络响应
             NSLog(@"需要加入异步上传图片的功能");
+            [[XMPPSupportClass ShareInstance] uploadPicture:_resultImage];
         }
             break;
         default:

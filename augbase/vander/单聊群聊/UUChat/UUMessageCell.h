@@ -14,6 +14,7 @@
 @protocol UUMessageCellDelegate <NSObject>
 @optional
 - (void)headImageDidClick:(UUMessageCell *)cell userId:(NSString *)userId;
+//没有实现
 - (void)cellContentDidClick:(UUMessageCell *)cell image:(UIImage *)contentImage;
 @end
 

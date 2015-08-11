@@ -10,7 +10,6 @@
 #import "UIDTOKEN.h"
 #import "SplitLineView.h"
 #import "MBProgressHUD.h"
-#import <AFNetworking.h>
 #import "Toast+UIView.h"
 #import "UIButton+EnlargeArea.h"
 

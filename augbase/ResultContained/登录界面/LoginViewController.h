@@ -9,7 +9,9 @@
 #import <UIKit/UIKit.h>
 #import "ImageViewLabelTextFieldView.h"
 
-@interface LoginViewController : UIViewController
+#import "XMPPSupportClass.h"
+
+@interface LoginViewController : UIViewController<ConnectXMPPDelegate>
 
 @property (strong,nonatomic) ImageViewLabelTextFieldView *userNameView;
 @property (strong,nonatomic) ImageViewLabelTextFieldView *passWordView;
@@ -17,6 +19,11 @@
 
 @property (strong,nonatomic) UIButton *loginButton;
 @property (strong,nonatomic) IBOutlet UIButton *thirdLoginButton;
+//忘记密码
+@property (nonatomic,strong) UIButton *forgetPassButton;
+
+
+//@property (nonatomic,strong) XMPPSupportClass *loginXMPPSupport;
 
 
 @end

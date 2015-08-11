@@ -19,13 +19,25 @@
 }
 
 -(void)imageWithRedNumber:(NSInteger)number{
-    UILabel *numberView = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 15, 15)];
+    UILabel *numberView = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
     numberView.backgroundColor = [UIColor redColor];
     [numberView imageWithRound:NO];
     numberView.center = CGPointMake(self.frame.size.width-3, 3);
     numberView.text = [NSString stringWithFormat:@"%ld",(long)number];
     numberView.textAlignment = NSTextAlignmentCenter;
-    numberView.font = [UIFont systemFontOfSize:11.0];
+    numberView.font = [UIFont systemFontOfSize:15.0];
+    numberView.textColor = [UIColor whiteColor];
+    [self addSubview:numberView];
+}
+
+-(void)imageWithRedNumber:(NSInteger)number Radio:(float)radio FontFloat:(float)fontFloat{
+    UILabel *numberView = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, radio, radio)];
+    numberView.backgroundColor = [UIColor redColor];
+    [numberView imageWithRound:NO];
+    numberView.center = CGPointMake(self.frame.size.width-3, 3);
+    numberView.text = [NSString stringWithFormat:@"%ld",(long)number];
+    numberView.textAlignment = NSTextAlignmentCenter;
+    numberView.font = [UIFont systemFontOfSize:fontFloat];
     numberView.textColor = [UIColor whiteColor];
     [self addSubview:numberView];
 }

@@ -77,9 +77,30 @@
         [((UIImageView *)[cell.contentView viewWithTag:6]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:7]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:8]) imageWithRound];
-        float spaceGap = (ViewWidth-200-30)/3;
-        NSLog(@"spaceGap=== %f",spaceGap);
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        NSInteger space =(NSInteger)(ViewWidth - 30*2-50*4 - 20)/3;
+        NSLog(@"space === %ld",(long)space);
+        [[cell.contentView viewWithTag:2] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:1].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:3] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:2].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:4] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:3].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:6] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:5].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:7] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:6].mas_right).with.offset(space);
+        }];
+        [[cell.contentView viewWithTag:8] mas_updateConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo([cell.contentView viewWithTag:7].mas_right).with.offset(space);
+        }];
+        UIImageView *tailImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 8, 15)];
+        tailImageView.image = [UIImage imageNamed:@"goin"];
+        cell.accessoryView = tailImageView;
+
     }else if (indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
     }else{

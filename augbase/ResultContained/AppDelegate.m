@@ -31,30 +31,46 @@
 
 #import "AppDelegate.h"
 
-#import "RZTransitionsManager.h"
-#import "RZTransitionsNavigationController.h"
 #import "OcrTextResultViewController.h"
 
 #import "LoginViewController.h"
+//#import "ShowAllMessageViewController.h"
 
 @interface AppDelegate ()
+
+{
+    BOOL NotFirstTimeLogin;//no为初次登录，yes则不是
+}
 
 @end
 
 @implementation AppDelegate
 
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    
     // Override point for customization after application launch.    
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    LoginViewController *rootViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
+    LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
+    UIViewController *showMessViewController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
     
-    RZTransitionsNavigationController* rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:rootViewController];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NotFirstTimeLogin = [defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
+    RZTransitionsNavigationController* rootNavController;
+    if (NotFirstTimeLogin) {
+        //已经登录过了
+        rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:showMessViewController];
+    }else{
+        rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+        [[DBManager ShareInstance] creatDatabase:DBName];
+        [[DBManager ShareInstance] closeDB];
+    }
     
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     self.window.rootViewController = rootNavController  ;
     [self.window makeKeyAndVisible];
-
+    if ([UIApplication instancesRespondToSelector:@selector(registerUserNotificationSettings:)]){
+        [application registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound categories:nil]];
+    }
     return YES;
 }
 
@@ -64,20 +80,23 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    [[XMPPSupportClass ShareInstance] disconnect];
+    UILocalNotification *localNotification = [[UILocalNotification alloc] init];
+//    localNotification.alertAction = @"Ok";
+//    localNotification.alertBody = [NSString stringWithFormat:@"From: %@\n%@",@"新消息:",@"123"];//弹窗信息
+    localNotification.applicationIconBadgeNumber = 2;//边角图标
+//    [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",testMineJID,httpServer]];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    [[XMPPSupportClass ShareInstance] disconnect];
 }
 
 @end

@@ -8,6 +8,8 @@
 
 #import "ContactPersonDetailViewController.h"
 
+#import "RootViewController.h"
+
 @interface ContactPersonDetailViewController ()
 
 {
@@ -126,8 +128,10 @@
         }else{
             if (indexPath.row == 1) {
                 cell = [tableView dequeueReusableCellWithIdentifier:@"sendmesscell" forIndexPath:indexPath];
+                [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(sendMess) forControlEvents:UIControlEventTouchUpInside];
             }else{
                 cell = [tableView dequeueReusableCellWithIdentifier:@"deletecell" forIndexPath:indexPath];
+                [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(deleteFriend) forControlEvents:UIControlEventTouchUpInside];
             }
             [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
         }
@@ -161,15 +165,20 @@
 #pragma 发送消息和删除好友的响应函数
 -(void)sendMess{
     NSLog(@"发送消息");
+    RootViewController *rvc = [[RootViewController alloc]init];
+    rvc.personJID = _personJID;
+    [self.navigationController pushViewController:rvc animated:YES];
 }
 
 -(void)deleteFriend{
     NSLog(@"删除好友");
+    [[XMPPSupportClass ShareInstance] removeFriend:_personJID];
+    [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 2&&indexPath.row == 0) {
@@ -178,60 +187,6 @@
         [self.navigationController pushViewController:cpdv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma mark ---deit delete---
-//// 让 UITableView 和 UIViewController 变成可编辑状态
-//- (void)setEditing:(BOOL)editing animated:(BOOL)animated
-//{
-////    [super setEditing:editing animated:animated];
-//
-//    [self setEditing:editing animated:animated];
-//}
-
-//  指定哪一行可以编辑 哪行不能编辑
-- (BOOL) tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return YES;
-}
-
-//自定义cell的编辑模式，可以是删除也可以是增加 改变左侧的按钮的样式 删除是'-' 增加是'+'
-- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
-    //    if (indexPath.row == 1) {
-    //        return UITableViewCellEditingStyleInsert;
-    //    } else {
-    return UITableViewCellEditingStyleDelete;
-    //    }
-}
-
-
-// 判断点击按钮的样式 来去做添加 或删除
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // 删除的操作
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        [_contactPersonTable beginUpdates];
-        NSArray *indexPaths = @[indexPath]; // 构建 索引处的行数 的数组
-        // 删除 索引的方法 后面是动画样式
-        //        [testArrayDatasource removeObjectAtIndex:indexPath.row];
-        [_contactPersonTable deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
-        [_contactPersonTable  endUpdates];
-    }
-    
-    // 添加的操作
-    if (editingStyle == UITableViewCellEditingStyleInsert) {
-        
-        NSArray *indexPaths = @[indexPath];
-        [_contactPersonTable insertRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationRight)];
-        
-    }
-    
-}
-
-#pragma mark 只有实现这个方法，编辑模式中才允许移动Cell
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
-    // 更换数据的顺序
-    //    [testArrayDatasource exchangeObjectAtIndex:sourceIndexPath.row withObjectAtIndex:destinationIndexPath.row];
 }
 
 #pragma 添加头和尾

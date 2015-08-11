@@ -32,8 +32,10 @@
 #import <UIKit/UIKit.h>
 
 #import <ADTransitionController.h>
+#import "XMPPSupportClass.h"
 
-#import "XMPP.h"
+#import "RZTransitionsManager.h"
+#import "RZTransitionsNavigationController.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 

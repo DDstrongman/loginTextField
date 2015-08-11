@@ -8,6 +8,8 @@
 
 #import "RegistNumberViewController.h"
 
+#import "FirstTimeUserInfoViewController.h"
+
 @interface RegistNumberViewController ()
 
 {
@@ -31,7 +33,7 @@
     
     _registViewOne.contentTextField.placeholder = NSLocalizedString(@"手机号码", @"");
     _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码（4位）", @"");
-    _registViewThree.contentTextField.placeholder = NSLocalizedString(@"密码", @"");
+    _registViewThree.contentTextField.placeholder = NSLocalizedString(@"密码(至少6位)", @"");
     
     twoRightButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 40, 30)];
     twoRightButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
@@ -59,7 +61,7 @@
     
     
     _finishButton = [[UIButton alloc]init];
-    [_finishButton addTarget:self action:@selector(gotoTemp) forControlEvents:UIControlEventTouchUpInside];
+    [_finishButton addTarget:self action:@selector(finishRegist) forControlEvents:UIControlEventTouchUpInside];
     [_finishButton setTitle:NSLocalizedString(@"注册", @"") forState:UIControlStateNormal];
     [_finishButton.layer setMasksToBounds:YES];
     [_finishButton.layer setCornerRadius:10.0];
@@ -131,7 +133,8 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    
+    self.navigationController.navigationBar.tintColor = themeColor;
+//    self.title = NSLocalizedString(@"", @"");
     //倒计时
     countTime = countAgainNumber;
     delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
@@ -195,11 +198,35 @@
     }
 }
 
-#pragma 跳转注册完后的界面
--(void)gotoTemp{
-    NSLog(@"需要加入验证码的判断");
+#pragma 跳转注册完后的界面,但是不是直接跳入showallmessage界面，而是引导到第一次登录加好友界面
+-(void)finishRegist{
+#warning 加入注册网络通讯
+//    NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,_registViewOne.contentTextField.text,_registViewTwo.contentTextField.text];
+//    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+//    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//        NSLog(@"reponson===%@",source);
+//        int res=[[source objectForKey:@"res"] intValue];
+//        NSLog(@"res===%d",res);
+//        if (res == 0) {
+//            //请求完成
+//            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//            UIViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+//            [self.navigationController pushViewController:ftui animated:YES];
+//        }
+//        else{
+//            
+//        }
+//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        NSLog(@"WEB端登录失败");
+//    }];
+#warning 正式版本中使用上方代码
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    UIViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+    FirstTimeUserInfoViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+    ftui.userName = _registViewOne.contentTextField.text;
+    ftui.userPass = _registViewThree.contentTextField.text;
     [self.navigationController pushViewController:ftui animated:YES];
 }
 

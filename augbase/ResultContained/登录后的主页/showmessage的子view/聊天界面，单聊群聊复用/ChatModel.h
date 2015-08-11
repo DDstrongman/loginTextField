@@ -8,16 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
+#import "XMPPSupportClass.h"
+#import "ChatSupportItem.h"
+
 @interface ChatModel : NSObject
 
 @property (nonatomic, strong) NSMutableArray *dataSource;
 
 @property (nonatomic) BOOL isGroupChat;
 
-- (void)populateRandomDataSource;
+- (void)populateRandomDataSource:(NSMutableArray *)messMutableArray;
 
-- (void)addRandomItemsToDataSource:(NSInteger)number;
+- (void)addRandomItemsToDataSource:(NSMutableArray *)messMutableArray;
 
 - (void)addSpecifiedItem:(NSDictionary *)dic;
+-(void)addCellFromDB:(NSString *)userJID;
+//- (NSArray *)additems:(NSMutableArray *)messArray;
 
 @end

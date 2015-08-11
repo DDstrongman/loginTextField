@@ -11,17 +11,60 @@
 #import "UUMessage.h"
 #import "UUMessageFrame.h"
 
+#import "DBItem.h"
+
+#import "DBManager.h"
+
 @implementation ChatModel
 
-- (void)populateRandomDataSource {
+- (void)populateRandomDataSource:(NSMutableArray *)messMutableArray {
     self.dataSource = [NSMutableArray array];
-    [self.dataSource addObjectsFromArray:[self additems:5]];
+    
+    [self.dataSource addObjectsFromArray:[self additems:messMutableArray]];
 }
 
-- (void)addRandomItemsToDataSource:(NSInteger)number{
+- (void)addRandomItemsToDataSource:(NSMutableArray *)messMutableArray{
     
-    for (int i=0; i<number; i++) {
-        [self.dataSource insertObject:[[self additems:1] firstObject] atIndex:0];
+    for (int i=0; i<[messMutableArray count]; i++) {
+        [self.dataSource insertObject:[[self additems:messMutableArray] firstObject] atIndex:0];
+    }
+}
+
+-(void)addCellFromDB:(NSString *)userJID{
+    self.dataSource = [NSMutableArray array];
+    
+    NSMutableDictionary *dataDic = [NSMutableDictionary dictionary];
+    [[DBManager ShareInstance] creatDatabase:DBName];
+    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID]];
+    FMResultSet *searchFMSet = [[DBManager ShareInstance] SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID] MessNumber:10 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+    while ([searchFMSet next]) {
+        UUMessageFrame *messageFrame = [[UUMessageFrame alloc]init];
+        UUMessage *message = [[UUMessage alloc] init];
+//        obj.mycontent = [searchFMSet stringForColumn:@"key"];
+        NSString *personJID = [searchFMSet stringForColumn:@"personJID"];
+        NSString *personNickName = [searchFMSet stringForColumn:@"personNickName"];
+        NSString *personImageUrl = [searchFMSet stringForColumn:@"personImageUrl"];
+        NSString *messContent = [searchFMSet stringForColumn:@"messContent"];
+        NSString *FromMeOrNot = [searchFMSet stringForColumn:@"FromMeOrNot"];
+        NSString *chatType = [searchFMSet stringForColumn:@"chatType"];
+        NSString *messType = [searchFMSet stringForColumn:@"messType"];
+        NSString *timeStamp = [searchFMSet stringForColumn:@"timeStamp"];
+        [dataDic setObject:FromMeOrNot forKey:@"from"];
+        [dataDic setObject:timeStamp forKey:@"strTime"];
+        [dataDic setObject:personNickName forKey:@"strName"];
+        [dataDic setObject:personImageUrl forKey:@"strIcon"];
+        [dataDic setObject:messType forKey:@"type"];
+        [dataDic setObject:messContent forKey:@"strContent"];
+        
+        [message setWithDict:dataDic];
+        [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+        messageFrame.showTime = message.showDateLabel;
+        [messageFrame setMessage:message];
+        
+        if (message.showDateLabel) {
+            previousTime = dataDic[@"strTime"];
+        }
+        [self.dataSource addObject:messageFrame];
     }
 }
 
@@ -51,20 +94,18 @@
 
 // 添加聊天item（一个cell内容）
 static NSString *previousTime = nil;
-- (NSArray *)additems:(NSInteger)number
+- (NSArray *)additems:(NSMutableArray *)messArray
 {
     NSMutableArray *result = [NSMutableArray array];
     
-    for (int i=0; i<number; i++) {
-        
-        NSDictionary *dataDic = [self getDic];
+    for (int i=0; i<[messArray count]; i++) {
+        NSDictionary *dataDic = [self getDic:i TableArray:messArray];
         UUMessageFrame *messageFrame = [[UUMessageFrame alloc]init];
         UUMessage *message = [[UUMessage alloc] init];
         [message setWithDict:dataDic];
         [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
         messageFrame.showTime = message.showDateLabel;
         [messageFrame setMessage:message];
-        
         if (message.showDateLabel) {
             previousTime = dataDic[@"strTime"];
         }
@@ -75,19 +116,22 @@ static NSString *previousTime = nil;
 
 // 如下:群聊（groupChat）
 static int dateNum = 10;
-- (NSDictionary *)getDic
+- (NSDictionary *)getDic:(NSInteger)indexCount TableArray:(NSMutableArray *)messArray
 {
     NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
     int randomNum = arc4random()%5;
-    if (randomNum == UUMessageTypePicture) {
-        [dictionary setObject:[UIImage imageNamed:[NSString stringWithFormat:@"%zd.jpeg",arc4random()%2]] forKey:@"picture"];
-    }else{
-        // 文字出现概率4倍于图片（暂不出现Voice类型）
+//    if (randomNum == UUMessageTypePicture) {
+//        [dictionary setObject:[UIImage imageNamed:[NSString stringWithFormat:@"%zd.jpeg",arc4random()%2]] forKey:@"picture"];
+//    }else{
+//        // 文字出现概率4倍于图片（暂不出现Voice类型）
         randomNum = UUMessageTypeText;
-        [dictionary setObject:[self getRandomString] forKey:@"strContent"];
-    }
+//    NSMutableArray *tempArray = ;
+    [dictionary setObject:((ChatSupportItem *)messArray[indexCount]).messContent forKey:@"strContent"];
+
+//        [dictionary setObject:[self getRandomString] forKey:@"strContent"];
+//    }
     NSDate *date = [[NSDate date]dateByAddingTimeInterval:arc4random()%1000*(dateNum++) ];
-    [dictionary setObject:@(UUMessageFromOther) forKey:@"from"];
+    [dictionary setObject:@(0) forKey:@"from"];
     [dictionary setObject:@(randomNum) forKey:@"type"];
     [dictionary setObject:[date description] forKey:@"strTime"];
     // 这里判断是否是私人会话、群会话

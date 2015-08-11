@@ -8,10 +8,7 @@
 
 #import "NewFriendNoticeViewController.h"
 
-@interface NewFriendNoticeViewController ()
-
-{
-    NSInteger noticeNumber;//获取的通知数目，网络获取
+@interface NewFriendNoticeViewController (){
     NSArray *dataOfSimilarArray;//获取的各个人相似数的数组
     NSArray *userArray;//获取发送信息的人name
     NSArray *boolAddArray;//每个通知添加与否的数组
@@ -54,7 +51,6 @@
     dataOfSimilarArray = [NSArray arrayWithObjects:@"83%",@"63%",@"43%",nil];
     userArray = [NSArray arrayWithObjects:@"小月打飞机",@"小月打飞机",@"小月打飞机",nil];
     boolAddArray = [NSArray arrayWithObjects:@NO,@NO,@NO,nil];
-    noticeNumber = dataArray.count;
 //    if (_confirmAddMessOrNot) {
 //        [_addFriendNotictTable reloadData];
 //        _confirmAddMessOrNot = NO;
@@ -100,21 +96,13 @@
     ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
     [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = userArray[0];
-
-//    static NSString *CellIdentifier = @"addfriendnoticecell";
-//    cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-//    if (cell == nil) {
-//        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-//    }
-//    cell.textLabel.text = userArray[0];
-//    cell.imageView.image = [UIImage imageNamed:@"icon.jpg"];
     UIView *addLabelAndButtonView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];
     UILabel *numberLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 10, 40, 30)];
     numberLabel.text = dataArray[0];
     numberLabel.font = [UIFont systemFontOfSize:17.0];
     numberLabel.textColor = [UIColor blackColor];
     UIButton *addFriendButton = [[UIButton alloc]initWithFrame:CGRectMake(45,10, 50, 30)];
-    [addFriendButton addTarget:self action:@selector(addFriendYes) forControlEvents:UIControlEventTouchUpInside];
+    [addFriendButton addTarget:self action:@selector(addFriendYes:) forControlEvents:UIControlEventTouchUpInside];
 //    NSLog(@"bool===%@",boolAddArray[0]);
     if (boolAddArray[0] == 0) {
         addFriendButton.backgroundColor = grayLabelColor;
@@ -129,14 +117,17 @@
     [addLabelAndButtonView addSubview:addFriendButton];
     
     cell.accessoryView = addLabelAndButtonView;
+    cell.tag = 100;
     return cell;
 }
 
--(void)addFriendYes{
+-(void)addFriendYes:(UIButton *)sender{
     NSLog(@"加上同意加为好友的响应函数，网络通讯");
 //    boolAddArray[0] = YES;
+    NSLog(@"cell的tag===%ld",(long)sender.superview.superview.tag);
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     AddFriendConfirmViewController *afcv = [main instantiateViewControllerWithIdentifier:@"addfriendconfirmdetail"];
+    afcv.personJid =[NSString stringWithFormat:@"%ld",(long)sender.superview.superview.tag];
     [self.navigationController pushViewController:afcv animated:YES];
 }
 

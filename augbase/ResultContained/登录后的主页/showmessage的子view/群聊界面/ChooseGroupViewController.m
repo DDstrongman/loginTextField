@@ -59,6 +59,7 @@
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"群助手", @"");
+    [self.navigationController.navigationBar setBarTintColor:[UIColor whiteColor]];
 }
 
 #pragma searcheViewController的delegate
@@ -148,6 +149,7 @@
         NSArray *indexPaths = @[indexPath]; // 构建 索引处的行数 的数组
         // 删除 索引的方法 后面是动画样式
         //        [testArrayDatasource removeObjectAtIndex:indexPath.row];
+        [dataArray removeObjectAtIndex:indexPath.row];
         [_groupTable deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
         [_groupTable  endUpdates];
     }

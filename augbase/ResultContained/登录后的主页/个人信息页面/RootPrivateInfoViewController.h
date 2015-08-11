@@ -23,4 +23,7 @@
 @property (nonatomic,strong) NSArray *medicalArray;//用药数组
 @property (nonatomic,strong) NSArray *diseaseArray;//患病数组
 
+@property (nonatomic) NSString *personJID;//好友的jid
+
+
 @end

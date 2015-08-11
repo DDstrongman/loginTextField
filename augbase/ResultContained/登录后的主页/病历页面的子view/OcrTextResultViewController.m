@@ -40,18 +40,20 @@
     
     //初始化各个tableview和tableview顶上的uiimagview
     self.navigationController.navigationBarHidden = YES;
-    tableTopImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth/2, 0)];
-    tableTopImageView.image = [UIImage imageNamed:@"paipai"];//此处改为拍照时候的最后一张照片
-    tableTopImageView.backgroundColor = [UIColor blackColor];
-    [self.view addSubview:tableTopImageView];
     
-    visualEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
-    visualEffectView.frame = CGRectMake(0, 44, ViewWidth, 0);
-    visualEffectView.alpha = 1.0;
-    [self.view addSubview:visualEffectView];
+//    tableTopImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth/2, 0)];
+//    tableTopImageView.image = [UIImage imageNamed:@"paipai"];//此处改为拍照时候的最后一张照片
+//    tableTopImageView.backgroundColor = [UIColor blackColor];
+//    [self.view addSubview:tableTopImageView];
+//    
+//    visualEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
+//    visualEffectView.frame = CGRectMake(0, 44, ViewWidth, 0);
+//    visualEffectView.alpha = 1.0;
+//    [self.view addSubview:visualEffectView];
     
     _nameTable.delegate = self;
     _nameTable.dataSource = self;
+    
     _firstResultTable.delegate = self;
     _firstResultTable.dataSource = self;
     _secondResultTable.delegate = self;
@@ -59,22 +61,28 @@
     _thirdesultTable.delegate = self;
     _thirdesultTable.dataSource = self;
     
-    //设置tableview的frame否则tableview无法显示完全
-    _nameTable.frame = CGRectMake(0, 44, 120,ViewHeight -44);
-    _firstResultTable.frame = CGRectMake(0, 0, 100,ViewHeight -44);
-    _secondResultTable.frame = CGRectMake(100, 0, 100,ViewHeight -44);
-    _thirdesultTable.frame = CGRectMake(200, 0, 100,ViewHeight -44);
-    _resultScroller.frame = CGRectMake(120, 44, ViewWidth-120,ViewHeight -44);
-    
     //初始化两个scrollerview
     _titleScroller.delegate = self;
     _resultScroller.delegate = self;
     
+    //此处应该加入通过标识符数组传入的cell高度的总和计算出的height，否则tableview显示不完全,目前用的height不正确,只是暂时的特例
+    _resultScroller.contentSize = CGSizeMake(1200,300);
+    
+    //设置tableview的frame否则tableview无法显示完全
+//    _titleButton.frame = CGRectMake(0, 22, 120, 44);
+//    
+//    _titleScroller.frame =  CGRectMake(120, 22, ViewWidth-120, 44);
+    _resultScroller.frame = CGRectMake(120, 44+22,ViewWidth-120,ViewHeight -44-22-44);
+//
+//    _nameTable.frame = CGRectMake(0, 44+22, 120,ViewHeight -44-22);
+//    _firstResultTable.frame = CGRectMake(0, 0, 100,ViewHeight -44-22);
+//    _secondResultTable.frame = CGRectMake(100, 0, 100,ViewHeight -44-22);
+//    _thirdesultTable.frame = CGRectMake(200, 0, 100,ViewHeight -44-22);
+    
+    
     //tableview有显示不全的问题,原因在于加入了最上方的44height的scrollerview，需要计算tableview的frame高度
 //    _nameTable.frame = CGRectMake(0, 44, 120, 2000);
     
-    //此处应该加入通过标识符数组传入的cell高度的总和计算出的height，否则tableview显示不完全,目前用的height不正确,只是暂时的特例
-    _resultScroller.contentSize = CGSizeMake(1200,300);
     
     
     [_titleButton makeInsetShadowWithRadius:8.0 Color:[UIColor colorWithRed:238.0 green:238.0 blue:238.0 alpha:0.1] Directions:[NSArray arrayWithObjects:@"right", nil]];
@@ -198,10 +206,10 @@
 
 
 
-#pragma 去掉statebar
-- (BOOL)prefersStatusBarHidden {
-    return YES;
-}
+//#pragma 去掉statebar
+//- (BOOL)prefersStatusBarHidden {
+//    return YES;
+//}
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

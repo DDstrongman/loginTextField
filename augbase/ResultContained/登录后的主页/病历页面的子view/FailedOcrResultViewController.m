@@ -25,9 +25,6 @@
     deleteButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [deleteButton addTarget:self action:@selector(deleteReport) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:deleteButton]];
-//    self.navigationItem.
-//    [[UINavigationBar appearance] setTintColor:themeColor];
-    [self.navigationController.navigationBar setTintColor:themeColor];
     
     
     self.title = NSLocalizedString(@"识别失败", @"");

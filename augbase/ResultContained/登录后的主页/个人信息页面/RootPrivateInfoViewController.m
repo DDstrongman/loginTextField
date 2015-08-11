@@ -7,6 +7,7 @@
 //
 
 #import "RootPrivateInfoViewController.h"
+#import "XMPPSupportClass.h"
 
 @interface RootPrivateInfoViewController ()
 
@@ -59,6 +60,7 @@
 #pragma 删除好友
 -(void)deleteFriend{
     NSLog(@"数据库交互，删除好友");
+    [[XMPPSupportClass ShareInstance] removeFriend:_personJID];
 }
 
 #pragma 跳转gotoPrivateDetail

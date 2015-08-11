@@ -15,4 +15,7 @@
 @property (nonatomic,strong) IBOutlet UITableView *confirmInfoTable;
 
 
+@property (nonatomic,strong) NSString *personJid;
+
+
 @end

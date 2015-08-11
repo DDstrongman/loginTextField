@@ -25,5 +25,9 @@
 
 @property (nonatomic,strong) UIButton *finishRegistButton;
 
+@property (nonatomic,strong) NSString *userName;
+@property (nonatomic,strong) NSString *userPass;
+
+
 
 @end

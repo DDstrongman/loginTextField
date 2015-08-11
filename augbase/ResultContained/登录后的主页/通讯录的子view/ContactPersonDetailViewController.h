@@ -16,4 +16,6 @@
 @property (nonatomic,strong) ItemOne *allInfo;//传输过来的用户信息
 @property (nonatomic,strong) IBOutlet UITableView *contactPersonTable;//查看和设置的tableview
 
+@property (nonatomic,strong) NSString *personJID;//好友的jid
+
 @end

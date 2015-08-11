@@ -12,11 +12,17 @@
 #import "ChineseInclude.h"
 #import "PinYinForObjc.h"
 
+#import "DBManager.h"
+#import "FriendDBManager.h"
+
 @interface FindOthersViewController ()
 
 {
     NSMutableArray *dataArray;//搜索的数据元数组
+    NSMutableArray *dataDescribe;//好友签名
+    NSMutableArray *dataJID;//好友JID
     NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *titleImageNameArray;//官方提供的选项的头像名称数组
     NSMutableArray *searchResults;//搜索结果的数组
     UISearchBar *mySearchBar;//ui，仅仅是个ui
     UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
@@ -30,9 +36,6 @@
     [super viewDidLoad];
     _contactsTableview.delegate = self;
     _contactsTableview.dataSource = self;
-    
-    self.navigationController.navigationBarHidden = YES;
-    [self initNavigationBar];
     
     mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
     mySearchBar.delegate = self;
@@ -56,52 +59,69 @@
     searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
 //    @"咨询",@"群组",@"等待验证好友",
     titleDataArray = [@[NSLocalizedString(@"咨询", @""),NSLocalizedString(@"群组", @""),NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
-    dataArray = [@[@"苹果",@"小月",@"小月打飞机",@"小月达飞机",@"小月你好帅！",@"and",@"苹果IOS",@"谷歌android",@"微软",@"微软WP",@"table",@"table",@"table",@"六六",@"六六",@"六六",@"table",@"table",@"table"]mutableCopy];
-    if (!searchResults) {
-        searchResults = dataArray;
-    }
-    [_contactsTableview mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(_navigationBar.mas_bottom).with.offset(0);
+    titleImageNameArray = [@[@"news",@"groups",@"add"]mutableCopy];
+//    [_contactsTableview mas_makeConstraints:^(MASConstraintMaker *make) {
+////        make.top.equalTo(_navigationBar.mas_bottom).with.offset(0);
 //        make.top.equalTo(@66);
-        make.bottom.equalTo(@0);
-        make.left.equalTo(@0);
-        make.right.equalTo(@0);
-    }];
+//        make.bottom.equalTo(@-44);
+//        make.left.equalTo(@0);
+//        make.right.equalTo(@0);
+//    }];
 }
-
-//#pragma 去掉statebar
-//- (BOOL)prefersStatusBarHidden {
-//    return YES;
-//}
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
+    [self initNavigationBar];
+    
+    UIImage* imageNormal = [UIImage imageNamed:@"contacts_off"];
+    UIImage* imageSelected = [UIImage imageNamed:@"contacts_on"];
+    self.tabBarItem.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    self.tabBarItem.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    
+#warning 获取数据库中好友列表
+    [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+    NSMutableArray *tableFrindName = [NSMutableArray arrayWithCapacity:0];
+    NSMutableArray *tableFrindDescribe = [NSMutableArray arrayWithCapacity:0];
+    NSMutableArray *tableFrindJID = [NSMutableArray arrayWithCapacity:0];
+    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+    FMResultSet *friendList = [[FriendDBManager ShareInstance] SearchAllFriend:YizhenFriendName];
+    
+#warning 此处需要加入通过jid判断用户name的网络需求
+    while ([friendList next]) {
+        [tableFrindDescribe addObject:[friendList stringForColumn:@"friendDescribe"]];
+        [tableFrindName addObject:[friendList stringForColumn:@"friendName"]];
+        [tableFrindJID addObject:[friendList stringForColumn:@"friendJID"]];
+    }
+    
+    dataArray = [[NSMutableArray alloc]initWithArray:tableFrindName];
+    dataDescribe = [[NSMutableArray alloc]initWithArray:tableFrindDescribe];
+    dataJID = [[NSMutableArray alloc]initWithArray:tableFrindJID];
+    searchResults = dataArray;
+    [_contactsTableview reloadData];
 //    [self initNavigationBar];
 }
 
 #pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
 -(void)initNavigationBar{
-    _navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
-    _navigationBar.backgroundColor = [UIColor whiteColor];
-    //test
+    _navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 66)];
     _navigationBar.backgroundColor = themeColor;
     //title
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
-    titleLabel.center = CGPointMake(ViewWidth/2, 22);
+    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 22, 80, 30)];
+    titleLabel.center = CGPointMake(ViewWidth/2, 22+22);
     titleLabel.text = NSLocalizedString(@"发现", @"");
+    titleLabel.textColor = [UIColor whiteColor];
     titleLabel.textAlignment = NSTextAlignmentCenter;
     [_navigationBar addSubview:titleLabel];
     
     //去登陆界面
     UIButton *addFriendButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-    addFriendButton.center = CGPointMake(ViewWidth-20, 22);
+    addFriendButton.center = CGPointMake(ViewWidth-20, 22+22);
     
     addFriendButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-    [addFriendButton setImage:[UIImage imageNamed:@"add_friend"] forState:UIControlStateNormal];
+    [addFriendButton setImage:[UIImage imageNamed:@"add"] forState:UIControlStateNormal];
     
     [addFriendButton addTarget:self action:@selector(addFriend) forControlEvents:UIControlEventTouchUpInside];
     [_navigationBar addSubview:addFriendButton];
-    
     [self.view addSubview:_navigationBar];
 }
 
@@ -114,8 +134,7 @@
 }
 
 #pragma searcheViewController的delegate
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController{
     //谓词检测
     NSPredicate *predicate = [NSPredicate predicateWithFormat:
                               @"self contains [cd] %@", searchController.searchBar.text];
@@ -152,18 +171,21 @@
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cellContact;
-    cellContact = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
+    UITableViewCell *cell;
+    cell = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
     //    [cellContact setSelectionStyle:UITableViewCellSelectionStyleNone];
-    
-    ((UIImageView *)[cellContact.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
-    [((UIImageView *)[cellContact.contentView viewWithTag:1]) imageWithRound];
     if (indexPath.section == 0) {
-        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
-    }else{
-        ((UILabel *)[cellContact.contentView viewWithTag:2]).text = searchResults[indexPath.row];
+        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:titleImageNameArray[indexPath.row]];
+        [cell.contentView viewWithTag:1].backgroundColor = themeColor;
     }
-    return cellContact;
+    [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
+    if (indexPath.section == 0) {
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
+    }else{
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
+        ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[indexPath.row];
+    }
+    return cell;
 }
 
 #pragma 需要加入传必要的值过去
@@ -190,63 +212,10 @@
     }else{
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.personJID = dataJID[indexPath.row];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma mark ---deit delete---
-//// 让 UITableView 和 UIViewController 变成可编辑状态
-//- (void)setEditing:(BOOL)editing animated:(BOOL)animated
-//{
-////    [super setEditing:editing animated:animated];
-//
-//    [self setEditing:editing animated:animated];
-//}
-
-//  指定哪一行可以编辑 哪行不能编辑
-- (BOOL) tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return YES;
-}
-
-//自定义cell的编辑模式，可以是删除也可以是增加 改变左侧的按钮的样式 删除是'-' 增加是'+'
-- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
-    //    if (indexPath.row == 1) {
-    //        return UITableViewCellEditingStyleInsert;
-    //    } else {
-    return UITableViewCellEditingStyleDelete;
-    //    }
-}
-
-
-// 判断点击按钮的样式 来去做添加 或删除
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    // 删除的操作
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        [_contactsTableview beginUpdates];
-        NSArray *indexPaths = @[indexPath]; // 构建 索引处的行数 的数组
-        // 删除 索引的方法 后面是动画样式
-        //        [testArrayDatasource removeObjectAtIndex:indexPath.row];
-        [_contactsTableview deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
-        [_contactsTableview  endUpdates];
-    }
-    
-    // 添加的操作
-    if (editingStyle == UITableViewCellEditingStyleInsert) {
-        
-        NSArray *indexPaths = @[indexPath];
-        [_contactsTableview insertRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationRight)];
-        
-    }
-    
-}
-
-#pragma mark 只有实现这个方法，编辑模式中才允许移动Cell
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
-    // 更换数据的顺序
-    //    [testArrayDatasource exchangeObjectAtIndex:sourceIndexPath.row withObjectAtIndex:destinationIndexPath.row];
 }
 
 #pragma searchbar delegate

@@ -8,14 +8,21 @@
 
 #import "ShowAllMessageViewController.h"
 
+#import "UserItem.h"
+#import "DBItem.h"
+#import "FriendDBManager.h"
+
 @interface ShowAllMessageViewController ()
 
 {
+    NSMutableArray *tableJidName;//用户jid数组
     NSMutableArray *dataArray;//搜索的数据元数组
     NSMutableArray *titleDataArray;//官方提供的选项的名称数组
+    NSMutableArray *titleImageNameArray;//官方提供的图片名称数组
     NSMutableArray *searchResults;//搜索结果的数组
     UISearchBar *mySearchBar;//ui，仅仅是个ui
     UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+    BOOL NotFirstTimeLogin;//no为初次登录，yes则不是
 }
 
 @end
@@ -26,18 +33,6 @@
     [super viewDidLoad];
     _messageTableview.delegate = self;
     _messageTableview.dataSource = self;
-//    _messageTableview.frame = CGRectMake(0, 0, ViewWidth, ViewHeight-44-44);
-    
-//    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
-//    mySearchBar.delegate = self;
-//    [mySearchBar setPlaceholder:@"搜索列表"];
-    
-//    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
-//    searchDisplayController.active = NO;
-//    searchDisplayController.searchResultsDataSource = self;
-//    searchDisplayController.searchResultsDelegate = self;
-    
-//    _messageTableview.tableHeaderView = mySearchBar;
     
     
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
@@ -49,110 +44,253 @@
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
     //将搜索控制器的搜索条设置为页眉视图
     _messageTableview.tableHeaderView = searchViewController.searchBar;
+    _messageTableview.backgroundColor = grayBackgroundLightColor;
+    _messageTableview.tableFooterView = [[UIView alloc]init];
     
     searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
     titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
-    dataArray = [@[@"百度",@"六六",@"谷歌",@"苹果"]mutableCopy];
-    if (!searchResults) {
-        searchResults = dataArray;
+    titleImageNameArray = [@[@"groups",@"news"]mutableCopy];
+#warning 此处加入收到信息的dataarray
+    [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+    FriendDBItem *testItem = [[FriendDBItem alloc]init];
+    testItem.friendJID = testToJID;
+    testItem.friendName = @"小月卖屁股";
+    testItem.friendDescribe = @"永超卖屁股";
+    testItem.friendImageUrl = @"永超卖屁股";//头像url
+    testItem.friendAge = @"永超卖屁股";//
+    testItem.friendGender = @"永超卖屁股";//
+    testItem.friendOnlineOrNot = @"0";//
+    for (int i=0; i<5; i++) {
+        [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:testItem];
     }
     
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NotFirstTimeLogin = [defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
+    if (NotFirstTimeLogin) {
+//        NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,[defaults objectForKey:@"UserName"],[defaults objectForKey:@"Password"]];
+#warning 此处用于测试，正式版本应该是上面这段
+        NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,@"闪电侠",@"039877"];
+        NSLog(@"url===%@",url);
+        url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+        [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            NSLog(@"device activitation res=%d",res);
+            if (res == 0) {
+                //请求完成
+                NSLog(@"userJid === %@,web登录完成，开始xmpp登录",[defaults valueForKey:@"UserJID"]);
+#warning 此处为db测试用代码
+//                [[DBManager ShareInstance] creatDatabase:DBName];
+//                [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID]];
+                
+//                NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+//                //设定时间格式,这里可以设置成自己需要的格式
+//                [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss EEE"];//EEE为周几，EEEE为星期几
+//                NSString *currenttime  = [dateFormatter stringFromDate:[NSDate date]];
+                
+//                DBItem *testItem = [[DBItem alloc]init];
+//                testItem.messContent = @"33333";
+//                testItem.timeStamp = currenttime;
+//                testItem.personJID = testMineJID;
+//                testItem.sendPersonJID = testToJID;
+//                testItem.personNickName = @"永超喜欢打飞机";
+//                testItem.personImageUrl = @"http://img0.bdstatic.com/img/image/shouye/xinshouye/mingxing16.jpg";
+//                testItem.ReadOrNot = 1;
+//                testItem.FromMeOrNot = 0;
+//                testItem.messType = 0;
+//                testItem.chatType = 0;
+//                testItem.personJID = @"11111";
+                
+//                [[DBManager ShareInstance] SetNotReadToRead:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID]];
+//                for (int i=0; i<3; i++) {
+//                    [[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID] andchatobj:testItem];
+//                }
+                
+//                [[DBManager ShareInstance] deleteTable:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID]];
+//                FMResultSet *messNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID] ItemName:@"ReadOrNot" ItemValue:0];
+//                while ([messNumber next]) {
+//                    testItem.personNickName = [messNumber stringForColumn:@"ReadOrNot"];
+//                }
+                
+//                FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,testToJID] MessNumber:10 SearchKey:@"chatid" SearchMethodDescOrAsc:@"desc"];
+//                while ([messWithNumber next]) {
+//                    testItem.personNickName = [messWithNumber stringForColumn:@"messContent"];
+//                    NSLog(@"testItem.nickName === %@",testItem.personNickName);
+//                }
+#warning 正式版中xmpp连接应该用注释中的代码
+                if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",testMineJID/*[UserItem ShareInstance].userJID*/,httpServer]]) {
+//                    [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+                }
+            }
+            else{
+                
+            }
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"WEB端登录失败：%@",error);
+        }];
+    }
+//    NSString *urlu = [NSString stringWithFormat:@"http://api.augbase.com/yiserver/user/login"];
+//    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+//    NSDictionary *dict = @{ @"username":@"闪电侠", @"password":@"039877",@"clienttype":@"1",@"role":@"0"};
+//    [manager POST:urlu parameters:dict success:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//        NSLog(@"获取的最终结果：%@",source);
+//    }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        NSLog(@"WEB端登录失败：%@",error);
+//    }];
+    
+    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",testMineJID/*[UserItem ShareInstance].userJID*/,httpServer]]) {
+        
+    }
 }
 
-//#pragma 去掉statebar
-//- (BOOL)prefersStatusBarHidden {
-//    return YES;
-//}
+#pragma xmpp收到信息后触法的delegate,receieveMess为发送者的jid
+-(void)ReceiveMessArray:(NSString *)receiveMess{
+    NSLog(@"xmpp收到消息");
+    [[DBManager ShareInstance] creatDatabase:DBName];
+    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName, receiveMess]];
+    tableJidName = [[DBManager ShareInstance] getAllTableName];
+#warning 此处需要加入通过jid判断用户name的网络需求
+    dataArray = [NSMutableArray arrayWithCapacity:0];
+#warning 此处改用同步请求获取好友昵称，为测试用，以后删除，改为登录或者注册后第一次登录的时候录入数据库
+    if ([tableJidName count] >0) {
+        for (NSString *JID in tableJidName) {
+            NSString *url = [NSString stringWithFormat:@"%@user?jid=%@",Baseurl,JID];
+            NSLog(@"url===%@",url);
+            NSURL *urlWithUrl = [NSURL URLWithString:url];
+            //第二步，通过URL创建网络请求
+            NSURLRequest *request = [[NSURLRequest alloc]initWithURL:urlWithUrl cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:5];
+            //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+            //        其中缓存协议是个枚举类型包含：
+            //
+            //        NSURLRequestUseProtocolCachePolicy（基础策略）
+            //
+            //        NSURLRequestReloadIgnoringLocalCacheData（忽略本地缓存）
+            //
+            //        NSURLRequestReturnCacheDataElseLoad（首先使用缓存，如果没有本地缓存，才从原地址下载）
+            //
+            //        NSURLRequestReturnCacheDataDontLoad（使用本地缓存，从不下载，如果本地没有缓存，则请求失败，此策略多用于离线操作）
+            //
+            //        NSURLRequestReloadIgnoringLocalAndRemoteCacheData（无视任何缓存策略，无论是本地的还是远程的，总是从原地址重新下载）
+            //
+            //        NSURLRequestReloadRevalidatingCacheData（如果本地缓存是有效的则不下载，其他任何情况都从原地址重新下载）
+            //第三步，连接服务器
+            NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:received options:NSJSONReadingMutableLeaves error:nil];
+            NSString *str = [source objectForKey:@"nickname"];
+            NSLog(@"str====%@",str);
+            [dataArray addObject:str];
+        }
+    }
+    NSLog(@"数据源为：%@",dataArray);
+    searchResults = dataArray;
+#warning 此处应该加入收到的讯息存入数据库的功能
+    FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,receiveMess] ItemName:@"ReadOrNot" ItemValue:0];
+    NSInteger messNumer = 0;
+    while ([messWithNumber next]) {
+        messNumer++;
+    }
+    NSLog(@"messNumber===%ld",(long)messNumer);
+    if (receiveMess != nil) {
+        [((MessTableViewCell *)[_messageTableview viewWithTag:[receiveMess integerValue]]).timeText imageWithRedNumber:messNumer];
+    }
+    [_messageTableview reloadData];
+    
+    [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+    
+    [[XMPPSupportClass ShareInstance] setUpChatRoom:[NSString stringWithFormat: @"%@@%@.%@",@"998899",@"conference",httpServer]];
+    
+    DBItem *groupChat = [[DBItem alloc]init];
+    groupChat.messContent = receiveMess;
+//    [[XMPPSupportClass ShareInstance] xmppRoomSendMess:[NSString stringWithFormat: @"%@@%@.%@",@"998899",@"conference",httpServer] ChatMess:groupChat FromUser:testMineJID];
+}
+
 
 -(void)viewWillAppear:(BOOL)animated{
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"blue"] forBarPosition:UIBarPositionTopAttached barMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    [self.navigationController.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor],NSForegroundColorAttributeName,nil]];
     self.navigationController.navigationBarHidden = YES;
-//    self.navigationItem.title = @"test";
+    
+    UIImage* imageNormal = [UIImage imageNamed:@"message_off"];
+    UIImage* imageSelected = [UIImage imageNamed:@"message_on"];
+    self.tabBarItem.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    self.tabBarItem.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    self.tabBarController.tabBar.tintColor = themeColor;
+    
+    self.view.backgroundColor = grayBackgroundLightColor;
     [self initNavigationBar];
+    [[DBManager ShareInstance] creatDatabase:DBName];
+    tableJidName = [[DBManager ShareInstance] getAllTableName];
+    dataArray = [NSMutableArray arrayWithCapacity:0];
+#warning 此处改用同步请求获取好友昵称，为测试用，以后删除，改为登录或者注册后第一次登录的时候录入数据库,此处改为从数据库获取
+    if ([tableJidName count] >0) {
+        for (NSString *JID in tableJidName) {
+            NSString *url = [NSString stringWithFormat:@"%@user?jid=%@",Baseurl,JID];
+            NSLog(@"url===%@",url);
+            NSURL *urlWithUrl = [NSURL URLWithString:url];
+            //第二步，通过URL创建网络请求
+            NSURLRequest *request = [[NSURLRequest alloc]initWithURL:urlWithUrl cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:5];
+            //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+            //        其中缓存协议是个枚举类型包含：
+            //
+            //        NSURLRequestUseProtocolCachePolicy（基础策略）
+            //
+            //        NSURLRequestReloadIgnoringLocalCacheData（忽略本地缓存）
+            //
+            //        NSURLRequestReturnCacheDataElseLoad（首先使用缓存，如果没有本地缓存，才从原地址下载）
+            //
+            //        NSURLRequestReturnCacheDataDontLoad（使用本地缓存，从不下载，如果本地没有缓存，则请求失败，此策略多用于离线操作）
+            //
+            //        NSURLRequestReloadIgnoringLocalAndRemoteCacheData（无视任何缓存策略，无论是本地的还是远程的，总是从原地址重新下载）
+            //
+            //        NSURLRequestReloadRevalidatingCacheData（如果本地缓存是有效的则不下载，其他任何情况都从原地址重新下载）
+            //第三步，连接服务器
+            NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+            if (received != nil) {
+                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:received options:NSJSONReadingMutableLeaves error:nil];
+                NSString *str = [source objectForKey:@"nickname"];
+                NSLog(@"str====%@",str);
+                [dataArray addObject:str];
+            }else{
+                NSLog(@"无返回");
+            }
+        }
+    }
+    NSLog(@"数据源为：%@",dataArray);
+    searchResults = dataArray;
+
+    [_messageTableview reloadData];
+    [XMPPSupportClass ShareInstance].receiveMessDelegate = self;
 }
 
 #pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
 -(void)initNavigationBar{
-    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 22, ViewWidth, 44)];
+    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 66)];
 //    navigationBar.layer.borderWidth = 0.5;
 //    navigationBar.layer.borderColor = themeColor.CGColor;
     navigationBar.backgroundColor = themeColor;
-    
-//    //左侧头像按钮，点击打开用户相关选项
-//    UIButton *userButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-//    userButton.center = CGPointMake(20, 22);
-//    
-//    userButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-//    [userButton setImage:[UIImage imageNamed:@"test"] forState:UIControlStateNormal];
-//    
-//    [userButton addTarget:self action:@selector(openUser) forControlEvents:UIControlEventTouchUpInside];
-//    
-//    [navigationBar addSubview:userButton];
-    
     //title
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
-    titleLabel.center = CGPointMake(ViewWidth/2, 22);
+    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 22, 80, 30)];
+    titleLabel.center = CGPointMake(ViewWidth/2, 22+22);
     titleLabel.text = NSLocalizedString(@"消息", @"");
     titleLabel.textAlignment = NSTextAlignmentCenter;
+    titleLabel.textColor = [UIColor whiteColor];
     [navigationBar addSubview:titleLabel];
-    
-//    //去登陆界面
-//    UIButton *cameraButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-//    cameraButton.center = CGPointMake(ViewWidth-20, 22);
-//    
-//    cameraButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-//    [cameraButton setImage:[UIImage imageNamed:@"test"] forState:UIControlStateNormal];
-//    
-//    [cameraButton addTarget:self action:@selector(openCamera) forControlEvents:UIControlEventTouchUpInside];
-//    //    self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:cameraButton];
-//    [navigationBar addSubview:cameraButton];
-    
     [self.view addSubview:navigationBar];
 }
 
-#pragma 打开用户相关界面，左侧抽屉显示，view暂时未做
--(void)openUser{
-    NSLog(@"打开用户界面");
-//    if(!showUserView){
-//        POPSpringAnimation *popOutAnimation = [POPSpringAnimation animation];
-//        popOutAnimation.property = [POPAnimatableProperty propertyWithName:kPOPViewFrame];
-//        if (YES) {
-//            popOutAnimation.toValue = [NSValue valueWithCGRect:CGRectMake(0, 44, ViewWidth/2,ViewHeight-44)];
-//        }
-//
-//        popOutAnimation.velocity = [NSValue valueWithCGRect:userView.frame];
-//        popOutAnimation.springBounciness = 5.0;
-//        popOutAnimation.springSpeed = 8.0;
-//
-//        [userView pop_addAnimation:popOutAnimation forKey:@"slide"];
-//        showUserView = YES;
-//    }else{
-//        POPSpringAnimation *popOutAnimation = [POPSpringAnimation animation];
-//        popOutAnimation.property = [POPAnimatableProperty propertyWithName:kPOPViewFrame];
-//        if (YES) {
-//            popOutAnimation.toValue = [NSValue valueWithCGRect:CGRectMake(-ViewWidth/2, 44, ViewWidth/2,ViewHeight-44)];
-//        }
-//        
-//        popOutAnimation.velocity = [NSValue valueWithCGRect:userView.frame];
-//        popOutAnimation.springBounciness = 5.0;
-//        popOutAnimation.springSpeed = 8.0;
-//        
-//        [userView pop_addAnimation:popOutAnimation forKey:@"slide"];
-//        showUserView = NO;
-//    }
-}
-
-#pragma 打开cameraview拍摄化验单等,cameraview已写好
--(void)openCamera{
-    NSLog(@"打开拍照界面");
-}
-
--(void)viewWillDisappear:(BOOL)animated{
-    
-}
-
 #pragma searcheViewController的delegate
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController{
     //谓词检测
     NSPredicate *predicate = [NSPredicate predicateWithFormat:
                               @"self contains [cd] %@", searchController.searchBar.text];
@@ -183,8 +321,7 @@
     }
 }
 
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     return 70;
 }
 
@@ -197,31 +334,36 @@
         cell = [[MessTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
     }
     if (indexPath.section == 0) {
-        switch (indexPath.row) {
-            case 0:{
-                cell.iconImageView.image = [UIImage imageNamed:@"groups"];
-                cell.iconImageView.backgroundColor = themeColor;
-                cell.titleText.text = titleDataArray[indexPath.row];
-                cell.descriptionText.text = NSLocalizedString(@"小月你又打飞机", @"");//测试用，以后改为传来的讯息,以下同
-                cell.timeText.text = @"18:00";
-            }
-                break;
-            case 1:{
-                cell.iconImageView.image = [UIImage imageNamed:@"news"];
-                cell.iconImageView.backgroundColor = [UIColor yellowColor];
-                cell.titleText.text = NSLocalizedString(@"咨讯", @"");
-                cell.descriptionText.text = @"小月你又打飞机";
-                cell.timeText.text = @"18:00";
-            }
-            default:
-                break;
-        }
+        cell.iconImageView.image = [UIImage imageNamed:titleImageNameArray[indexPath.row]];
+        cell.iconImageView.backgroundColor = themeColor;
+        cell.titleText.text = titleDataArray[indexPath.row];
+        cell.descriptionText.text = NSLocalizedString(@"小月你又打飞机", @"");//测试用，以后改为传来的讯息,以下同
+        cell.timeText.text = @"18:00";
     }else{
+        FMResultSet *lastMessResult = [[DBManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+        NSString *lastMess;
+        NSString *lastTime;
+        while ([lastMessResult next]) {
+            lastMess = [lastMessResult stringForColumn:@"messContent"];
+            lastTime = [lastMessResult stringForColumn:@"timeStamp"];
+        }
         cell.iconImageView.image = [UIImage imageNamed:@"test"];
         cell.titleText.text = searchResults[indexPath.row];
-        cell.descriptionText.text = @"小月你又打飞机";
-        cell.timeText.text = @"18:00";
+        cell.descriptionText.text = lastMess;
+        
+        cell.timeText.text = lastTime;
+        cell.tag = [tableJidName[indexPath.row] integerValue];
+        NSLog(@"cell.tag === %ld",(long)[tableJidName[indexPath.row] integerValue]);
+        FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] ItemName:@"ReadOrNot" ItemValue:0];
+        NSInteger messNumer = 0;
+        while ([messWithNumber next]) {
+            messNumer++;
+        }
+        [cell.timeText imageWithRedNumber:messNumer];
     }
+#warning 设置分割线
+    tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    tableView.separatorInset = UIEdgeInsetsMake(0, 50, 0, 0);//上左下右,顺序
     return cell;
 }
 
@@ -230,6 +372,7 @@
     if (indexPath.section == 0&&indexPath.row == 0) {
         ChooseGroupViewController *cgv = [[ChooseGroupViewController alloc]init];
         [self.navigationController pushViewController:cgv animated:YES];
+#warning 测试用
     }else if(indexPath.section == 0&&indexPath.row == 1){
         HACollectionViewSmallLayout *smallLayout = [[HACollectionViewSmallLayout alloc] init];
         HASmallCollectionViewController *collectionViewController = [[HASmallCollectionViewController alloc] initWithCollectionViewLayout:smallLayout];
@@ -237,19 +380,18 @@
         self.transitionController = [[HATransitionController alloc] initWithCollectionView:collectionViewController.collectionView];
         self.transitionController.delegate = self;
         [self.navigationController pushViewController:collectionViewController animated:YES];
-        
     }else if(indexPath.section == 0&&indexPath.row == 2){
         
     }else{
         RootViewController *rtv = [[RootViewController alloc]init];
         rtv.privateOrNot = 0;//私聊
-        
+        rtv.personJID = [NSString stringWithFormat:@"%ld",[_messageTableview cellForRowAtIndexPath:indexPath].tag];
         [self.navigationController pushViewController:rtv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-#pragma mark ---deit delete---
+#pragma mark ---edit delete---
 //// 让 UITableView 和 UIViewController 变成可编辑状态
 //- (void)setEditing:(BOOL)editing animated:(BOOL)animated
 //{
@@ -260,6 +402,9 @@
 
 //  指定哪一行可以编辑 哪行不能编辑
 - (BOOL) tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (indexPath.section == 0) {
+        return NO;
+    }
     return YES;
 }
 
@@ -280,14 +425,56 @@
         [_messageTableview beginUpdates];
         NSArray *indexPaths = @[indexPath]; // 构建 索引处的行数 的数组
         // 删除 索引的方法 后面是动画样式
-//        [testArrayDatasource removeObjectAtIndex:indexPath.row];
         [_messageTableview deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
+        [dataArray removeObjectAtIndex:indexPath.row];
+#warning 此处加入删除消息的数据库操作
+        [[DBManager ShareInstance] creatDatabase:DBName];
+        [[DBManager ShareInstance] deleteTable:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]]];
+         
+        tableJidName = [[DBManager ShareInstance] getAllTableName];
+        NSLog(@"talbeName == %@",tableJidName);
+#warning 此处需要加入通过jid判断用户name的网络需求
+        dataArray = [NSMutableArray arrayWithCapacity:0];
+#warning 此处改用同步请求获取好友昵称，为测试用，以后删除，改为登录或者注册后第一次登录的时候录入数据库
+        if ([tableJidName count] >0) {
+            for (NSString *JID in tableJidName) {
+                NSString *url = [NSString stringWithFormat:@"%@user?jid=%@",Baseurl,JID];
+                NSLog(@"url===%@",url);
+                NSURL *urlWithUrl = [NSURL URLWithString:url];
+                //第二步，通过URL创建网络请求
+                NSURLRequest *request = [[NSURLRequest alloc]initWithURL:urlWithUrl cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:5];
+                //NSURLRequest初始化方法第一个参数：请求访问路径，第二个参数：缓存协议，第三个参数：网络请求超时时间（秒）
+                //        其中缓存协议是个枚举类型包含：
+                //
+                //        NSURLRequestUseProtocolCachePolicy（基础策略）
+                //
+                //        NSURLRequestReloadIgnoringLocalCacheData（忽略本地缓存）
+                //
+                //        NSURLRequestReturnCacheDataElseLoad（首先使用缓存，如果没有本地缓存，才从原地址下载）
+                //
+                //        NSURLRequestReturnCacheDataDontLoad（使用本地缓存，从不下载，如果本地没有缓存，则请求失败，此策略多用于离线操作）
+                //
+                //        NSURLRequestReloadIgnoringLocalAndRemoteCacheData（无视任何缓存策略，无论是本地的还是远程的，总是从原地址重新下载）
+                //
+                //        NSURLRequestReloadRevalidatingCacheData（如果本地缓存是有效的则不下载，其他任何情况都从原地址重新下载）
+                //第三步，连接服务器
+                NSData *received = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:received options:NSJSONReadingMutableLeaves error:nil];
+                NSString *str = [source objectForKey:@"nickname"];
+                NSLog(@"str====%@",str);
+                [dataArray addObject:str];
+            }
+        }
+        NSLog(@"数据源为：%@",dataArray);
+#warning 此处需要加入通过jid判断用户name的网络需求
+        //    dataArray = [[NSMutableArray alloc]initWithArray:tableJidName];
+        searchResults = dataArray;
+        
         [_messageTableview  endUpdates];
     }
     
     // 添加的操作
     if (editingStyle == UITableViewCellEditingStyleInsert) {
-        
         NSArray *indexPaths = @[indexPath];
         [_messageTableview insertRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationRight)];
         
@@ -300,70 +487,20 @@
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
-}
-
-
-#pragma searchbar delegate
-- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
-    [self doSearch:searchBar];
-}
-
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
-    [searchBar resignFirstResponder];
-    [self doSearch:searchBar];
-}
-
-
-- (void)doSearch:(UISearchBar *)searchBar{
-    NSLog(@"搜索开始");
-}
-
-
-
-#pragma UISearchDisplayDelegate
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    searchResults = [[NSMutableArray alloc]init];
-    if (mySearchBar.text.length>0&&![ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-        for (int i=0; i<dataArray.count; i++) {
-            if ([ChineseInclude isIncludeChineseInString:dataArray[i]]) {
-                NSString *tempPinYinStr = [PinYinForObjc chineseConvertToPinYin:dataArray[i]];
-                NSRange titleResult=[tempPinYinStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-                NSString *tempPinYinHeadStr = [PinYinForObjc chineseConvertToPinYinHead:dataArray[i]];
-                NSRange titleHeadResult=[tempPinYinHeadStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleHeadResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-            }
-            else {
-                NSRange titleResult=[dataArray[i] rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-            }
-        }
-    } else if (mySearchBar.text.length>0&&[ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-        for (NSString *tempStr in dataArray) {
-            NSRange titleResult=[tempStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-            if (titleResult.length>0) {
-                [searchResults addObject:tempStr];
-            }
-        }
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
+    if (section == 0) {
+        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+//        headerView.backgroundColor = themeColor;
+        return headerView;
+    }else{
+        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+        return headerView;
     }
 }
+
+//-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
+//    return nil;
+//}
 
 #pragma 加cell进入动画
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -432,4 +569,8 @@
     [self.view endEditing:YES];
 }
 
+-(void)viewWillDisappear:(BOOL)animated{
+    [[DBManager ShareInstance] closeDB];
+    [[FriendDBManager ShareInstance] closeDB];
+}
 @end

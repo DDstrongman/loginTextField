@@ -20,14 +20,13 @@
 #import "HACollectionViewSmallLayout.h"
 #import "HASmallCollectionViewController.h"
 
+#import "XMPPSupportClass.h"
+#import "HttpSupportClass.h"
 
-@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate>
+@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate,ReceiveMessDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *messageTableview;
 
-
 @property (nonatomic) HATransitionController *transitionController;
-
-//@property (nonatomic,strong) IBOutlet UISearchBar *searchBar;
 
 @end

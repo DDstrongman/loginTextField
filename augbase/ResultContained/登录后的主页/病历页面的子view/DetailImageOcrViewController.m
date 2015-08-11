@@ -30,8 +30,6 @@
     //    [_leftButton addTarget:self action:@selector(leftPop) forControlEvents:UIControlEventTouchUpInside];
     //    [self.navigationItem setLeftBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:_leftButton]];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:_rightButton]];
-    [self.navigationController.navigationBar setBarTintColor:[UIColor blackColor]];
-    [self.navigationController.navigationBar setTintColor:[UIColor whiteColor]];
     _showImageView.image = _showImage;
 }
 

@@ -7,6 +7,7 @@
 //
 
 #import "LoginAndRegistViewController.h"
+#import "XMPPSupportClass.h"
 
 @interface LoginAndRegistViewController ()
 
@@ -26,13 +27,38 @@
     [loginButton setTitleColor:themeColor forState:UIControlStateNormal];
     [loginButton addTarget:self action:@selector(loginView) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setLeftBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:loginButton]];
+#warning 调整向上距离用的参数
+    int spaceRoom = 40;
     
-    _phoneNumberView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 134, ViewWidth-120+12, 50)];
+    _phoneNumberView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 134-spaceRoom, ViewWidth-120+12, 50)];
     _phoneNumberView.contentTextField.placeholder = NSLocalizedString(@"请输入手机号码（11位）", @"");
     _phoneNumberView.contentTextField.keyboardType = UIKeyboardTypeNumberPad;
 //    _phoneNumberView.contentTextField.textAlignment = NSTextAlignmentCenter;
     [_phoneNumberView.contentTextField addTarget:self action:@selector(confirmPhonenumber) forControlEvents:UIControlEventEditingChanged];
     [self.view addSubview:_phoneNumberView];
+    
+    _confirmNumberView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 189-spaceRoom, ViewWidth-120+12-80, 50)];
+    _confirmNumberView.contentTextField.placeholder = NSLocalizedString(@"验证码（4位）", @"");
+    _confirmNumberView.contentTextField.keyboardType = UIKeyboardTypeASCIICapable;
+//    _confirmNumberView.contentTextField.font = [UIFont systemFontOfSize:12.0];
+    //    _phoneNumberView.contentTextField.textAlignment = NSTextAlignmentCenter;
+    [_confirmNumberView.contentTextField addTarget:self action:@selector(confirmPhonenumber) forControlEvents:UIControlEventEditingChanged];
+    [self.view addSubview:_confirmNumberView];
+    
+    _numberButton = [[UIButton alloc]initWithFrame:CGRectMake(48+ViewWidth-120+12-80+5, 210-spaceRoom, 75, 30)];
+    _numberButton.backgroundColor = themeColor;
+    NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
+    NSURLRequest *re=[NSURLRequest requestWithURL:[NSURL URLWithString:strURL]];
+    NSOperationQueue *op=[[NSOperationQueue alloc] init];
+    [NSURLConnection sendAsynchronousRequest:re queue:op completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        dispatch_async(dispatch_get_main_queue(),^{
+            UIImage *img=[UIImage imageWithData:data];
+            [_numberButton setBackgroundImage:img forState:UIControlStateNormal];
+        });
+    }];
+    [_numberButton viewWithRadis:10.0];
+    [_numberButton addTarget:self action:@selector(changeConfirmNumber:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:_numberButton];
     
     
     _sendMessButton = [[UIButton alloc]init];
@@ -42,9 +68,11 @@
     [_sendMessButton.layer setCornerRadius:10.0];
     [self.view addSubview:_sendMessButton];
     
+    
     //autolayout
-    [_sendMessButton mas_makeConstraints:^(MASConstraintMaker *make) {        make.height.equalTo(@50);
-        make.top.equalTo(_phoneNumberView.mas_bottom).with.offset(20);
+    [_sendMessButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.height.equalTo(@50);
+        make.top.equalTo(_confirmNumberView.mas_bottom).with.offset(20);
         make.right.equalTo(@-60);
         make.left.equalTo(@60);
     }];
@@ -52,6 +80,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
+    self.title = NSLocalizedString(@"注册", @"");
     _sendMessButton.backgroundColor = grayBackColor;
     [_phoneNumberView.contentTextField becomeFirstResponder];
     if ([self isValidateMobile:_phoneNumberView.contentTextField.text]) {
@@ -75,7 +104,7 @@
 
 
 -(void)confirmPhonenumber{
-    if ([self isValidateMobile:_phoneNumberView.contentTextField.text]) {
+    if ([self isValidateMobile:_phoneNumberView.contentTextField.text]&&_confirmNumberView.contentTextField.text.length>3) {
         NSLog(@"手机号码通过验证");
         _sendMessButton.userInteractionEnabled = YES;
         _sendMessButton.backgroundColor = themeColor;
@@ -87,9 +116,46 @@
     }
 }
 
+-(void)changeConfirmNumber:(UIButton *)sender{
+    NSLog(@"改变验证图");
+    NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
+    NSURLRequest *re=[NSURLRequest requestWithURL:[NSURL URLWithString:strURL]];
+    NSOperationQueue *op=[[NSOperationQueue alloc] init];
+    [NSURLConnection sendAsynchronousRequest:re queue:op completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        dispatch_async(dispatch_get_main_queue(),^{
+            UIImage *img=[UIImage imageWithData:data];
+            [sender setBackgroundImage:img forState:UIControlStateNormal];
+        });
+    }];
+}
+
 #pragma 输入手机号后获取验证码，需要加入判断手机号是否注册的网络交互事件
 -(void)RegistNumberView{
-    NSLog(@"获取验证码，手机号需要网络验证");
+#warning 加入获取验证码的手机交互
+//    NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,_phoneNumberView.contentTextField.text,_confirmNumberView.contentTextField.text];
+//    NSLog(@"url===%@",url);
+//    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+//    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+//    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//        NSLog(@"reponson===%@",source);
+//        int res=[[source objectForKey:@"res"] intValue];
+//        NSLog(@"res===%d",res);
+//        if (res == 0) {
+//            //请求完成
+//            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//            RegistNumberViewController *rgv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
+//            rgv.phoneNumber = _phoneNumberView.contentTextField.text;
+//            [self.navigationController pushViewController:rgv animated:YES];
+//        }
+//        else{
+//            
+//        }
+//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        NSLog(@"WEB端登录失败");
+//    }];
+#warning  正式版本中使用上方的代码
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     RegistNumberViewController *rgv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
     rgv.phoneNumber = _phoneNumberView.contentTextField.text;
@@ -126,11 +192,6 @@ BOOL validateCarNo(NSString* carNo)
 #pragma 取消输入操作
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
     [self.view endEditing:YES];
-}
-
-#pragma 内存警告，无卵用
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
 }
 
 

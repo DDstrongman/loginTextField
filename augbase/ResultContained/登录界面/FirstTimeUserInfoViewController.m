@@ -8,7 +8,11 @@
 
 #import "FirstTimeUserInfoViewController.h"
 
-@interface FirstTimeUserInfoViewController ()
+#import "XMPPSupportClass.h"
+#import "UserItem.h"
+#import "AppDelegate.h"
+
+@interface FirstTimeUserInfoViewController ()<ConnectXMPPDelegate>
 {
     BOOL _animatedOrNot;
 }
@@ -22,6 +26,7 @@
     
     self.navigationItem.title = NSLocalizedString(@"个人信息", @"");
     [_userImageView setImage:[UIImage imageNamed:@"default_avatar"]];
+    [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
     
     _nameView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 250, ViewWidth-120+12, 50)];
     _nameView.contentTextField.placeholder = NSLocalizedString(@"昵称", @"");
@@ -87,6 +92,51 @@
 
 -(void)finishRegist{
     NSLog(@"注册完成，添加响应函数");
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:_userName forKey:@"userName"];
+    [defaults setObject:_userPass forKey:@"userPassword"];
+    [defaults setObject:@YES forKey:@"NotFirstTime"];
+    [defaults setObject:_nameView.contentTextField.text forKey:@"userNickName"];
+    NSString *sexAndAge = _sexAndAgeView.contentTextField.text;
+    NSArray *array = [sexAndAge componentsSeparatedByString:@"／"];
+    NSLog(@"分割后的字符为：%@",array);
+    [defaults setObject:array[0] forKey:@"userGender"];
+    [defaults setObject:array[1] forKey:@"userAge"];
+    //    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,[defaults objectForKey:@"UserName"],[defaults objectForKey:@"Password"]];
+#warning 正式版本中使用上方的代码
+    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,@"azaz",@"123123"];
+    NSLog(@"url === %@",url);
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+       
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"WEB端登录失败");
+    }];
+#warning 此处是测试时候用的代码，正式上线需要将一部分代码转移到上面去
+    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",testMineJID,httpServer]]) {
+        
+    }
+}
+
+#pragma xmpp登录结果的delegate
+-(void)ConnectXMPPResult:(BOOL)result{
+    NSLog(@"xmpp登录结果");
+    if (result) {
+        
+//        [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+        
+        UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
+        AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
+        
+        appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:tabbarController];
+    }else{
+        NSLog(@"XMPP服务器登陆失败");
+        UIAlertView *xmppFailedAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"聊天服务器登陆失败", @"") message:NSLocalizedString(@"聊天服务器登陆失败,请联系管理员", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+        [xmppFailedAlert show];
+    }
 }
 
 #pragma mark ZhpickVIewDelegate
