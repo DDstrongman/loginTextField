@@ -10,7 +10,6 @@
 #import "UUInputFunctionView.h"
 #import "MJRefresh.h"
 #import "UUMessageCell.h"
-#import "ChatModel.h"
 #import "UUMessageFrame.h"
 #import "UUMessage.h"
 
@@ -26,11 +25,12 @@
 
 @implementation RootViewController{
     UUInputFunctionView *IFView;
-    UISegmentedControl *titleSegment;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    NSLog(@"通讯好友的jid====%@",_personJID);
+    
     [self initBar];
     [self addRefreshViews];
     [self loadBaseViewsAndData];
@@ -49,7 +49,6 @@
     [XMPPSupportClass ShareInstance].receiveMessDelegate = self;
     self.navigationController.navigationBarHidden = NO;
     _chatModel.isGroupChat = _privateOrNot;
-    titleSegment.selectedSegmentIndex = _privateOrNot;
     if (_privateOrNot == 1) {
         UIButton *groupDetailButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
         [groupDetailButton setBackgroundImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
@@ -63,20 +62,17 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    
     //add notification
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(keyboardChange:) name:UIKeyboardWillShowNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(keyboardChange:) name:UIKeyboardWillHideNotification object:nil];
     [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(tableViewScrollToBottom) name:UIKeyboardDidShowNotification object:nil];
-    
-//    [[NSNotificationCenter defaultCenter]addObserver:self selector:@selector(receiveNewMess) name:ReceiveNewMess object:nil];
 }
 
--(void)ReceiveMessArray:(NSString *)receiveJID{
+-(void)ReceiveMessArray:(NSString *)receiveJID ChatItem:chatItem{
     NSLog(@"接收到通知");
 #warning 此处需要加入从数据库获取数据
     [self.chatModel.dataSource removeAllObjects];
-    [self.chatModel addCellFromDB:receiveJID];
+    [self.chatModel addCellFromDB:_personJID];
     [self.chatTableView reloadData];
     [self tableViewScrollToBottom];
     [[DBManager ShareInstance] creatDatabase:DBName];
@@ -98,24 +94,12 @@
     [self.navigationController pushViewController:gdv animated:YES];
 }
 
-- (void)initBar
-{
-    titleSegment = [[UISegmentedControl alloc]initWithItems:@[@" private ",@" group "]];
-    [titleSegment addTarget:self action:@selector(segmentChanged:) forControlEvents:UIControlEventValueChanged];
-    titleSegment.selectedSegmentIndex = 0;
-    self.navigationItem.titleView = titleSegment;
-    
-//    self.navigationController.navigationBar.tintColor = [UIColor orangeColor];
-//    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemOrganize target:nil action:nil];
-//    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:nil];
-}
-- (void)segmentChanged:(UISegmentedControl *)segment
-{
-#warning 此处需要加入从数据库获取数据
-    self.chatModel.isGroupChat = segment.selectedSegmentIndex;
-    [self.chatModel.dataSource removeAllObjects];
-    
-    [self.chatTableView reloadData];
+- (void)initBar{
+    if(_privateOrNot == 0){
+        self.title = NSLocalizedString(@"私聊", @"");
+    }else{
+        self.title = NSLocalizedString(@"群聊", @"");
+    }
 }
 
 - (void)addRefreshViews
@@ -147,13 +131,13 @@
 - (void)loadBaseViewsAndData
 {
     self.chatModel = [[ChatModel alloc]init];
+    _chatModel.flushTableDelegate = self;
     self.chatModel.isGroupChat = NO;
     //    [self.chatModel populateRandomDataSource:_MessTableArray];
 #warning 此处需要加入从数据库获取数据
-    [self.chatModel addCellFromDB:testMineJID];
+    [self.chatModel addCellFromDB:_personJID];
     
     IFView = [[UUInputFunctionView alloc]initWithSuperVC:self];
-//    IFView.center = CGPointMake(ViewWidth/2, ViewHeight/2);
     IFView.delegate = self;
     [self.view addSubview:IFView];
     
@@ -237,7 +221,8 @@
         MessNumber = 0;
     }else if ([messType isEqualToNumber:[NSNumber numberWithInt:1]]){
         MessNumber = 1;
-    }else if ([messType isEqualToNumber:[NSNumber numberWithInt:2]]){        MessNumber = 2;
+    }else if ([messType isEqualToNumber:[NSNumber numberWithInt:2]]){
+        MessNumber = 2;
     }
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     //设定时间格式,这里可以设置成自己需要的格式
@@ -249,12 +234,23 @@
     chatDBItem.messContent = messContent;
     NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
     NSString *userJID = [userDefault objectForKey:@"userJID"];
-#warning 正式版本中testMineJID应该用上方的userJID
-    chatDBItem.personJID = testMineJID;
+    chatDBItem.personJID = userJID;
     chatDBItem.sendPersonJID = _personJID;
-    chatDBItem.personNickName = @"永超爱打飞机";
-    chatDBItem.personImageUrl = @"http://img0.bdstatic.com/img/image/shouye/xinshouye/mingxing16.jpg";
+    if ([[userDefault objectForKey:@"userNickName"] isEqualToString:@""]) {
+        chatDBItem.personNickName = defaultUserName;
+    }else{
+        chatDBItem.personNickName = [userDefault objectForKey:@"userNickName"];
+    }
+
+    chatDBItem.personImageUrl = [NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName];
     chatDBItem.messType = MessNumber;
+    if (MessNumber == 1) {
+        chatDBItem.messPic = [dic objectForKey:@"picture"];
+    }else{
+        chatDBItem.messVoice = [dic objectForKey:@"voice"];
+        chatDBItem.messVoiceTime = [dic objectForKey:@"strVoiceTime"];
+    }
+    
     chatDBItem.chatType = 0;//私聊
     chatDBItem.timeStamp = currenttime;
     
@@ -262,10 +258,14 @@
     chatDBItem.ReadOrNot = 1;
     
     
-    if ([[XMPPSupportClass ShareInstance] sendMess:chatDBItem toUserJID:_personJID FromUserJID:testMineJID]) {
-#warning 正式版本中testMineJID应该用上方的userJID
-        [self.chatModel addCellFromDB:testMineJID];
+    if ([[XMPPSupportClass ShareInstance] sendMess:chatDBItem toUserJID:_personJID FromUserJID:userJID]) {
+        [self.chatModel addCellFromDB:_personJID];
         [self.chatTableView reloadData];
+//        [self.chatTableView beginUpdates];
+//        NSMutableArray *path = [NSMutableArray array];
+//        [path addObject:[NSIndexPath indexPathForRow:self.chatModel.dataSource.count-1 inSection:0]];
+//        [self.chatTableView insertRowsAtIndexPaths:path withRowAnimation:(UITableViewRowAnimationRight)];
+//        [self.chatTableView endUpdates];
         [self tableViewScrollToBottom];
     }
 }
@@ -321,4 +321,12 @@
 -(void)cellContentDidClick:(UUMessageCell *)cell image:(UIImage *)contentImage{
     
 }
+
+#pragma 接收完图片或者语音后刷新界面
+-(void)FlushTable:(BOOL)result{
+    if (result) {
+        [_chatTableView reloadData];
+    }
+}
+
 @end

@@ -37,49 +37,58 @@
     _contactsTableview.delegate = self;
     _contactsTableview.dataSource = self;
     
-    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
-    mySearchBar.delegate = self;
-    [mySearchBar setPlaceholder:@"搜索列表"];
-    
-//    searchDisplayController = [[UISearchDisplayController alloc]initWithSearchBar:mySearchBar contentsController:self];
-//    searchDisplayController.active = NO;
-//    searchDisplayController.searchResultsDataSource = self;
-//    searchDisplayController.searchResultsDelegate = self;
-    
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
-    searchViewController.dimsBackgroundDuringPresentation = NO;
-    searchViewController.hidesNavigationBarDuringPresentation = NO;
+    searchViewController.dimsBackgroundDuringPresentation = YES;
+    searchViewController.hidesNavigationBarDuringPresentation = YES;
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
     //将搜索控制器的搜索条设置为页眉视图
     _contactsTableview.tableHeaderView = searchViewController.searchBar;
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
+    searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
+    searchViewController.searchBar.layer.borderWidth = 0.5;
+    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
+    for (UIView *sb in [[searchViewController.searchBar subviews][0] subviews]) {
+        if ([sb isKindOfClass:[UITextField class]]) {
+            sb.layer.borderColor = themeColor.CGColor;
+            sb.layer.borderWidth = 0.5;
+            [sb viewWithRadis:10.0];
+        }
+    }
 //    @"咨询",@"群组",@"等待验证好友",
-    titleDataArray = [@[NSLocalizedString(@"咨询", @""),NSLocalizedString(@"群组", @""),NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
-    titleImageNameArray = [@[@"news",@"groups",@"add"]mutableCopy];
-//    [_contactsTableview mas_makeConstraints:^(MASConstraintMaker *make) {
-////        make.top.equalTo(_navigationBar.mas_bottom).with.offset(0);
-//        make.top.equalTo(@66);
-//        make.bottom.equalTo(@-44);
-//        make.left.equalTo(@0);
-//        make.right.equalTo(@0);
-//    }];
+    titleDataArray = [@[NSLocalizedString(@"群组", @""),NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
+    titleImageNameArray = [@[@"groups",@"verify_friend"]mutableCopy];
+    
+    _contactsTableview.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    _contactsTableview.separatorColor = lightGrayBackColor;
+    _contactsTableview.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
+    _contactsTableview.backgroundColor = grayBackgroundLightColor;
+    self.view.backgroundColor = grayBackgroundLightColor;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.navigationController.navigationBarHidden = YES;
-    [self initNavigationBar];
+    self.navigationController.navigationBarHidden = NO;
+    
+    self.tabBarController.title = NSLocalizedString(@"联系人", @"");
+    UIButton *sendMessButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 15, 15)];
+    [sendMessButton setBackgroundImage:[UIImage imageNamed:@"add"] forState:UIControlStateNormal];
+    sendMessButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [sendMessButton addTarget:self action:@selector(addFriend) forControlEvents:UIControlEventTouchUpInside];
+    [self.tabBarController.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendMessButton]];
     
     UIImage* imageNormal = [UIImage imageNamed:@"contacts_off"];
     UIImage* imageSelected = [UIImage imageNamed:@"contacts_on"];
     self.tabBarItem.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
     self.tabBarItem.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-    
-#warning 获取数据库中好友列表
+}
+
+-(void)viewDidAppear:(BOOL)animated{
     [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+    
     NSMutableArray *tableFrindName = [NSMutableArray arrayWithCapacity:0];
     NSMutableArray *tableFrindDescribe = [NSMutableArray arrayWithCapacity:0];
     NSMutableArray *tableFrindJID = [NSMutableArray arrayWithCapacity:0];
@@ -89,7 +98,11 @@
 #warning 此处需要加入通过jid判断用户name的网络需求
     while ([friendList next]) {
         [tableFrindDescribe addObject:[friendList stringForColumn:@"friendDescribe"]];
-        [tableFrindName addObject:[friendList stringForColumn:@"friendName"]];
+        if ([[friendList stringForColumn:@"friendName"] isEqualToString:@""]) {
+            [tableFrindName addObject:defaultUserName];
+        }else{
+            [tableFrindName addObject:[friendList stringForColumn:@"friendName"]];
+        }
         [tableFrindJID addObject:[friendList stringForColumn:@"friendJID"]];
     }
     
@@ -98,31 +111,6 @@
     dataJID = [[NSMutableArray alloc]initWithArray:tableFrindJID];
     searchResults = dataArray;
     [_contactsTableview reloadData];
-//    [self initNavigationBar];
-}
-
-#pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
--(void)initNavigationBar{
-    _navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 66)];
-    _navigationBar.backgroundColor = themeColor;
-    //title
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 22, 80, 30)];
-    titleLabel.center = CGPointMake(ViewWidth/2, 22+22);
-    titleLabel.text = NSLocalizedString(@"发现", @"");
-    titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    [_navigationBar addSubview:titleLabel];
-    
-    //去登陆界面
-    UIButton *addFriendButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 30, 30)];
-    addFriendButton.center = CGPointMake(ViewWidth-20, 22+22);
-    
-    addFriendButton.titleLabel.font = [UIFont boldSystemFontOfSize:22];
-    [addFriendButton setImage:[UIImage imageNamed:@"add"] forState:UIControlStateNormal];
-    
-    [addFriendButton addTarget:self action:@selector(addFriend) forControlEvents:UIControlEventTouchUpInside];
-    [_navigationBar addSubview:addFriendButton];
-    [self.view addSubview:_navigationBar];
 }
 
 #pragma 添加朋友的功能需要实现
@@ -164,9 +152,8 @@
     }
 }
 
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return 70;
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    return 45;
 }
 
 
@@ -182,25 +169,23 @@
     if (indexPath.section == 0) {
         ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
     }else{
+        FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:dataJID[indexPath.row]];
+        while ([messPicPath next]) {
+            NSString *picPath = [messPicPath stringForColumn:@"friendImageUrl"];
+            ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:picPath];
+        }
         ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
         ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[indexPath.row];
     }
     return cell;
 }
-
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 0) {
-        if (indexPath.row == 0) {
-            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-            ContactNewsViewController *cnv = [main instantiateViewControllerWithIdentifier:@"contactnews"];
-            [self.navigationController pushViewController:cnv animated:YES];
-//            ContactNewsViewController *cnv = [[ContactNewsViewController alloc]init];
-//            [self.navigationController pushViewController:cnv animated:YES];
-        }else if (indexPath.row == 1){
+        if (indexPath.row == 0){
             UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
             ContactGroupViewController *cgv = [main instantiateViewControllerWithIdentifier:@"contantgroup"];
             [self.navigationController pushViewController:cgv animated:YES];
@@ -216,60 +201,6 @@
         [self.navigationController pushViewController:cpdv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma searchbar delegate
-- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
-    [self doSearch:searchBar];
-}
-
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
-    [searchBar resignFirstResponder];
-    [self doSearch:searchBar];
-}
-
--(void)searchBartextDidChange:(UISearchBar *)searchBar{
-    
-}
-
-
-- (void)doSearch:(UISearchBar *)searchBar{
-    NSLog(@"搜索开始");
-}
-
-#pragma UISearchDisplayDelegate
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    searchResults = [[NSMutableArray alloc]init];
-    if (mySearchBar.text.length>0&&![ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-        for (int i=0; i<dataArray.count; i++) {
-            if ([ChineseInclude isIncludeChineseInString:dataArray[i]]) {
-                NSString *tempPinYinStr = [PinYinForObjc chineseConvertToPinYin:dataArray[i]];
-                NSRange titleResult=[tempPinYinStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-                NSString *tempPinYinHeadStr = [PinYinForObjc chineseConvertToPinYinHead:dataArray[i]];
-                NSRange titleHeadResult=[tempPinYinHeadStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleHeadResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-            }
-            else {
-                NSRange titleResult=[dataArray[i] rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-                if (titleResult.length>0) {
-                    [searchResults addObject:dataArray[i]];
-                }
-            }
-        }
-    } else if (mySearchBar.text.length>0&&[ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-        for (NSString *tempStr in dataArray) {
-            NSRange titleResult=[tempStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-            if (titleResult.length>0) {
-                [searchResults addObject:tempStr];
-            }
-        }
-    }
 }
 
 #pragma cell滑入的动画效果
@@ -292,7 +223,11 @@
 //}
 
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
+    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+    headerView.backgroundColor = grayBackgroundLightColor;
+    headerView.layer.borderColor = lightGrayBackColor.CGColor;
+    headerView.layer.borderWidth = 0.5;
+    return headerView;
 }
 
 #pragma 滑动scrollview取消输入
@@ -303,6 +238,10 @@
 #pragma 取消输入操作
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
     [self.view endEditing:YES];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [self.tabBarController.navigationItem setRightBarButtonItem:nil];
 }
 
 @end

@@ -7,6 +7,7 @@
 //
 
 #import "ContactGroupViewController.h"
+#import "SetupView.h"
 
 @interface ContactGroupViewController ()
 
@@ -33,8 +34,11 @@
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    searchViewController.delegate = self;
     //将搜索控制器的搜索条设置为页眉视图
     _contactGroupTable.tableHeaderView = searchViewController.searchBar;
+    
+    [[SetupView ShareInstance]setupSearchbar:searchViewController];
     
     searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
     dataArray = [@[@"上海大三阳战友群",@"上海大三阳战友群",@"上海大三阳战友群"]mutableCopy];

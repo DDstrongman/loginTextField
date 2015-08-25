@@ -37,12 +37,23 @@
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    searchViewController.delegate = self; //协议(UISearchResultsUpdating)
     //将搜索控制器的搜索条设置为页眉视图
     _groupTable.tableHeaderView = searchViewController.searchBar;
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
+    searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
+    searchViewController.searchBar.layer.borderWidth = 0.5;
+    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
+    for (UIView *sb in [[searchViewController.searchBar subviews][0] subviews]) {
+        if ([sb isKindOfClass:[UITextField class]]) {
+            sb.layer.borderColor = themeColor.CGColor;
+            sb.layer.borderWidth = 0.5;
+            [sb viewWithRadis:10.0];
+        }
+    }
 #warning 此处的array需要网络获取
-//    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
     dataArray = [@[@"小月",@"娄sir",@"老王",@"红包"]mutableCopy];
     if (!searchResults) {
         searchResults = dataArray;
@@ -60,11 +71,12 @@
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"群助手", @"");
     [self.navigationController.navigationBar setBarTintColor:[UIColor whiteColor]];
+//    [[UINavigationBar appearance] setBackIndicatorImage:[UIImage imageNamed:@"back"]];
+//    [[UINavigationBar appearance] setBackIndicatorTransitionMaskImage:[UIImage imageNamed:@"back"]];
 }
 
 #pragma searcheViewController的delegate
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController{
     //谓词检测
     NSPredicate *predicate = [NSPredicate predicateWithFormat:
                               @"self contains [cd] %@", searchController.searchBar.text];
@@ -102,7 +114,7 @@
     if (cell == nil) {
         cell = [[MessTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
     }
-    cell.iconImageView.image = [UIImage imageNamed:@"test"];
+    cell.iconImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%ld",@"persontitle",(indexPath.row+1)]];
     cell.titleText.text = dataArray[indexPath.row];
     cell.descriptionText.text = @"小月你又打飞机";
     cell.timeText.text = @"18:00";
@@ -180,59 +192,19 @@
     return nil;
 }
 
-
 #pragma searchbar delegate
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
     [self doSearch:searchBar];
 }
-
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
     [searchBar resignFirstResponder];
     [self doSearch:searchBar];
 }
 
-
 - (void)doSearch:(UISearchBar *)searchBar{
     NSLog(@"搜索开始");
 }
-
-
-
-//#pragma UISearchDisplayDelegate
-//
-//- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-//    searchResults = [[NSMutableArray alloc]init];
-//    if (mySearchBar.text.length>0&&![ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-//        for (int i=0; i<dataArray.count; i++) {
-//            if ([ChineseInclude isIncludeChineseInString:dataArray[i]]) {
-//                NSString *tempPinYinStr = [PinYinForObjc chineseConvertToPinYin:dataArray[i]];
-//                NSRange titleResult=[tempPinYinStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-//                if (titleResult.length>0) {
-//                    [searchResults addObject:dataArray[i]];
-//                }
-//                NSString *tempPinYinHeadStr = [PinYinForObjc chineseConvertToPinYinHead:dataArray[i]];
-//                NSRange titleHeadResult=[tempPinYinHeadStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-//                if (titleHeadResult.length>0) {
-//                    [searchResults addObject:dataArray[i]];
-//                }
-//            }
-//            else {
-//                NSRange titleResult=[dataArray[i] rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-//                if (titleResult.length>0) {
-//                    [searchResults addObject:dataArray[i]];
-//                }
-//            }
-//        }
-//    } else if (mySearchBar.text.length>0&&[ChineseInclude isIncludeChineseInString:mySearchBar.text]) {
-//        for (NSString *tempStr in dataArray) {
-//            NSRange titleResult=[tempStr rangeOfString:mySearchBar.text options:NSCaseInsensitiveSearch];
-//            if (titleResult.length>0) {
-//                [searchResults addObject:tempStr];
-//            }
-//        }
-//    }
-//}
 
 #pragma 加cell进入动画
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -244,6 +216,30 @@
     //            ;
     //        }];
     //    }
+}
+
+#pragma searchviewcontroller的delegate
+// 搜索界面将要出现
+- (void)willPresentSearchController:(UISearchController *)searchController
+{
+    NSLog(@"将要  开始  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
+    //    navigationBar.hidden = YES;
+    //    [[UIApplication sharedApplication]setStatusBarHidden:YES];
+}
+
+// 搜索界面将要消失
+-(void)willDismissSearchController:(UISearchController *)searchController
+{
+    NSLog(@"将要  取消  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    //    navigationBar.hidden = NO;
+    //    [[UIApplication sharedApplication]setStatusBarHidden:NO];
+}
+
+-(void)didDismissSearchController:(UISearchController *)searchController
+{
+    
 }
 
 @end

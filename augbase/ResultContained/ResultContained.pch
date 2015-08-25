@@ -15,23 +15,27 @@
     #import "Masonry.h"
     #import "ACMacros.h"
     #import <AFNetworking.h>
+    #import <SDWebImage/UIImageView+WebCache.h>
     //加入自定义的category
     #import "CategoryGlobalSupport.pch"
     //加入自定义的pch
     #import "YizhenMarco.h"//易诊旧项目的头文件
 #define  ViewHeight [[UIScreen mainScreen] bounds].size.height
 #define  ViewWidth [[UIScreen mainScreen] bounds].size.width
-#define countAgainNumber 30.0 //手机注册验证码的倒计时时间
-#define ensureMass 4 //手机验证码的长度
+#define countAgainNumber 120.0 //手机注册验证码的倒计时时间
+#define ensureMass 6 //手机验证码的长度
 #define httpServer @"115.29.143.102"//主机ip
-//test 本app中测试用的xmpp jid
-#define testMineJID @"182572"//测试用的jid,闪电侠:182572
-#define testToJID @"182572"//测试用的发送jid,发给小易
 #define YizhenTableName @"Yizhen_"//易诊的本地数据库统一表头字符
 #define YizhenFriendName @"Friend_"
 #define httpPort 8080//主机port
 #define DBName @"YizhenDB"//本地存储数据库的名字，不可随意变动，否则将导致今后更新失败,但仍可以创建新的db,就这点上sqilte比coredata要好
-#define FriendDBName @"YizhenFriendDB"//本地存储好友数据库的名字，不可随意变动，否则将导致今后更新失败,但仍可以创建新的db,就这点上sqilte比coredata要好
+#define FriendDBName @"YizhenFriendDB"//本地存储好友数据库的名字，不可随意变动，否则将导致今后更新失败,但仍可以创建新的db,就这点上sqilte比coredata要好]
+//获取头像的url
+#define PersonImageUrl @"http://yizhenimg.augbase.com/user/"
+#define yizhenImageFile @"YizhenImage"
+#define yizhenMP3File @"YizhenMP3"
+#define defaultUserName @"Yizhen"
+#define myImageName [[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"]
 
 //主题颜色，主要是各种背景色
 #define themeColor [UIColor colorWithRed:41/255.0 green:181/255.0 blue:207/255.0 alpha:1.0]
@@ -46,6 +50,8 @@
 #define grayLabelColor [UIColor colorWithRed:120/255.0 green:120/255.0 blue:120/255.0 alpha:1.0]
 //黑色，用于显示标题的黑色
 #define blackTitleColor [UIColor colorWithRed:50/255.0 green:50/255.0 blue:50/255.0 alpha:1.0]
+//黑色，用于显示标题的黄色
+#define yellowTitleColor [UIColor colorWithRed:255/255.0 green:203/255.0 blue:5/255.0 alpha:1.0]
 //白色，主要用于自定义的
 #define navigationColor [UIColor whiteColor]//navigationbar的背景色
 

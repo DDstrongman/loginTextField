@@ -27,9 +27,4 @@
     [self.view addSubview:_titleLabel];
 }
 
--(void) viewWillDisappear:(BOOL)animated
-{
-    self.navigationController.navigationBarHidden = YES;
-}
-
 @end

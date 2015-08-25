@@ -6,22 +6,11 @@
 //  Copyright (c) 2015年 李胜书. All rights reserved.
 //
 
-@protocol ReceiveMessDelegate <NSObject>
 
-@required//必须实现的代理方法
-
--(void)ReceiveMessArray:(NSString *)receiveJID;//传递收到的消息，用类作为array中元素，具体类包含信息查看chatsupportitem.h
-@optional//不必须实现的代理方法
-
-
-@end
-@protocol ConnectXMPPDelegate <NSObject>
-@required
--(void)ConnectXMPPResult:(BOOL)result;//xmpp服务器连接成功
-
-@end
 
 #import <Foundation/Foundation.h>
+
+#import "DBItem.h"
 
 #import "XMPP.h"
 #import "XMPPReconnect.h"
@@ -34,6 +23,27 @@
 #import "DBManager.h"
 #import "FriendDBManager.h"
 #import "ChatSupportItem.h"
+
+@protocol ReceiveMessDelegate <NSObject>
+
+@required//必须实现的代理方法
+
+-(void)ReceiveMessArray:(NSString *)receiveJID ChatItem:(DBItem *)chatItem;//传递收到的消息，用类作为array中元素，具体类包含信息查看chatsupportitem.h
+@optional//不必须实现的代理方法
+
+@end
+
+@protocol ConnectXMPPDelegate <NSObject>
+@required
+-(void)ConnectXMPPResult:(BOOL)result;//xmpp服务器连接成功
+
+@end
+
+@protocol GetFriendListDelegate <NSObject>
+@required
+-(void)GetFriendListDelegate:(BOOL)result;//xmpp服务器连接成功
+
+@end
 
 @interface XMPPSupportClass : NSObject
 
@@ -50,6 +60,7 @@
 
 @property (nonatomic,weak)  id<ReceiveMessDelegate> receiveMessDelegate;
 @property (nonatomic,weak)  id<ConnectXMPPDelegate> connectXMPPDelegate;
+@property (nonatomic,weak)  id<GetFriendListDelegate> getFriendListDelegate;
 
 @property (nonatomic,strong) XMPPStream *xmppStream;
 @property (nonatomic,strong) XMPPRosterCoreDataStorage  *xmppRosterDataStorage;
@@ -71,8 +82,8 @@
 //发送文字图片，音频等信息 MessType  0:文字  1:图片 2:音频
 -(BOOL)sendMess:(DBItem *)allContents toUserJID:(NSString *)friendUserJid FromUserJID:(NSString *)myJID;
 //发送音频图片信息的时候上传服务器之后返回url，发送url文本信息过去
--(void)uploadPicture:(UIImage *)picture;
--(void)uploadMP3:(NSData *)mp3;
+-(NSString *)uploadPic:(UIImage *)image;
+-(NSString *)uploadMP3:(NSData *)mp3;
 
 //获取实时接收的信息，暂时用为test
 //-(NSMutableArray *)recieveMess;

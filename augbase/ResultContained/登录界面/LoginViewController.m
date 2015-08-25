@@ -10,9 +10,11 @@
 
 #import "XMPPSupportClass.h"
 #import "AppDelegate.h"
-#import "HttpSupportClass.h"
-
 #import "UserItem.h"
+
+#import "sys/sysctl.h"
+
+#import "ForgetPasswordRootViewController.h"
 
 @interface LoginViewController ()
 
@@ -37,7 +39,6 @@
     
     //去登陆界面
     UIButton *registButton = [[UIButton alloc] initWithFrame:CGRectMake(0,2, 120, 30)];
-    [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
     
     registButton.titleLabel.font = [UIFont boldSystemFontOfSize:17];
     registButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
@@ -96,7 +97,11 @@
     _thirdLoginButton.layer.borderColor = themeColor.CGColor;
     [_thirdLoginButton setTintColor:themeColor];
     [_thirdLoginButton viewWithRadis:10.0];
+    
+    NSString * strModel  = [self doDevicePlatform];
+    NSLog(@"设备型号为：%@",strModel);
 }
+
 
 #pragma 登录的响应函数
 -(void)gotoMainView{
@@ -104,15 +109,18 @@
     [defaults setObject:_userNameView.contentTextField.text forKey:@"userName"];
     [defaults setObject:_passWordView.contentTextField.text forKey:@"userPassword"];
     [defaults setObject:@YES forKey:@"NotFirstTime"];
-//    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,[defaults objectForKey:@"UserName"],[defaults objectForKey:@"Password"]];
-#warning 正式版本中使用上方的代码
-    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,@"闪电侠",@"039877"];
-    NSLog(@"url === %@",url);
+    [defaults setObject:@NO forKey:@"FriendList"];
+    
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+    NSLog(@"url===%@",url);
+    NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+    [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+    [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
     url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
         //NSLog(@"responseObject=%@",responseObject);
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
@@ -126,12 +134,40 @@
             [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
             NSLog(@"返回的登录系数：%@",source);
             //            [defaults synchronize];
-            [defaults setObject:[UserItem ShareInstance].userUID forKey:@"UserUID"];
-            [defaults setObject:[UserItem ShareInstance].userName forKey:@"UserName"];
-            [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"NickName"];
-            [defaults setObject:[UserItem ShareInstance].userToken forKey:@"UserToken"];
-            [defaults setObject:[UserItem ShareInstance].userJID forKey:@"UserJID"];
+            [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
+            [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
+            [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
+            [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
+            [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
             [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",[UserItem ShareInstance].userJID,httpServer]];
+            //获取本人头像和好友头像
+            NSLog(@"userJid === %@,web登录完成，开始xmpp登录",[defaults valueForKey:@"userJID"]);
+            //jid获取用户信息
+            NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+            NSLog(@"jidurl === %@",jidurl);
+            jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+            [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                NSLog(@"imageurl === %@",imageurl);
+                imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
+                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
+                        
+                    }
+                }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    NSLog(@"获取图片信息失败");
+                }];
+            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"获取jid信息失败");
+            }];
         }
         else{
             
@@ -139,14 +175,12 @@
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
     }];
-#warning 此处是测试时候用的代码，正式上线需要将一部分代码转移到上面去
-    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",testMineJID,httpServer]]) {
-        
-    }
 }
 #pragma 忘记密码的响应函数
 -(void)forgetPass:(UIButton *)sender{
     NSLog(@"忘记密码的响应函数");
+    ForgetPasswordRootViewController *fprv = [[ForgetPasswordRootViewController alloc]init];
+    [self.navigationController pushViewController:fprv animated:YES];
 }
 
 
@@ -172,33 +206,25 @@
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     self.navigationController.navigationBarHidden = NO;
-#warning 去掉navigationbar下划线
-//    UINavigationBar *navigationBar = self.navigationController.navigationBar;
-//    [navigationBar setBackgroundImage:[UIImage imageNamed:@"white"]
-//                       forBarPosition:UIBarPositionAny
-//                           barMetrics:UIBarMetricsDefault];
-//    [navigationBar setShadowImage:[UIImage new]];
-    
+
     self.navigationController.navigationBar.barStyle = UIBaselineAdjustmentNone;
     
     [self.navigationController.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:themeColor,NSForegroundColorAttributeName,nil]];
     self.navigationController.navigationBar.tintColor = themeColor;
     [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"white"] forBarPosition:UIBarPositionTopAttached barMetrics:UIBarMetricsDefault];
     
-//    [self.navigationController.navigationBar setTintColor:themeColor];
-    //初始化
-    //    [_userNameText becomeFirstResponder];
     _userNameView.contentTextField.placeholder = NSLocalizedString(@"手机号／用户名", @"");
-    _userNameView.contentTextField.keyboardType = UIKeyboardTypeNumberPad;
     _passWordView.contentTextField.placeholder = NSLocalizedString(@"密码", @"");
     _passWordView.contentTextField.secureTextEntry = YES;
     _passWordView.contentTextField.keyboardType = UIKeyboardTypeASCIICapable;
     showPasswordOrNot = YES;
     _loginButton.userInteractionEnabled = NO;
+    
+    [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
 }
 
 -(void)ensurePhoneAndPassword{
-    if (_passWordView.contentTextField.text.length>5&&[self isValidateMobile:_userNameView.contentTextField.text]) {
+    if (_passWordView.contentTextField.text.length>5/*&&[self isValidateMobile:_userNameView.contentTextField.text]*/) {
         _loginButton.userInteractionEnabled = YES;
         _loginButton.backgroundColor = themeColor;
     }else{
@@ -244,6 +270,92 @@
 #pragma 取消输入操作
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
     [self.view endEditing:YES];
+}
+
+
+- (NSString*) doDevicePlatform{
+    size_t size;
+    int nR = sysctlbyname("hw.machine", NULL, &size, NULL, 0);
+    char *machine = (char *)malloc(size);
+    nR = sysctlbyname("hw.machine", machine, &size, NULL, 0);
+    NSString *platform = [NSString stringWithCString:machine encoding:NSUTF8StringEncoding];
+    free(machine);
+    
+    if ([platform isEqualToString:@"iPhone1,1"]) {
+        
+        platform = @"iPhone";
+        
+    } else if ([platform isEqualToString:@"iPhone1,2"]) {
+        
+        platform = @"iPhone 3G";
+        
+    } else if ([platform isEqualToString:@"iPhone2,1"]) {
+        
+        platform = @"iPhone 3GS";
+        
+    } else if ([platform isEqualToString:@"iPhone3,1"]||[platform isEqualToString:@"iPhone3,2"]||[platform isEqualToString:@"iPhone3,3"]) {
+        
+        platform = @"iPhone 4";
+        
+    } else if ([platform isEqualToString:@"iPhone4,1"]) {
+        
+        platform = @"iPhone 4S";
+        
+    } else if ([platform isEqualToString:@"iPhone5,1"]||[platform isEqualToString:@"iPhone5,2"]) {
+        
+        platform = @"iPhone 5";
+        
+    }else if ([platform isEqualToString:@"iPhone5,3"]||[platform isEqualToString:@"iPhone5,4"]) {
+        
+        platform = @"iPhone 5C";
+        
+    }else if ([platform isEqualToString:@"iPhone6,2"]||[platform isEqualToString:@"iPhone6,1"]) {
+        
+        platform = @"iPhone 5S";
+        
+    }else if ([platform isEqualToString:@"iPod4,1"]) {
+        
+        platform = @"iPod touch 4";
+        
+    }else if ([platform isEqualToString:@"iPod5,1"]) {
+        
+        platform = @"iPod touch 5";
+        
+    }else if ([platform isEqualToString:@"iPod3,1"]) {
+        
+        platform = @"iPod touch 3";
+        
+    }else if ([platform isEqualToString:@"iPod2,1"]) {
+        
+        platform = @"iPod touch 2";
+        
+    }else if ([platform isEqualToString:@"iPod1,1"]) {
+        
+        platform = @"iPod touch";
+        
+    } else if ([platform isEqualToString:@"iPad3,2"]||[platform isEqualToString:@"iPad3,1"]) {
+        
+        platform = @"iPad 3";
+        
+    } else if ([platform isEqualToString:@"iPad2,2"]||[platform isEqualToString:@"iPad2,1"]||[platform isEqualToString:@"iPad2,3"]||[platform isEqualToString:@"iPad2,4"]) {
+        
+        platform = @"iPad 2";
+        
+    }else if ([platform isEqualToString:@"iPad1,1"]) {
+        
+        platform = @"iPad 1";
+        
+    }else if ([platform isEqualToString:@"iPad2,5"]||[platform isEqualToString:@"iPad2,6"]||[platform isEqualToString:@"iPad2,7"]) {
+        
+        platform = @"ipad mini";
+        
+    } else if ([platform isEqualToString:@"iPad3,3"]||[platform isEqualToString:@"iPad3,4"]||[platform isEqualToString:@"iPad3,5"]||[platform isEqualToString:@"iPad3,6"]) {
+        
+        platform = @"ipad 3";
+        
+    }
+    
+    return platform;
 }
 
 @end

@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "ZHPickView.h"
 #import "ImageViewLabelTextFieldView.h"
-#import "IQKeyboardManager.h"
 
 @interface FirstTimeUserInfoViewController : UIViewController<ZHPickViewDelegate>
 

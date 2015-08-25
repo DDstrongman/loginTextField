@@ -56,10 +56,16 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NotFirstTimeLogin = [defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
     RZTransitionsNavigationController* rootNavController;
+    
+    [[UINavigationBar appearance] setBackIndicatorImage:[UIImage imageNamed:@"back"]];
+    [[UINavigationBar appearance] setBackIndicatorTransitionMaskImage:[UIImage imageNamed:@"back"]];
+    
     if (NotFirstTimeLogin) {
         //已经登录过了
+        
         rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:showMessViewController];
     }else{
+        
         rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
         [[DBManager ShareInstance] creatDatabase:DBName];
         [[DBManager ShareInstance] closeDB];
@@ -89,7 +95,8 @@
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",testMineJID,httpServer]];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]];
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
@@ -97,6 +104,9 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     [[XMPPSupportClass ShareInstance] disconnect];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@NO forKey:@"FriendList"];
+    
 }
 
 @end

@@ -54,7 +54,7 @@
         return YES;
     }
 }
-#pragma mark-插入聊天列表 或者更新------------------------|*|*|*|*|*|
+#pragma mark-插入好友列表 或者更新------------------------|*|*|*|*|*|
 -(BOOL)addFriendObjTablename:(NSString *)tableName andchatobj:(FriendDBItem *)obj{
     [self isFriendTableExist:tableName];
     NSString *friendJid = obj.friendJID;
@@ -92,7 +92,6 @@
             return NO;
         }
     }
-    return YES;
 }
 
 -(BOOL)updateFriendState:(NSString *)tableName FriendJid:(NSString *)friendJid andState:(NSString *)state{
@@ -124,7 +123,7 @@
 -(FMResultSet *)SearchOneFriend:(NSString *)tableName FriendJID:(NSString *)friendJid{
     FMResultSet *messWithNumber;
 #warning 此处的limit 0,%ld表示从第一台哦开始，取％ld条数据，0可以自己修改为想要的数据或是传入
-    NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@ where friendJID = %@",tableName,friendJid];
+    NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@ where friendJID = '%@'",tableName,friendJid];
     if ([self isFriendTableExist:tableName]) {
         messWithNumber = [self.yzFriendDB executeQuery:searchsql];
     }

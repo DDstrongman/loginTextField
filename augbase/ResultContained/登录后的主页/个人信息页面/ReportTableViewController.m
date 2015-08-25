@@ -35,7 +35,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    [[IQKeyboardManager sharedManager] setEnable:YES];
+//    [[IQKeyboardManager sharedManager] setEnable:YES];
     self.navigationController.navigationBarHidden = NO;
     UIButton *sendReportButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 45, 22)];
     [sendReportButton setTitle:NSLocalizedString(@"发送", @"") forState:UIControlStateNormal];

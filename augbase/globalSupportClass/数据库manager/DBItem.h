@@ -30,8 +30,13 @@
 #pragma 两个表共有
 //时间标签
 @property (nonatomic,strong) NSString *timeStamp;
-//消息的内容，text为文本信息，其他的如图片或者音频则为url
+//消息的内容，text为文本信息，其他的如图片或者音频则为url所需的文件名
 @property (nonatomic,strong) NSString *messContent;
+//为图片,并不需要存入数据库，上传到主机，messContent改为获取的文件名，然后通过拼接url获取对应文件
+@property (nonatomic,strong) UIImage *messPic;
+//为声音，同上
+@property (nonatomic,strong) NSData *messVoice;
+@property (nonatomic,strong) NSString *messVoiceTime;
 
 //聊天分类，区分是私聊还是群聊:0私聊，1群聊
 @property (nonatomic,assign) NSInteger chatType;
@@ -48,17 +53,5 @@
 @property (nonatomic,strong) NSString *chatJID;
 @property (nonatomic,strong) NSString *chatNickName;//群昵称
 @property (nonatomic,strong) NSString *chatImageUrl;//群头像的url
-
-//#pragma 易诊旧信息
-//@property (nonatomic,strong)NSString *lasttime;
-//@property (nonatomic,strong)NSString *mycontect;
-//@property (nonatomic,assign)NSInteger chattype;
-//@property (nonatomic,assign)NSInteger lastchatype;
-//@property (nonatomic,strong)NSString *isnew;
-//@property (nonatomic,strong)NSString *nickname;
-//@property (nonatomic,strong)NSString *imgname;
-//@property (nonatomic,strong)NSString *jid;
-//@property (nonatomic,strong)NSString *mystate;
-
 
 @end

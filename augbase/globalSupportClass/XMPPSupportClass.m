@@ -8,7 +8,9 @@
 
 #import "XMPPSupportClass.h"
 
+#import "WriteFileSupport.h"
 
+#import "HttpManager.h"
 
 @implementation XMPPSupportClass
 
@@ -47,6 +49,7 @@
 }
 
 -(BOOL)boolConnect:(NSString *)userName{
+    NSLog(@"开始连接Bool");
     password = @"123456";//设定死的，为xmpp服务器的密码，用户密码为web端的
     [self setupStream];
     if ([xmppStream isConnected]) {
@@ -56,11 +59,9 @@
     [xmppStream setMyJID:[XMPPJID jidWithString:userName]];
     //设置服务器
     [xmppStream setHostName:httpServer];
-    NSLog(@"httpServer === %@",httpServer);
     //连接服务器
     NSError *error = nil;
     [xmppStream connectWithTimeout:20.0 error:&error];
-    NSLog(@"开始连接Bool");
     if (error) {
         NSLog(@"can't connect %@", httpServer);
         return NO;
@@ -127,6 +128,7 @@
     _messArray = [NSMutableArray array];
     [_messArray removeAllObjects];
     NSString *messContent = [[message elementForName:@"body"]stringValue];//发送内容的主题必须是body，xmpp需求
+    NSString *messTime = [[message elementForName:@"messTime"]stringValue];
     NSString *timeStamp = [[message elementForName:@"timeStamp"]stringValue];
     NSString *personJID = [[message elementForName:@"personJID"]stringValue];
     NSString *sendPersonJID = [[message elementForName:@"sendPersonJID"]stringValue];
@@ -140,6 +142,7 @@
     
     DBItem *chatItem = [[DBItem alloc]init];
     chatItem.messContent = messContent;
+    chatItem.messVoiceTime = messTime;
     chatItem.timeStamp = timeStamp;
     chatItem.personJID = personJID;
     chatItem.sendPersonJID = sendPersonJID;
@@ -151,12 +154,12 @@
     
     chatItem.FromMeOrNot = 1;
     chatItem.ReadOrNot = 0;
-#warning 之后必须改为存入本地数据库，这样可以解决所有问题
+    
     [[DBManager ShareInstance] creatDatabase:DBName];
-    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,sendPersonJID]];
-    [[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,sendPersonJID] andchatobj:chatItem];
+    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID]];
+    [[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID] andchatobj:chatItem];
     [[DBManager ShareInstance] closeDB];
-    [_receiveMessDelegate ReceiveMessArray:sendPersonJID];
+    [_receiveMessDelegate ReceiveMessArray:personJID ChatItem:chatItem];
 }
 
 #pragma mark-  好友在线状态
@@ -190,10 +193,17 @@
     NSXMLElement *personImageUrl = [NSXMLElement elementWithName:@"personImageUrl"];
     NSXMLElement *chatType = [NSXMLElement elementWithName:@"chatType"];
     NSXMLElement *messType = [NSXMLElement elementWithName:@"messType"];
-//    NSXMLElement *messContent = [NSXMLElement elementWithName:@"messContent"];
     NSXMLElement *ReadOrNot = [NSXMLElement elementWithName:@"ReadOrNot"];
     NSXMLElement *FromMeOrNot = [NSXMLElement elementWithName:@"FromMeOrNot"];
+    NSXMLElement *messTime = [NSXMLElement elementWithName:@"messTime"];
     
+    
+    if (allContents.messType == 1) {
+#warning 在这里要加入delegate刷新，因为获取图片使用了多线程，无法直接return获取必要信息，暂时测试用其他代替
+        allContents.messContent = [self uploadPic:allContents.messPic];
+    }else if(allContents.messType == 2){
+        allContents.messContent = [self uploadMP3:allContents.messVoice];
+    }
     
     [body setStringValue:allContents.messContent];
     [personJID setStringValue:allContents.personJID];
@@ -201,6 +211,7 @@
     [timeStamp setStringValue:allContents.timeStamp];
     [personNickName setStringValue:allContents.personNickName];
     [personImageUrl setStringValue:allContents.personImageUrl];
+    [messTime setStringValue:allContents.messVoiceTime];
     
     [messType setStringValue:[NSString stringWithFormat:@"%ld",(long)allContents.messType]];//文本信息
     [chatType setStringValue:[NSString stringWithFormat:@"%ld",(long)allContents.chatType]];//私聊
@@ -222,10 +233,12 @@
     [TextMessage addChild:messType];
     [TextMessage addChild:FromMeOrNot];
     [TextMessage addChild:ReadOrNot];
-    [self.xmppStream sendElement:TextMessage];//发送在线信息
-    NSLog(@"发送信息:%@",TextMessage);
+    [TextMessage addChild:messTime];
     
-    [self sendapns:allContents ToPerson:friendUserJid];
+    [self.xmppStream sendElement:TextMessage];//发送在线信息
+    
+    
+//    [self sendapns:allContents ToPerson:friendUserJid];
     
     [[DBManager ShareInstance] creatDatabase:DBName];
     [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid]];
@@ -295,9 +308,7 @@
     [self.xmppStream sendElement:message];
 }
 
-- (void)xmppRoom:(XMPPRoom *)sender didFetchConfigurationForm:(DDXMLElement *)configForm
-
-{
+- (void)xmppRoom:(XMPPRoom *)sender didFetchConfigurationForm:(DDXMLElement *)configForm{
     
     NSLog(@"config : %@", configForm);
     
@@ -365,45 +376,28 @@
 }
 
 #pragma 上传图片和音频，并返回url
--(void)uploadPicture:(UIImage *)picture{
-    //上传高清图
-    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
-    NSString *yzuid=[UIDTOKEN getme].uid;
-    NSString *yztoken=[UIDTOKEN getme].token;
-    if (yztoken==nil) {
-        yzuid=@"2";
-        yztoken=@"890836ff8accec9d8aa01dca54280060";
-        
-    }
-    NSDictionary *ddd= @{@"1":@"2"};
-    NSString *url=[NSString stringWithFormat:@"http://api.augbase.com/YizhenServer4/chat/sendphoto"];
+-(NSString *)uploadPic:(UIImage *)image{
+    NSString *yzuid = [[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"];
+    NSString *yztoken = [[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"];
+    NSString *uurl=[NSString stringWithFormat:@"%@v2/chat/historymsg/multipart?uid=%@&token=%@&fileType=%@",Baseurl,yzuid,yztoken,@"png"];
+    //得到图片的data
+    NSData *data= UIImageJPEGRepresentation(image , compress);
     
-    NSString *ii=[NSString stringWithFormat:@"%@.png",@"13"];
-    
-    NSDictionary *dic=[NSDictionary dictionaryWithObjects:@[yzuid,yztoken,ii,testMineJID
-    ] forKeys:@[@"uid",@"token",@"name",@"ji"]];
-    NSData *data = UIImageJPEGRepresentation(picture, 0.35);
-    [manager POST:url parameters:dic constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        [formData appendPartWithFileData:data name:@"image" fileName:@"13" mimeType:@"png"];
-    } success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *dic=[NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
-        int res=[[dic objectForKey:@"res"] intValue];
-        NSLog(@"上传返回:%@",responseObject);
-        if (res==0){
-            NSLog(@"上传成功");
-        }
-        else{
-            
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"上传失败");
-    }];
+    NSData *received =  [[HttpManager ShareInstance] httpPostSupport:uurl PostName:data FileType:@"image/png" FileTrail:@"pic"];
+    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:received options:NSJSONReadingMutableLeaves error:nil];
+    NSString *fileName = [source objectForKey:@"fileName"];
+    return fileName;
 }
 
--(void)uploadMP3:(NSData *)mp3{
-    
+-(NSString *)uploadMP3:(NSData *)mp3{
+    NSString *yzuid = [[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"];
+    NSString *yztoken = [[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"];
+    NSString *uurl=[NSString stringWithFormat:@"%@v2/chat/historymsg/multipart?uid=%@&token=%@&fileType=%@",Baseurl,yzuid,yztoken,@"mp3"];
+   
+    NSData *received =  [[HttpManager ShareInstance] httpPostSupport:uurl PostName:mp3 FileType:@"video/mp4" FileTrail:@"mp3"];
+    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:received options:NSJSONReadingMutableLeaves error:nil];
+    NSString *fileName = [source objectForKey:@"fileName"];
+    return fileName;
 }
 
 #pragma 获取好友列表
@@ -448,10 +442,54 @@
     // [presence addAttributeWithName:@"subscription" stringValue:@"好友"];
     //发送好友请求
     [xmppRoster subscribePresenceToUser:jid];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,keyjid,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+    NSLog(@"好友url====%@",url);
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"获取好友列表的返回＝＝＝%d,返回的具体结果为＝＝＝%@",res,source);
+        if (res == 0) {
+            FriendDBItem *fdItem = [[FriendDBItem alloc]init];
+            fdItem.friendName = [source objectForKey:@"nickname"];
+            fdItem.friendGender = [source objectForKey:@"gender"];
+            fdItem.friendAge = [source objectForKey:@"age"];
+            fdItem.friendDescribe = @"test";
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+            NSString *documentsDirectory = [paths objectAtIndex:0];
+            fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,keyjid];
+            fdItem.friendJID = keyjid;
+            fdItem.friendOnlineOrNot = @"0";
+            [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+            [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+            [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
+            
+            NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+            NSLog(@"imageurl === %@",imageurl);
+            imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+            [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+#warning 此处的获取好友头像可以变成lazyloading以便进一步优化效率
+                [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:keyjid Contents:responseObject];
+            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"获取图片信息失败");
+            }];
+        }else{
+            
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"WEB端登录失败：%@",error);
+    }];
 }
 #pragma mark 删除好友,取消加好友，或者加好友后需要删除
-- (void)removeFriend:(NSString *)friendJID
-{
+- (void)removeFriend:(NSString *)friendJID{
     if (_xmppRosterDataStorage == nil) {
         _xmppRosterDataStorage = [[XMPPRosterCoreDataStorage alloc]init];
     }
@@ -467,9 +505,6 @@
     XMPPJID *jid = [XMPPJID jidWithString:[NSString stringWithFormat:@"%@@%@",friendJID,httpServer]];
     [xmppRoster removeUser:jid];
     [[FriendDBManager ShareInstance] deleteFriendObjTablename:YizhenFriendName andinterobj:friendJID];
-    
-    NSString *url = [NSString stringWithFormat:@"%@chat/sendofflinemsg",Baseurl];
-    NSLog(@"离线url===%@",url);
 }
 
 #pragma 好友请求列表,获取好友列表
@@ -489,29 +524,53 @@
                 NSLog(@"获取好友列表成功：jid===%@,name===%@",jid,name);
                 [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
                 [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-                NSString *url = [NSString stringWithFormat:@"%@user?jid=%@",Baseurl,name];
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                
+                NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,name,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+                NSLog(@"好友url====%@",url);
                 AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
                 manager.responseSerializer = [AFHTTPResponseSerializer serializer];
                 manager.requestSerializer=[AFHTTPRequestSerializer serializer];
                 [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
                     NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                     int res=[[source objectForKey:@"res"] intValue];
+                    NSLog(@"获取好友列表的返回＝＝＝%d,返回的具体结果为＝＝＝%@",res,source);
                     if (res == 0) {
                         FriendDBItem *fdItem = [[FriendDBItem alloc]init];
                         fdItem.friendName = [source objectForKey:@"nickname"];
                         fdItem.friendGender = [source objectForKey:@"gender"];
                         fdItem.friendAge = [source objectForKey:@"age"];
                         fdItem.friendDescribe = @"test";
-                        fdItem.friendImageUrl = @"test";
+                        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                        NSString *documentsDirectory = [paths objectAtIndex:0];
+                        fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,name];
                         fdItem.friendJID = name;
                         fdItem.friendOnlineOrNot = @"0";
-#warning 加入存入数据库的代码，需要判断是否有重复的
                         [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
                         [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
                         [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
+                        
+                        NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                        NSLog(@"imageurl === %@",imageurl);
+                        imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                        manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+                        [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+#warning 此处的获取好友头像可以变成lazyloading以便进一步优化效率
+                            [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:name Contents:responseObject];
+                            [_getFriendListDelegate GetFriendListDelegate:YES];
+                        }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            NSLog(@"获取图片信息失败");
+                            [_getFriendListDelegate GetFriendListDelegate:NO];
+                        }];
+                    }else{
+                        [_getFriendListDelegate GetFriendListDelegate:NO];
                     }
                 } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                     NSLog(@"WEB端登录失败：%@",error);
+                    [_getFriendListDelegate GetFriendListDelegate:NO];
                 }];
             }
         }
@@ -521,15 +580,13 @@
 
 #pragma mark-发送离线消息 ——————————————————————————————————
 -(void)sendapns:(DBItem *)messObj ToPerson:(NSString *)personJid{
-    NSLog(@"发送离线消息");
     NSString *url = [NSString stringWithFormat:@"%@chat/sendofflinemsg",Baseurl];
     NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
     [manager.requestSerializer setTimeoutInterval:30];
-#warning 此处之后要改为userDefault获取的自己的jid
-    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@&clienttype=%@&clientid=%@&msgtype=%ld&msg=%@&sendtime=%@",url,testMineJID,[userDefault valueForKey:@"UserToken"],@"1",@"1686",(long)messObj.messType,messObj.messContent,messObj.timeStamp];
+    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@&clienttype=%@&clientid=%@&msgtype=%ld&msg=%@&sendtime=%@",url,[userDefault valueForKey:@"userJID"],[userDefault valueForKey:@"userToken"],@"1",@"1686",(long)messObj.messType,messObj.messContent,messObj.timeStamp];
     NSLog(@"uurl===%@",uurl);
     NSLog(@"发送中文的方法"); 
     uurl=[uurl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
@@ -553,6 +610,19 @@
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         //            [self networkAnomaly];
     }];
+}
+
+-(NSString *)gettime{
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //设定时间格式,这里可以设置成自己需要的格式
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH-mm-ss"];
+    NSString *currentDateStr = [dateFormatter stringFromDate:[NSDate date]];
+    
+    NSString *strUrl = [currentDateStr stringByReplacingOccurrencesOfString:@"-" withString:@""];
+    
+    NSString *newdate=[strUrl substringToIndex:8];
+    return newdate;
+    
 }
 
 #pragma 成功与失败的反应函数

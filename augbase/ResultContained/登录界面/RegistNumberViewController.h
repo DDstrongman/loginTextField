@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import "ImageViewLabelTextFieldView.h"
-#import "IQKeyboardManager.h"
 
 @interface RegistNumberViewController : UIViewController
 

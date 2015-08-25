@@ -33,6 +33,9 @@
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(focusGesture:)];
     [_cameraViewController addGestureRecognizer:tapGesture];
     
+    [_cameraButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [_cameraButton setTintColor:[UIColor whiteColor]];
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated

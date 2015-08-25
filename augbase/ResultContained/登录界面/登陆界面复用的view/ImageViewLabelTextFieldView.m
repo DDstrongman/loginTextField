@@ -33,18 +33,12 @@
         _contentTextField.center = CGPointMake((self.frame.size.width-12)/2+12, (self.frame.size.height-_contentTextField.frame.size.height)+_contentTextField.frame.size.height/2);
         _contentTextField.font = [UIFont systemFontOfSize:17.0];
         _contentTextField.delegate = self;
-        _contentTextField.placeholder = NSLocalizedString(@"请输入xxx", @"");        [self addSubview:_contentTextField];
-        
-//        [_contentTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-//            make.bottom.equalTo(@0);
-//            make.height.equalTo(@50);
-//            make.left.equalTo(@12);
-//            make.right.equalTo(@0);
-//        }];
+        _contentTextField.placeholder = NSLocalizedString(@"请输入xxx", @"");
+        [self addSubview:_contentTextField];
         
         _arrowImageView = [[UIImageView alloc]init];
         _arrowImageView.frame = CGRectMake(0, 0, 7, 16);
-        _arrowImageView.center = CGPointMake(_arrowImageView.frame.size.width/2, (self.frame.size.height-_contentTextField.frame.size.height)+_contentTextField.frame.size.height/2);
+        _arrowImageView.center = CGPointMake(_arrowImageView.frame.size.width/2, (self.frame.size.height-_contentTextField.frame.size.height)+_contentTextField.frame.size.height/2-2);
         _arrowImageView.image = [UIImage imageNamed:@"cursor"];
         
         [self addSubview:_arrowImageView];
@@ -112,9 +106,9 @@
     //    POPBasicAnimation *anim = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerScaleXY];
     
         if (_animatedOrNot) {
-            anim.toValue = [NSValue valueWithCGRect:CGRectMake(5,35,_arrowImageView.bounds.size.width,_arrowImageView.bounds.size.height)];
+            anim.toValue = [NSValue valueWithCGRect:CGRectMake(5,35-2,_arrowImageView.bounds.size.width,_arrowImageView.bounds.size.height)];
         }else{
-            anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,35,_arrowImageView.bounds.size.width,_arrowImageView.bounds.size.height)];
+            anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,35-2,_arrowImageView.bounds.size.width,_arrowImageView.bounds.size.height)];
         }
     
     //    anim.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionDefault];

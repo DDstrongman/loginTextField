@@ -32,7 +32,7 @@
     _registViewThree = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 184, ViewWidth-120+12, 50)];
     
     _registViewOne.contentTextField.placeholder = NSLocalizedString(@"手机号码", @"");
-    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码（4位）", @"");
+    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码（6位）", @"");
     _registViewThree.contentTextField.placeholder = NSLocalizedString(@"密码(至少6位)", @"");
     
     twoRightButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 40, 30)];
@@ -158,7 +158,7 @@
         _finishButton.userInteractionEnabled = NO;
         _finishButton.backgroundColor = grayBackColor;
     }
-    [[IQKeyboardManager sharedManager] setEnable:YES];
+//    [[IQKeyboardManager sharedManager] setEnable:YES];
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
@@ -201,33 +201,28 @@
 #pragma 跳转注册完后的界面,但是不是直接跳入showallmessage界面，而是引导到第一次登录加好友界面
 -(void)finishRegist{
 #warning 加入注册网络通讯
-//    NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,_registViewOne.contentTextField.text,_registViewTwo.contentTextField.text];
-//    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-//    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-//    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-//        NSLog(@"reponson===%@",source);
-//        int res=[[source objectForKey:@"res"] intValue];
-//        NSLog(@"res===%d",res);
-//        if (res == 0) {
-//            //请求完成
-//            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-//            UIViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
-//            [self.navigationController pushViewController:ftui animated:YES];
-//        }
-//        else{
-//            
-//        }
-//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-//        NSLog(@"WEB端登录失败");
-//    }];
-#warning 正式版本中使用上方代码
-    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    FirstTimeUserInfoViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
-    ftui.userName = _registViewOne.contentTextField.text;
-    ftui.userPass = _registViewThree.contentTextField.text;
-    [self.navigationController pushViewController:ftui animated:YES];
+    NSString *url = [NSString stringWithFormat:@"%@user/signup/tel?username=%@&password=%@&tel=%@&verificationCode=%@&role=%d&clienttype=%d",Baseurl,_registViewOne.contentTextField.text,_registViewThree.contentTextField.text,_registViewOne.contentTextField.text,_registViewTwo.contentTextField.text,0,0];
+    NSLog(@"注册url === %@",url);
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        NSLog(@"reponson===%@",source);
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"res===%d",res);
+        if (res == 0) {
+            //请求完成
+            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            UIViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+            [self.navigationController pushViewController:ftui animated:YES];
+        }
+        else{
+            
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"WEB端登录失败");
+    }];
 }
 
 #pragma 再次发送验证码到手机
@@ -238,6 +233,7 @@
     delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
     twoRightButton.userInteractionEnabled = NO;
     twoRightButton.backgroundColor = grayBackColor;
+    
 }
 
 -(void)countNumber{

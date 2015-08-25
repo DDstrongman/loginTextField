@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, MessageFrom) {
 @property (nonatomic, copy) NSString *strName;
 
 @property (nonatomic, copy) NSString *strContent;
-@property (nonatomic, copy) UIImage  *picture;
+@property (nonatomic, copy) NSURL  *picture;
 @property (nonatomic, copy) NSData   *voice;
 @property (nonatomic, copy) NSString *strVoiceTime;
 

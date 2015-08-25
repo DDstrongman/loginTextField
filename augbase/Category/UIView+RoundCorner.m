@@ -26,6 +26,13 @@
     }
 }
 
+- (void) imagewithColor:(UIColor *)cornerColor CornerWidth:(float)cornerWidth{
+    self.clipsToBounds = YES;
+    self.layer.cornerRadius = self.frame.size.width/2;
+    self.layer.borderWidth = cornerWidth;
+    self.layer.borderColor = cornerColor.CGColor;
+}
+
 - (void)viewWithRadis:(float)radisCorner{
     [self.layer setMasksToBounds:YES];
     [self.layer setCornerRadius:radisCorner];

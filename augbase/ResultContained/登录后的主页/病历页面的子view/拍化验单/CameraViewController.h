@@ -24,6 +24,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *albumButton;
 //@property (weak, nonatomic) IBOutlet UIButton *recognizeButton;
 @property (weak, nonatomic) IBOutlet UIButton *cancelButton;
+@property (weak, nonatomic) IBOutlet UIButton *cameraButton;
 
 
 - (IBAction)focusGesture:(id)sender;

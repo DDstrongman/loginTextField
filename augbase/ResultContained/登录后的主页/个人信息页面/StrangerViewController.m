@@ -22,20 +22,6 @@
     _showStrangerTable.delegate = self;
     _showStrangerTable.backgroundColor = [UIColor whiteColor];
     
-    //    _deleteButton = [[UIButton alloc]init];
-    //    [_deleteButton setTitle:NSLocalizedString(@"删除", @"") forState:UIControlStateNormal];
-    //    [_deleteButton addTarget:self action:@selector(deleteFriend) forControlEvents:UIControlEventTouchUpInside];
-    //    _deleteButton.backgroundColor = [UIColor redColor];
-    //    [_deleteButton.layer setMasksToBounds:YES];
-    //    [_deleteButton.layer setCornerRadius:10.0];
-    //    [self.view addSubview:_deleteButton];
-    //    [_deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
-    //        make.top.equalTo(_showInfoTable.mas_bottom).with.offset(3);
-    //        make.left.equalTo(@20);
-    //        make.right.equalTo(@-20);
-    //        make.height.equalTo(@45);
-    //    }];
-    
     NSLog(@"显示用药病情与否的bool showdetail并没有赋值,此处初始化各种数据，需要网络交互");
     _strangerName = @"小月";
     _strangerDescribe = @"男／25+";

@@ -44,7 +44,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzdcdb tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messContent TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messContent TEXT,messTime TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
         BOOL success=[self.yzdcdb executeUpdate:sql];
         return success;
     }
@@ -80,9 +80,10 @@
     NSInteger FromMeOrNot = obj.FromMeOrNot;
     NSString *timeStamp = obj.timeStamp;
     NSString *messContent = obj.messContent;
+    NSString *messTime = obj.messVoiceTime;
     if (isexit) {
         //存在表
-        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
+        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
         if ([self.yzdcdb executeUpdate:insertsql]) {
             //插入成功
             NSLog(@"插入成功");
@@ -106,52 +107,6 @@
     NSString *messContent = obj.messContent;
     NSInteger ReadOrNot = obj.ReadOrNot;
     NSInteger FromMeOrNot = obj.FromMeOrNot;
-//    if (isexit) {
-//        //存在表
-//        NSString *insertsql=[NSString stringWithFormat:@"INSERT INTO %@ (mycontent, isme,type,displaytime,mydataname,creattime,sendsuccess) VALUES (?,?,?,?,?,?,?)",tableName];
-//        FMResultSet *rs;
-//        if (rs==nil) {
-//            
-//            
-//            if ([self.yzdcdb executeUpdate:insertsql,mycontent,[NSNumber numberWithInt:isme],[NSNumber numberWithInt:type],displaytime,mydataname,creattime,@"1"]) {
-//                //插入成功
-//                return YES;
-//            }
-//            else{
-//                return NO;
-//            }
-    
-        
-        //        }
-        //        else{
-        //            int kk=0;
-        //            while ([rs next]) {
-        //                kk++;
-        //            }
-        //            if (kk==0) {
-        //                if ([self.yzdcdb executeUpdate:insertsql,mycontent,[NSNumber numberWithInt:isme],[NSNumber numberWithInt:type],displaytime,mydataname,creattime,@"1"]) {
-        //                    //插入成功
-        //                    return YES;
-        //                }
-        //                else{
-        //                    return NO;
-        //                }
-//                    }
-    //    }
-    //            else{
-    //                //更新
-    //                NSString *insertsql=[NSString stringWithFormat:@"UPDATE  %@  set mycontent = ?,isme =? ,type =? ,displaytime =? ,mydataname =?,creattime = ?,sendsuccess= ? where mycontent='%@' and  isme=%d and type=%d and displaytime='%@' and creattime='%@' ",name,mycontent,isme,type,displaytime,creattime];
-    //                if ([self.yzdcdb executeUpdate:insertsql,mycontent,[NSNumber numberWithInt:isme],[NSNumber numberWithInt:type],displaytime,mydataname,creattime,@"0"]) {
-    //                    //发送失败
-    //                    //更新成功
-    //                    return YES;
-    //                }
-    //                else{
-    //                    return NO;
-    //                }
-    //            }
-    //        }
-    //    }
     return YES;
 }
 
@@ -175,9 +130,7 @@
 -(FMResultSet *)SearchMessNotReadNumber:(NSString *)tableName ItemName:(NSString *)itemName ItemValue:(NSInteger)itemValue{
     FMResultSet *messWithNumber;
     NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@=%ld",tableName,itemName,(long)itemValue];
-    NSLog(@"searchsql===%@",searchsql);
     if ([self isChatTableExist:tableName]) {
-//        searchsql=[NSString stringWithFormat:@"SELECT * FROM %@",tableName];
         messWithNumber = [self.yzdcdb executeQuery:searchsql];
     }
     return messWithNumber;

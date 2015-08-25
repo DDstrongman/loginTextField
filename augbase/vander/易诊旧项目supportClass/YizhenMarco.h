@@ -14,33 +14,9 @@
 #import "UIButton+EnlargeArea.h"
 
 @interface YizhenMarco : NSObject
-//#define Baseurl
-//http://192.168.1.100:8080/YizhenServer_V2/
-//url
-//@"http://192.168.1.104:8080/YizhenServer_V2/"
-//    liu
-//@"http://192.168.1.103:8080/YizhenServer_V2/"
-//@"http://api.augbase.com/yiserver/"
-//@"http://192.168.1.104:8080/YizhenServer_V2/"
-//@"http://192.168.1.105:8080/YizhenServer2/"
-//@"" //提交版本
-//@"http://192.168.0.118:8080/YizhenServer2/"
 
-//192.168.1.109http://api.augbase.com/yiserver/
-//@"http:/192.168.1.104:8080/YizhenServer2/"
-//http://115.29.143.102:8080/YizhenServer4/测试xpp
-//http://192.168.1.104:8080/YizhenServer4/
-
-
-//@""  yuan
-//http://115.28.0.79:8080/yiserver/
 #define Baseurl @"http://api.augbase.com/yiserver/"
-//@"http://115.29.143.102:8080/YizhenServer4/" ceshi
-//#define Baseurl @"http://api.augbase.com/yiserver/"  12.29
 
-//#define Baseurl @"http://api.augbase.com/yiserver/"
-//http://115.29.143.102:8080/YizhenServer4/
-//115.29.143.102:8080    @"http://api.augbase.com/yiserver/"
 #define IOS_VERSION [[[UIDevice currentDevice] systemVersion] floatValue]
 
 #define UserD  [NSUserDefaults standardUserDefaults]
@@ -82,7 +58,7 @@
 #define MAIN(block) dispatch_async(dispatch_get_main_queue(),block)
 
 
-#define compress 0.5
+#define compress 1.0
 
 
 

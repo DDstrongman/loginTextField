@@ -12,10 +12,11 @@
 #import "StrangerViewController.h"
 #import "GroupDetailViewController.h"
 
+#import "ChatModel.h"
 #import "XMPPSupportClass.h"
 #import "DBItem.h"
-
-@interface RootViewController : UIViewController<ReceiveMessDelegate>
+#import "WriteFileSupport.h"
+@interface RootViewController : UIViewController<ReceiveMessDelegate,FlushTableDelegate>
 
 @property (nonatomic) BOOL privateOrNot;//0,私聊；1，群聊.
 

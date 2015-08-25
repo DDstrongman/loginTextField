@@ -61,6 +61,7 @@
 -(void)deleteFriend{
     NSLog(@"数据库交互，删除好友");
     [[XMPPSupportClass ShareInstance] removeFriend:_personJID];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 #pragma 跳转gotoPrivateDetail

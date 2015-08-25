@@ -9,6 +9,8 @@
 #import "LoginAndRegistViewController.h"
 #import "XMPPSupportClass.h"
 
+#import "SetupView.h"
+
 @interface LoginAndRegistViewController ()
 
 
@@ -40,8 +42,6 @@
     _confirmNumberView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 189-spaceRoom, ViewWidth-120+12-80, 50)];
     _confirmNumberView.contentTextField.placeholder = NSLocalizedString(@"验证码（4位）", @"");
     _confirmNumberView.contentTextField.keyboardType = UIKeyboardTypeASCIICapable;
-//    _confirmNumberView.contentTextField.font = [UIFont systemFontOfSize:12.0];
-    //    _phoneNumberView.contentTextField.textAlignment = NSTextAlignmentCenter;
     [_confirmNumberView.contentTextField addTarget:self action:@selector(confirmPhonenumber) forControlEvents:UIControlEventEditingChanged];
     [self.view addSubview:_confirmNumberView];
     
@@ -105,11 +105,9 @@
 
 -(void)confirmPhonenumber{
     if ([self isValidateMobile:_phoneNumberView.contentTextField.text]&&_confirmNumberView.contentTextField.text.length>3) {
-        NSLog(@"手机号码通过验证");
         _sendMessButton.userInteractionEnabled = YES;
         _sendMessButton.backgroundColor = themeColor;
     }else{
-        NSLog(@"手机号码未通过验证");
         _sendMessButton.userInteractionEnabled = NO;
         _sendMessButton.backgroundColor = grayBackColor;
         
@@ -117,7 +115,6 @@
 }
 
 -(void)changeConfirmNumber:(UIButton *)sender{
-    NSLog(@"改变验证图");
     NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
     NSURLRequest *re=[NSURLRequest requestWithURL:[NSURL URLWithString:strURL]];
     NSOperationQueue *op=[[NSOperationQueue alloc] init];
@@ -132,34 +129,33 @@
 #pragma 输入手机号后获取验证码，需要加入判断手机号是否注册的网络交互事件
 -(void)RegistNumberView{
 #warning 加入获取验证码的手机交互
-//    NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,_phoneNumberView.contentTextField.text,_confirmNumberView.contentTextField.text];
-//    NSLog(@"url===%@",url);
-//    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-//    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-//    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-//    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-//        NSLog(@"reponson===%@",source);
-//        int res=[[source objectForKey:@"res"] intValue];
-//        NSLog(@"res===%d",res);
-//        if (res == 0) {
-//            //请求完成
-//            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-//            RegistNumberViewController *rgv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
-//            rgv.phoneNumber = _phoneNumberView.contentTextField.text;
-//            [self.navigationController pushViewController:rgv animated:YES];
-//        }
-//        else{
-//            
-//        }
-//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-//        NSLog(@"WEB端登录失败");
-//    }];
-#warning  正式版本中使用上方的代码
-    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    RegistNumberViewController *rgv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
-    rgv.phoneNumber = _phoneNumberView.contentTextField.text;
-    [self.navigationController pushViewController:rgv animated:YES];
+    NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,_phoneNumberView.contentTextField.text,_confirmNumberView.contentTextField.text];
+    NSLog(@"url===%@",url);
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        NSLog(@"reponson===%@",source);
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"res===%d",res);
+        if (res == 0) {
+            //请求完成
+            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            RegistNumberViewController *rgv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
+            rgv.phoneNumber = _phoneNumberView.contentTextField.text;
+            [self.navigationController pushViewController:rgv animated:YES];
+        }else if(res == 17){
+            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"该手机号已注册", @"") Title:NSLocalizedString(@"手机号已注册", @"") ViewController:self];
+        }else if (res == 29){
+            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"验证码输入错误", @"") Title:NSLocalizedString(@"验证码错误", @"") ViewController:self];
+        }
+        else{
+            
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"WEB端登录失败");
+    }];
 }
 
 /*邮箱验证 MODIFIED BY HELENSONG*/
@@ -187,6 +183,18 @@ BOOL validateCarNo(NSString* carNo)
     NSPredicate *carTest = [NSPredicate predicateWithFormat:@"SELF MATCHES %@",carRegex];
     NSLog(@"carTest is %@",carTest);
     return [carTest evaluateWithObject:carNo];
+}
+#pragma 刷新图片验证码
+-(void)refreshConfirmPicture{
+    NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
+    NSURLRequest *re=[NSURLRequest requestWithURL:[NSURL URLWithString:strURL]];
+    NSOperationQueue *op=[[NSOperationQueue alloc] init];
+    [NSURLConnection sendAsynchronousRequest:re queue:op completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        dispatch_async(dispatch_get_main_queue(),^{
+            UIImage *img=[UIImage imageWithData:data];
+            [_numberButton setBackgroundImage:img forState:UIControlStateNormal];
+        });
+    }];
 }
 
 #pragma 取消输入操作

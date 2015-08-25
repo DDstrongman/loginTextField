@@ -12,5 +12,7 @@
 #import "UIView+RoundCorner.h"
 //view加入红点和红色提醒数字
 #import "UIView+RedPointNumber.h"
+//view加入阴影
+#import "UIView+Shadow.h"
 
 #endif

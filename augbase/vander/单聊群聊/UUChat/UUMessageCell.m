@@ -148,7 +148,6 @@
 
 //内容及Frame设置
 - (void)setMessageFrame:(UUMessageFrame *)messageFrame{
-
     _messageFrame = messageFrame;
     UUMessage *message = messageFrame.message;
     
@@ -159,9 +158,10 @@
     // 2、设置头像
     headImageBackView.frame = messageFrame.iconF;
     self.btnHeadImage.frame = CGRectMake(2, 2, ChatIconWH-4, ChatIconWH-4);
-    [self.btnHeadImage setBackgroundImageForState:UIControlStateNormal
-                                          withURL:[NSURL URLWithString:message.strIcon]
-                                 placeholderImage:[UIImage imageNamed:@"headImage.jpeg"]];
+//    [self.btnHeadImage setBackgroundImageForState:UIControlStateNormal
+//                                          withURL:[NSURL URLWithString:message.strIcon]
+//                                 placeholderImage:[UIImage imageNamed:@"headImage.jpeg"]];
+    [_btnHeadImage setBackgroundImage:[UIImage imageWithContentsOfFile:message.strIcon] forState:UIControlStateNormal];
     
     // 3、设置下标
     self.labelNum.text = message.strName;
@@ -172,7 +172,7 @@
         self.labelNum.frame = CGRectMake(messageFrame.nameF.origin.x, messageFrame.nameF.origin.y + 3, 80, messageFrame.nameF.size.height);
         self.labelNum.textAlignment = NSTextAlignmentLeft;
     }
-
+    
     // 4、设置内容
     
     //prepare for reuse
@@ -212,7 +212,8 @@
         case UUMessageTypePicture:
         {
             self.btnContent.backImageView.hidden = NO;
-            self.btnContent.backImageView.image = message.picture;
+//            self.btnContent.backImageView.image = message.picture;
+            [self.btnContent.backImageView setImageWithURL:message.picture placeholderImage:[UIImage imageNamed:@"test"]];
             self.btnContent.backImageView.frame = CGRectMake(0, 0, self.btnContent.frame.size.width, self.btnContent.frame.size.height);
             [self makeMaskView:self.btnContent.backImageView withImage:normal];
         }

@@ -707,7 +707,8 @@
     if ([mystring isEqualToString:@""]) {
         [mystring appendString:@"0"];
     }
-    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@&category=%@&did=%@",url,[UIDTOKEN getme].uid,[UIDTOKEN getme].token,@"1",mystring];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@&category=%@&did=%@",url,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"],@"1",mystring];
     
     
     uurl=[uurl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];

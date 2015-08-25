@@ -45,6 +45,8 @@
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"groupmembercell" forIndexPath:indexPath];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     [((UIButton *)[cell.contentView viewWithTag:7]) addTarget:self action:@selector(addFriend) forControlEvents:UIControlEventTouchUpInside];
+    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"persontitle2"];
+    [[cell.contentView viewWithTag:1] imageWithRound:NO];
     cell.layer.borderWidth = 0.5;
     cell.layer.borderColor = grayBackColor.CGColor;
     return cell;

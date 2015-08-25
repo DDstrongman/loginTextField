@@ -15,6 +15,10 @@
 
 #import "DBManager.h"
 
+#import "HttpManager.h"
+
+#import "WriteFileSupport.h"
+
 @implementation ChatModel
 
 - (void)populateRandomDataSource:(NSMutableArray *)messMutableArray {
@@ -37,14 +41,23 @@
     [[DBManager ShareInstance] creatDatabase:DBName];
     [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID]];
     FMResultSet *searchFMSet = [[DBManager ShareInstance] SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID] MessNumber:10 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+    [[FriendDBManager ShareInstance]creatDatabase:FriendDBName];
+    FMResultSet *searchFriendImage = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:userJID];
+    NSString *personImageFriendUrl;
+    NSString *personImageMyUrl = [NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName];
+    __block NSString *personImageUrl;
+    while ([searchFriendImage next]) {
+        personImageFriendUrl = [searchFriendImage stringForColumn:@"friendImageUrl"];
+    }
+    
     while ([searchFMSet next]) {
         UUMessageFrame *messageFrame = [[UUMessageFrame alloc]init];
         UUMessage *message = [[UUMessage alloc] init];
 //        obj.mycontent = [searchFMSet stringForColumn:@"key"];
         NSString *personJID = [searchFMSet stringForColumn:@"personJID"];
         NSString *personNickName = [searchFMSet stringForColumn:@"personNickName"];
-        NSString *personImageUrl = [searchFMSet stringForColumn:@"personImageUrl"];
         NSString *messContent = [searchFMSet stringForColumn:@"messContent"];
+        NSString *messTime = [searchFMSet stringForColumn:@"messTime"];
         NSString *FromMeOrNot = [searchFMSet stringForColumn:@"FromMeOrNot"];
         NSString *chatType = [searchFMSet stringForColumn:@"chatType"];
         NSString *messType = [searchFMSet stringForColumn:@"messType"];
@@ -52,19 +65,86 @@
         [dataDic setObject:FromMeOrNot forKey:@"from"];
         [dataDic setObject:timeStamp forKey:@"strTime"];
         [dataDic setObject:personNickName forKey:@"strName"];
-        [dataDic setObject:personImageUrl forKey:@"strIcon"];
         [dataDic setObject:messType forKey:@"type"];
-        [dataDic setObject:messContent forKey:@"strContent"];
         
-        [message setWithDict:dataDic];
-        [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
-        messageFrame.showTime = message.showDateLabel;
-        [messageFrame setMessage:message];
-        
-        if (message.showDateLabel) {
-            previousTime = dataDic[@"strTime"];
+        if ([messType isEqualToString:@"0"]) {
+            [dataDic setObject:messContent forKey:@"strContent"];
+            if ([FromMeOrNot isEqualToString:@"0"]) {
+                personImageUrl = personImageMyUrl;
+            }else{
+                personImageUrl = personImageFriendUrl;
+            }
+            [dataDic setObject:personImageUrl forKey:@"strIcon"];
+            
+            [message setWithDict:dataDic];
+            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+            messageFrame.showTime = message.showDateLabel;
+            [messageFrame setMessage:message];
+            
+            if (message.showDateLabel) {
+                previousTime = dataDic[@"strTime"];
+            }
+            [self.dataSource addObject:messageFrame];
+        }else if([messType isEqualToString:@"1"]){
+            [dataDic setObject:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]] forKey:@"picture"];
+            if ([FromMeOrNot isEqualToString:@"0"]) {
+                personImageUrl = personImageMyUrl;
+            }else{
+                personImageUrl = personImageFriendUrl;
+            }
+            [dataDic setObject:personImageUrl forKey:@"strIcon"];
+            [message setWithDict:dataDic];
+            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+            messageFrame.showTime = message.showDateLabel;
+            [messageFrame setMessage:message];
+            
+            if (message.showDateLabel) {
+                previousTime = dataDic[@"strTime"];
+            }
+            [self.dataSource addObject:messageFrame];
+        }else{
+            [dataDic setObject:messTime forKey:@"strVoiceTime"];
+            NSData *received = [[HttpManager ShareInstance] httpGetSupport:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]];
+            [dataDic setObject:received forKey:@"voice"];
+            if ([FromMeOrNot isEqualToString:@"0"]) {
+                personImageUrl = personImageMyUrl;
+            }else{
+                personImageUrl = personImageFriendUrl;
+            }
+            [dataDic setObject:personImageUrl forKey:@"strIcon"];
+            
+            [message setWithDict:dataDic];
+            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+            messageFrame.showTime = message.showDateLabel;
+            [messageFrame setMessage:message];
+            
+            if (message.showDateLabel) {
+                previousTime = dataDic[@"strTime"];
+            }
+            [self.dataSource addObject:messageFrame];
+//            [[HttpManager ShareInstance] AFNetGETSupport:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent] Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+//                [dataDic setObject:responseObject forKey:@"voice"];
+//                if ([FromMeOrNot isEqualToString:@"0"]) {
+//                    personImageUrl = personImageMyUrl;
+//                }else{
+//                    personImageUrl = personImageFriendUrl;
+//                }
+//                [dataDic setObject:personImageUrl forKey:@"strIcon"];
+//                
+//                [message setWithDict:dataDic];
+//                [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+//                messageFrame.showTime = message.showDateLabel;
+//                [messageFrame setMessage:message];
+//                
+//                if (message.showDateLabel) {
+//                    previousTime = dataDic[@"strTime"];
+//                }
+//                [self.dataSource addObject:messageFrame];
+//                [_flushTableDelegate FlushTable:YES];
+//            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+//                NSLog(@"WEB端登录失败：%@",error);
+//            }];
         }
-        [self.dataSource addObject:messageFrame];
     }
 }
 
@@ -75,7 +155,7 @@
     UUMessage *message = [[UUMessage alloc] init];
     NSMutableDictionary *dataDic = [NSMutableDictionary dictionaryWithDictionary:dic];
     
-    NSString *URLStr = @"http://img0.bdstatic.com/img/image/shouye/xinshouye/mingxing16.jpg";
+    NSString *URLStr = [NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName];
     [dataDic setObject:@(UUMessageFromMe) forKey:@"from"];
     [dataDic setObject:[[NSDate date] description] forKey:@"strTime"];
     [dataDic setObject:@"Hello,Sister" forKey:@"strName"];

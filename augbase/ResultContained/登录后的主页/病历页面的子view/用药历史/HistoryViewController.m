@@ -197,9 +197,9 @@
    // alineview=[SplitLineView getview:0 andY:0 andW:320];
     
     self.view.backgroundColor=[UIColor whiteColor];
-    self.navigationController.navigationBar.hidden=YES;
+    self.navigationController.navigationBarHidden = YES;
     
-    self.tabBarController.tabBar.hidden=YES;
+    self.tabBarController.tabBar.hidden = YES;
     [self initnavBar];
     
     self.ischange=0;
@@ -320,12 +320,9 @@
         
     }
     
-#warning 暂时测试用，因为旧版的未给dictionary赋值
-    [UIDTOKEN getme].uid = @"123test";
-    [UIDTOKEN getme].token = @"123test";
-    
-    NSDictionary *dic=[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:[UIDTOKEN getme].uid,[UIDTOKEN getme].token,self.source,nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"source",nil]];
-    urlkey=[[NSURL URLWithString:[NSString stringWithFormat:@"%@?uid=%@&token=%@",url,[UIDTOKEN getme].uid,[UIDTOKEN getme].token]] absoluteString];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSDictionary *dic=[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"],self.source,nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"source",nil]];
+    urlkey=[[NSURL URLWithString:[NSString stringWithFormat:@"%@?uid=%@&token=%@",url,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]]] absoluteString];
     id obj=[[TMDiskCache sharedCache] objectForKey:urlkey];
     if (obj==NULL) {
         //缓存现在

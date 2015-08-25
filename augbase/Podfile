@@ -7,7 +7,6 @@ pod 'Masonry'
 pod 'AFNetworking'
 pod 'MBProgressHUD'
 pod 'FMDB'
-
-pod 'IQKeyboardManager'
+pod 'SDWebImage'
 
 pod 'XMPPFramework'

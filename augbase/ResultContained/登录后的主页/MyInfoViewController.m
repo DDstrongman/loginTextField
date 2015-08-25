@@ -27,8 +27,9 @@
 //}
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.navigationController.navigationBarHidden = YES;
-    [self initNavigationBar];
+    self.navigationController.navigationBarHidden = NO;
+    self.tabBarController.title = NSLocalizedString(@"我", @"");
+//    [self initNavigationBar];
     
     UIImage* imageNormal = [UIImage imageNamed:@"mine_off"];
     UIImage* imageSelected = [UIImage imageNamed:@"mine_on"];

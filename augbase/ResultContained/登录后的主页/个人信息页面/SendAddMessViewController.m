@@ -34,7 +34,6 @@
         make.left.equalTo(@0);
         make.right.equalTo(@0);
         make.top.equalTo(@0);
-//        make.height.equalTo(@180);
         make.bottom.equalTo(@0);
     }];
 }
@@ -46,7 +45,7 @@
     self.title = NSLocalizedString(@"添加好友", @"");
     UIButton *sendMessButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
     [sendMessButton setTitle:NSLocalizedString(@"发送", @"") forState:UIControlStateNormal];
-    [sendMessButton setTitleColor:themeColor forState:UIControlStateNormal];
+    [sendMessButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     sendMessButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [sendMessButton addTarget:self action:@selector(sendAddFriend) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:sendMessButton]];
@@ -56,8 +55,7 @@
 -(void)sendAddFriend{
     NSLog(@"发送加好友信息");
 #warning 此处添加好友需要加入jid判定
-    [[XMPPSupportClass ShareInstance] addfriend:@"182572"];
-    [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+    [[XMPPSupportClass ShareInstance] addfriend:@"p20865"];
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
@@ -150,5 +148,7 @@
     }
     showOrNotBool = [sender isOn];
 }
-
+-(void)viewWillDisappear:(BOOL)animated{
+    [self.navigationItem setRightBarButtonItem:nil];
+}
 @end

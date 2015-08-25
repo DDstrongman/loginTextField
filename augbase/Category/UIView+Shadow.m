@@ -39,7 +39,6 @@
 {
     UIView *shadowView = [self createShadowViewWithRadius:radius Color:color Directions:directions];
     shadowView.tag = kShadowViewTag;
-    
     [self addSubview:shadowView];
 }
 

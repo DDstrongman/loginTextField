@@ -8,7 +8,6 @@
 
 #import "SendAddDoctorMessViewController.h"
 
-#import "IQKeyboardManager.h"
 
 @interface SendAddDoctorMessViewController ()
 
@@ -26,7 +25,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    [[IQKeyboardManager sharedManager] setEnable:YES];
+//    [[IQKeyboardManager sharedManager] setEnable:YES];
 }
 
 #pragma mark - Table view data source

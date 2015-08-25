@@ -21,12 +21,15 @@
 #import "HASmallCollectionViewController.h"
 
 #import "XMPPSupportClass.h"
-#import "HttpSupportClass.h"
 
-@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate,ReceiveMessDelegate>
+#import "WriteFileSupport.h"
+
+@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate,ReceiveMessDelegate,ConnectXMPPDelegate,GetFriendListDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *messageTableview;
 
 @property (nonatomic) HATransitionController *transitionController;
+
+//@property (nonatomic,strong) 
 
 @end

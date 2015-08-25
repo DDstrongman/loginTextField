@@ -81,6 +81,14 @@
         [[cell.contentView viewWithTag:6] imageWithRound:NO];
         [[cell.contentView viewWithTag:7] imageWithRound:NO];
         [[cell.contentView viewWithTag:8] imageWithRound:NO];
+        ((UIImageView *)[cell.contentView viewWithTag:1]).image =  [UIImage imageNamed:@"persontitle1"];
+        ((UIImageView *)[cell.contentView viewWithTag:2]).image =  [UIImage imageNamed:@"persontitle2"];
+        ((UIImageView *)[cell.contentView viewWithTag:3]).image =  [UIImage imageNamed:@"persontitle3"];
+        ((UIImageView *)[cell.contentView viewWithTag:4]).image =  [UIImage imageNamed:@"persontitle5"];
+        ((UIImageView *)[cell.contentView viewWithTag:5]).image =  [UIImage imageNamed:@"persontitle6"];
+        ((UIImageView *)[cell.contentView viewWithTag:6]).image =  [UIImage imageNamed:@"persontitle7"];
+        ((UIImageView *)[cell.contentView viewWithTag:7]).image =  [UIImage imageNamed:@"persontitle8"];
+        ((UIImageView *)[cell.contentView viewWithTag:8]).image =  [UIImage imageNamed:@"persontitle9"];
         NSInteger space =(NSInteger)(ViewWidth - 30*2-50*4 - 20)/3;
         NSLog(@"space === %ld",(long)space);
         [[cell.contentView viewWithTag:2] mas_updateConstraints:^(MASConstraintMaker *make) {
@@ -106,8 +114,11 @@
         cell.accessoryView = tailImageView;
     }else if(indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
+        ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"群描述：", @"");
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"    永超就是喜欢卖屁股", @"");
     }else if(indexPath.row == 5){
         cell = [tableView dequeueReusableCellWithIdentifier:@"quitgroupcell" forIndexPath:indexPath];
+        [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(quitGroup:) forControlEvents:UIControlEventTouchUpInside];
     }else{
         cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
         if (cell == nil) {
@@ -141,5 +152,9 @@
 //-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
 //    return nil;
 //}
+
+-(void)quitGroup:(UIButton *)sender{
+    NSLog(@"退群");
+}
 
 @end

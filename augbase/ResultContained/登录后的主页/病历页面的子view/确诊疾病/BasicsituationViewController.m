@@ -71,7 +71,7 @@
 {
     [super viewDidLoad];
     self.view.backgroundColor=[UIColor whiteColor];//1
-    [self.navigationController.navigationBar setHidden:YES];//1
+    self.navigationController.navigationBarHidden = YES;//1
     [self initnavBar];//1
     [self.tabBarController.tabBar setHidden:YES];//1
  //   [self initArray];// 0.8 简单的 + 上面的 疾病的处理
@@ -378,8 +378,9 @@
     HUD.delegate = self;
 	[HUD show:YES];
     //que/getabstractlist
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@und/list",Baseurl];
-    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@",url,[UIDTOKEN getme].uid,[UIDTOKEN getme].token];
+    NSString *uurl=[NSString stringWithFormat:@"%@?uid=%@&token=%@",url,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
     NSLog(@"%@",uurl);
     
     [UIDTOKEN getme].BASICurl=[[NSURL URLWithString:uurl] absoluteString];
@@ -1310,8 +1311,8 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     NSUserDefaults *user=[NSUserDefaults standardUserDefaults];
-    NSString *yzuid=[user objectForKey:@"myuid"];
-    NSString *yztoken=[user objectForKey:@"mytoken"];
+    NSString *yzuid=[user objectForKey:@"userUID"];
+    NSString *yztoken=[user objectForKey:@"userToken"];
     //  NSLog(@"%@-%@",yztoken,yzuid);
     NSDictionary *dic=[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:yzuid,yztoken,str,@"2",nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"did",@"category",nil]];
     [manager POST:url parameters:dic success:^(AFHTTPRequestOperation *operation, id responseObject) {

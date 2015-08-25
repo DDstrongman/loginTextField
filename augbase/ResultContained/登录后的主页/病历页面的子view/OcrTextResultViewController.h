@@ -14,9 +14,30 @@
 @interface OcrTextResultViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIScrollViewDelegate>
 
 @property (nonatomic,strong )IBOutlet UITableView *nameTable;
-@property (nonatomic,strong )IBOutlet UITableView *firstResultTable;
-@property (nonatomic,strong )IBOutlet UITableView *secondResultTable;
-@property (nonatomic,strong )IBOutlet UITableView *thirdesultTable;
+
+@property (nonatomic,strong) IBOutlet UIButton *firstTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *secondTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *thirdTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *forthTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *fifthTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *sixthTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *sevenTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *eightTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *nineTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *tenthTitleButton;
+@property (nonatomic,strong) IBOutlet UIButton *elevenTitleButton;
+
+@property (nonatomic,strong )UITableView *firstResultTable;
+@property (nonatomic,strong )UITableView *secondResultTable;
+@property (nonatomic,strong )UITableView *thirdsultTable;
+@property (nonatomic,strong )UITableView *forthsultTable;
+@property (nonatomic,strong )UITableView *fifthsultTable;
+@property (nonatomic,strong )UITableView *sixthsultTable;
+@property (nonatomic,strong )UITableView *sevensultTable;
+@property (nonatomic,strong )UITableView *eightsultTable;
+@property (nonatomic,strong )UITableView *ninesultTable;
+@property (nonatomic,strong )UITableView *tensultTable;
+@property (nonatomic,strong )UITableView *elevensultTable;
 
 
 @property (nonatomic,strong) IBOutlet UIButton *titleButton;

@@ -54,8 +54,24 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.navigationController.navigationBarHidden = YES;
-    [self initNavigationBar];
+    self.navigationController.navigationBarHidden = NO;
+    self.tabBarController.title = NSLocalizedString(@"病历", @"");
+#warning 去掉navigationbar下划线
+    UINavigationBar *navigationBar = self.navigationController.navigationBar;
+    [navigationBar setBackgroundImage:[UIImage imageNamed:@"nav"]
+                       forBarPosition:UIBarPositionAny
+                           barMetrics:UIBarMetricsDefault];
+    [navigationBar setShadowImage:[UIImage new]];
+    self.navigationController.navigationBar.barStyle = UIBaselineAdjustmentNone;
+    
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"nav"] forBarPosition:UIBarPositionTopAttached barMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    [self.navigationController.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor],NSForegroundColorAttributeName,nil]];
+    
+    
+//    [self initNavigationBar];
     
     UIImage* imageNormal = [UIImage imageNamed:@"case_history_off"];
     UIImage* imageSelected = [UIImage imageNamed:@"case_history_on"];
@@ -107,6 +123,19 @@
     [((UIImageView *)[cell.contentView viewWithTag:4]) setTintColor:grayBackColor];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
     ((UILabel *)[cell.contentView viewWithTag:3]).textColor = grayLabelColor;
+    if (indexPath.row == 0) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"2015-07-12";
+    }else if (indexPath.row == 1) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"大三阳";
+    }else if (indexPath.row == 2) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"恩替卡韦";
+    }else if (indexPath.row == 3) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
+    }else if (indexPath.row == 4) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
+    }else if (indexPath.row == 5) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
+    }
     cell.layer.borderWidth = 0.25;
     cell.layer.borderColor = lightGrayBackColor.CGColor;
 

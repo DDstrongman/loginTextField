@@ -11,6 +11,8 @@
 
 #import "XMPPSupportClass.h"
 
+#import "WriteFileSupport.h"
+
 @interface LoginViewController : UIViewController<ConnectXMPPDelegate>
 
 @property (strong,nonatomic) ImageViewLabelTextFieldView *userNameView;

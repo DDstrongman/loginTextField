@@ -26,33 +26,22 @@
 //    _newsTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, ViewHeight)];
     _newsTable.dataSource = self;
     _newsTable.delegate = self;
-//    [self.view addSubview:_newsTable];
-//    mySearchBar = [[UISearchBar alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 40)];
-//    mySearchBar.delegate = self;
-//    [mySearchBar setPlaceholder:@"搜索列表"];
+
+    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
+    searchViewController.dimsBackgroundDuringPresentation = NO;
+    searchViewController.hidesNavigationBarDuringPresentation = NO;
+    [searchViewController.searchBar sizeToFit];
+    //设置显示搜索结果的控制器
+    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
+    //将搜索控制器的搜索条设置为页眉视图
+    _newsTable.tableHeaderView = searchViewController.searchBar;
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.delegate = self;
     
-    
-//    _newsTable.tableHeaderView = mySearchBar;
     dataArray = [@[@"小月",@"小易",@"小易"]mutableCopy];
     if (!searchResults) {
         searchResults = dataArray;
     }
-    
-//    //创建搜索条,将自身设置为展示结果的控制器
-//    UISearchController *searchVC =[[UISearchController alloc]
-//                                   initWithSearchResultsController:nil];
-//    //设置渲染颜色
-//    searchVC.searchBar.tintColor = [UIColor orangeColor];
-//    //设置状态条颜色
-//    searchVC.searchBar.barTintColor = [UIColor orangeColor];
-//    //设置开始搜索时背景显示与否(很重要)
-//    searchVC.dimsBackgroundDuringPresentation = NO;
-//    //适应整个屏幕
-//    [searchVC.searchBar sizeToFit];
-//    //设置显示搜索结果的控制器
-//    searchVC.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
-//    //将搜索控制器的搜索条设置为页眉视图
-//    self.tableView.tableHeaderView = searchVC.searchBar;
     
     _followOrNot = NO;//测试用
     _contactNumber = 3;
@@ -80,19 +69,6 @@
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"咨询", @"");
-    NSLog(@"_table.frame===%@",NSStringFromCGRect(_newsTable.frame));
-    
-    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
-    //    searchViewController.active = NO;
-    searchViewController.dimsBackgroundDuringPresentation = NO;
-    searchViewController.hidesNavigationBarDuringPresentation = NO;
-    [searchViewController.searchBar sizeToFit];
-    //设置显示搜索结果的控制器
-    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
-    //将搜索控制器的搜索条设置为页眉视图
-    _newsTable.tableHeaderView = searchViewController.searchBar;
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
-    searchViewController.searchBar.delegate = self;
 }
 
 #pragma mark - Table view data source
@@ -161,65 +137,23 @@
     return nil;
 }
 
-//#pragma 滑动scrollview取消输入
-//- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-//    [self.view endEditing:YES];
-//}
-//
-//#pragma 取消输入操作
-//-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
-//    [self.view endEditing:YES];
-//}
-
-#pragma searchbar delegate
-- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar{
-    [self.navigationController setNavigationBarHidden:YES animated:YES];
-//    _newsTable.frame = CGRectMake(0,44, ViewWidth, ViewHeight-44);
-//    [_newsTable mas_makeConstraints:^(MASConstraintMaker *make) {
-//        make.top.equalTo(@0);
-//    }];
-//    [self performSelector:@selector(setFrameOfTable) withObject:nil afterDelay:2.0f];
-    UIButton *cancelButton;
-    [searchBar setShowsCancelButton:YES animated:NO];
-    UIView *topView = searchBar.subviews[0];
-    for (UIView *subView in topView.subviews) {
-        if ([subView isKindOfClass:NSClassFromString(@"UINavigationButton")]) {
-            cancelButton = (UIButton*)subView;
-        }
-    }
-    if (cancelButton) {
-        //Set the new title of the cancel button
-        [cancelButton setTitle:@"取消" forState:UIControlStateNormal];
-        cancelButton.tintColor = [UIColor grayColor];
-    }
+#pragma searchviewcontroller的delegate
+// 搜索界面将要出现
+- (void)willPresentSearchController:(UISearchController *)searchController{
+    NSLog(@"将要  开始  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
 }
 
--(void)setFrameOfTable{
-    NSLog(@"执行setframe,table的frame为===%@",NSStringFromCGRect(_newsTable.frame));
-   _newsTable.frame = CGRectMake(0, 0, ViewWidth, ViewHeight);
+// 搜索界面将要消失
+-(void)willDismissSearchController:(UISearchController *)searchController{
+    NSLog(@"将要  取消  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    //    navigationBar.hidden = NO;
+    //    [[UIApplication sharedApplication]setStatusBarHidden:NO];
 }
 
-- (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar{
-    [self.navigationController setNavigationBarHidden:NO animated:YES];
-//    [UISearchController cancelPreviousPerformRequestsWithTarget:nil];
-//    [searchBar resignFirstResponder];
-}
-
--(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
-    [self.navigationController setNavigationBarHidden:NO animated:YES];
-//    [self.view endEditing:YES];
-//    [searchBar resignFirstResponder];
-}
-
--(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar{
-    [self.navigationController setNavigationBarHidden:NO animated:YES];
-//    _newsTable.frame = CGRectMake(0, 44, ViewWidth, ViewHeight-44);
-//    [_newsTable mas_updateConstraints:^(MASConstraintMaker *make) {
-//        make.top.equalTo(@0);
-//    }];
-//    [self.view endEditing:YES];
-//    [searchBar endEditing:YES];
-//    [searchBar resignFirstResponder];
+-(void)didDismissSearchController:(UISearchController *)searchController{
+    
 }
 
 @end

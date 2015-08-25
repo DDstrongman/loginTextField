@@ -12,6 +12,8 @@
 #import "UserItem.h"
 #import "AppDelegate.h"
 
+#import "WriteFileSupport.h"
+
 @interface FirstTimeUserInfoViewController ()<ConnectXMPPDelegate>
 {
     BOOL _animatedOrNot;
@@ -26,6 +28,7 @@
     
     self.navigationItem.title = NSLocalizedString(@"个人信息", @"");
     [_userImageView setImage:[UIImage imageNamed:@"default_avatar"]];
+    [_userImageView imagewithColor:grayBackgroundDarkColor CornerWidth:1.0];
     [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
     
     _nameView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 250, ViewWidth-120+12, 50)];
@@ -52,7 +55,7 @@
     [self.view addSubview:_finishRegistButton];
     
     _cameraImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    _cameraImageView.center = CGPointMake(56.25, 56.25);
+    _cameraImageView.center = CGPointMake(_userImageView.bounds.size.width-_cameraImageView.bounds.size.width/2,_userImageView.bounds.size.height-_cameraImageView.bounds.size.height/2);
     _cameraImageView.image = [UIImage imageNamed:@"take"];
     [_cameraImageView imageWithRound];
     [_userImageView addSubview:_cameraImageView];
@@ -71,7 +74,7 @@
     
     //可能需要加入每次加载界面的判断，是否满足激活按钮的条件，需要详细考虑
     _finishRegistButton.userInteractionEnabled = NO;
-    [[IQKeyboardManager sharedManager] setEnable:YES];
+//    [[IQKeyboardManager sharedManager] setEnable:YES];
 }
 
 -(void)selectSexAndAge{
@@ -93,8 +96,6 @@
 -(void)finishRegist{
     NSLog(@"注册完成，添加响应函数");
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:_userName forKey:@"userName"];
-    [defaults setObject:_userPass forKey:@"userPassword"];
     [defaults setObject:@YES forKey:@"NotFirstTime"];
     [defaults setObject:_nameView.contentTextField.text forKey:@"userNickName"];
     NSString *sexAndAge = _sexAndAgeView.contentTextField.text;
@@ -102,22 +103,71 @@
     NSLog(@"分割后的字符为：%@",array);
     [defaults setObject:array[0] forKey:@"userGender"];
     [defaults setObject:array[1] forKey:@"userAge"];
-    //    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,[defaults objectForKey:@"UserName"],[defaults objectForKey:@"Password"]];
 #warning 正式版本中使用上方的代码
-    NSString *url = [NSString stringWithFormat:@"%@user/login?username=%@&password=%@",Baseurl,@"azaz",@"123123"];
-    NSLog(@"url === %@",url);
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+    NSLog(@"url===%@",url);
+    NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+    [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+    [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+    url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-       
+    [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        //NSLog(@"responseObject=%@",responseObject);
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"device activitation res=%d",res);
+        if (res==0) {
+            //请求完成
+            [UserItem ShareInstance].userUID = [source objectForKey:@"uid"];
+            [UserItem ShareInstance].userName = [source objectForKey:@"username"];
+            [UserItem ShareInstance].userNickName = [source objectForKey:@"nickname"];
+            [UserItem ShareInstance].userToken = [source objectForKey:@"token"];
+            [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
+            NSLog(@"返回的登录系数：%@",source);
+            //            [defaults synchronize];
+            [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
+            [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
+            [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
+            [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
+            [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
+            [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",[UserItem ShareInstance].userJID,httpServer]];
+            //获取本人头像和好友头像
+            NSLog(@"userJid === %@,web登录完成，开始xmpp登录",[defaults valueForKey:@"userJID"]);
+            //jid获取用户信息
+            NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+            NSLog(@"jidurl === %@",jidurl);
+            jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+            [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                NSLog(@"imageurl === %@",imageurl);
+                imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {                        [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
+                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
+                        
+                    }
+                }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    NSLog(@"获取图片信息失败");
+                }];
+            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"获取jid信息失败");
+            }];
+        }
+        else{
+            
+        }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
     }];
 #warning 此处是测试时候用的代码，正式上线需要将一部分代码转移到上面去
-    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",testMineJID,httpServer]]) {
-        
-    }
 }
 
 #pragma xmpp登录结果的delegate
