@@ -120,7 +120,6 @@
     FMResultSet *messWithNumber;
 #warning 此处的limit 0,%ld表示从第一台哦开始，取％ld条数据，0可以自己修改为想要的数据或是传入
     NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM (SELECT * FROM %@ order by %@ %@ limit 0,%ld) order by %@ ASC",tableNameJID,searchKey,methodDescOrAsc,(long)messNumber,searchKey];
-    NSLog(@"searchsql === %@",searchsql);
     if ([self isChatTableExist:tableNameJID]) {
         messWithNumber = [self.yzdcdb executeQuery:searchsql];
     }
@@ -140,7 +139,6 @@
     BOOL res;
 //    NSString *upxdatesql = [NSString stringWithFormat:@"UPDATE %@ SET ReadOrNot=1 where ReadOrNot=0",tableName];
     NSString *updatesql = [NSString stringWithFormat:@"UPDATE %@ set ReadOrNot = 1 where ReadOrNot = 0",tableName];
-    NSLog(@"updatesql===%@",updatesql);
     if ([self.yzdcdb open]) {
         if ([self isChatTableExist:tableName]) {
             res = [self.yzdcdb executeUpdate:updatesql];
@@ -253,7 +251,7 @@
 #pragma mark-患者端最近联系人 表?????????????????????????????????
 -(BOOL)creatDianTablename:(NSString *)name{
     if (!self.yzdcdb) {
-        [self creatDatabase:[UIDTOKEN getme].dbname];
+        [self creatDatabase:DBName];
     }
     if (![self.yzdcdb open]) {
        	return NO;
@@ -365,6 +363,11 @@
         
     }
     return rs;
+}
+
+#pragma 删除db文件即可
+-(void)deleteDB{
+    
 }
 
 @end

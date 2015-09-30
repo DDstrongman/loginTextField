@@ -87,7 +87,11 @@
 - (NSInteger)hour
 {
     NSDateComponents *dateComponents = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSHourCalendarUnit|NSMinuteCalendarUnit  fromDate:self];
-    return [dateComponents hour];
+    if (([dateComponents hour]-8)<0) {
+        return [dateComponents hour]-8+24;
+    }else{
+        return [dateComponents hour]-8;
+    }
 }
 
 - (NSInteger)minute
@@ -171,7 +175,7 @@
         timeStr = [NSString stringWithFormat:@"%@%@",([self hour] > 12 ? @"下午" : @"上午"),timeStr];
     }
     if (enableSuffix) {
-        timeStr = [NSString stringWithFormat:@"%@%@",([self hour] > 12 ? @"pm" : @"am"),timeStr];
+        timeStr = [NSString stringWithFormat:@"%@%@",([self hour] > 12 ? @"下午" : @"上午"),timeStr];
     }
     return timeStr;
 }
@@ -210,11 +214,11 @@
     NSString *str;
     NSInteger chaDay = [self daysBetweenCurrentDateAndDate];
     if (chaDay == 0) {
-        str = @"Today";
+        str = @"今天";
     }else if (chaDay == 1){
-        str = @"The Day Befor Yesterday";
+        str = @"昨天";
     }else if (chaDay == -1){
-        str = @"Yesterday";
+        str = @"明天";
     }else{
         str = [self stringYearMonthDay];
     }
@@ -369,7 +373,7 @@
     NSTimeInterval timeIntervalNow = [dateNow timeIntervalSince1970];
     
     NSTimeInterval cha = timeInterval - timeIntervalNow;
-    CGFloat chaDay = cha / 86400.0;
+    CGFloat chaDay = (cha-8*3600) / 86400.0;
     NSInteger day = chaDay * 1;
     return day;
 }

@@ -21,6 +21,7 @@
 -(void)imageWithRedNumber:(NSInteger)number{
     UILabel *numberView = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
     numberView.backgroundColor = [UIColor redColor];
+    numberView.tag = 99;
     [numberView imageWithRound:NO];
     numberView.center = CGPointMake(self.frame.size.width-3, 3);
     numberView.text = [NSString stringWithFormat:@"%ld",(long)number];
@@ -28,6 +29,10 @@
     numberView.font = [UIFont systemFontOfSize:15.0];
     numberView.textColor = [UIColor whiteColor];
     [self addSubview:numberView];
+}
+
+- (void)imageRemoveRedNumber{
+    [[self viewWithTag:99] removeFromSuperview];
 }
 
 -(void)imageWithRedNumber:(NSInteger)number Radio:(float)radio FontFloat:(float)fontFloat{

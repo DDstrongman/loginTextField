@@ -16,9 +16,6 @@
 @property (nonatomic,strong) IBOutlet UILabel *doctorDetalLabel;//医生详细信息
 @property (nonatomic,strong) IBOutlet UIButton *addDoctorButton;//添加医生
 
-@property (nonatomic,strong) UIImage *doctorImage;//医生头像
-@property (nonatomic,strong) NSString *doctorName;//医生名字
-@property (nonatomic,strong) NSString *doctorHospital;//医生医院
-@property (nonatomic,strong) NSString *doctorDetail;//医生详细信息
+@property (nonatomic,strong) NSDictionary *doctorDic;//医生信息字典
 
 @end

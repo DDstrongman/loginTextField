@@ -13,13 +13,7 @@
 
 #import "OcrTextResultViewController.h"
 
-#import "HistoryViewController.h"
-#import "BasicsituationViewController.h"
-#import "CameraViewController.h"
-
-//#import "HistoryViewController.h"
-
-@interface CaseViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate>
+@interface CaseViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UIActionSheetDelegate>
 
 //上方两个image的button和对应下方的button
 @property (nonatomic,strong) IBOutlet UIButton *cameraNewButton;

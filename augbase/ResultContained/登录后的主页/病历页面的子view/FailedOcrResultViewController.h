@@ -15,7 +15,9 @@
 @property (nonatomic,strong)IBOutlet UILabel *failDetailText;
 @property (nonatomic,strong)IBOutlet UIButton *cameraAgainButton;
 
-@property (nonatomic,strong) UIImage *failedImage;
+@property (nonatomic,strong) NSString *failedImageUrl;
+
+@property (nonatomic,strong) NSDictionary *detailDic;
 
 
 @end

@@ -8,7 +8,6 @@
 
 #import "FirstTimeUserInfoViewController.h"
 
-#import "XMPPSupportClass.h"
 #import "UserItem.h"
 #import "AppDelegate.h"
 
@@ -96,7 +95,6 @@
 -(void)finishRegist{
     NSLog(@"注册完成，添加响应函数");
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:@YES forKey:@"NotFirstTime"];
     [defaults setObject:_nameView.contentTextField.text forKey:@"userNickName"];
     NSString *sexAndAge = _sexAndAgeView.contentTextField.text;
     NSArray *array = [sexAndAge componentsSeparatedByString:@"／"];
@@ -105,7 +103,6 @@
     [defaults setObject:array[1] forKey:@"userAge"];
 #warning 正式版本中使用上方的代码
     NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
-    NSLog(@"url===%@",url);
     NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
     [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
     [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
@@ -114,7 +111,6 @@
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
     [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"responseObject=%@",responseObject);
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         NSLog(@"device activitation res=%d",res);
@@ -132,34 +128,24 @@
             [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
             [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
             [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
-            [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",[UserItem ShareInstance].userJID,httpServer]];
-            //获取本人头像和好友头像
-            NSLog(@"userJid === %@,web登录完成，开始xmpp登录",[defaults valueForKey:@"userJID"]);
-            //jid获取用户信息
-            NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-            NSLog(@"jidurl === %@",jidurl);
-            jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-            [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
-                NSLog(@"imageurl === %@",imageurl);
-                imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-                [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {                        [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
-                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
-                        
+            if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[UserItem ShareInstance].userJID,httpServer]]) {
+                NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
+                NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
+                [createDic setObject:@0 forKey:@"clienttype"];
+                [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    if ([[createRes objectForKey:@"res"] intValue] == 0) {
+                        NSLog(@"更新设备号成功");
                     }
-                }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                    NSLog(@"获取图片信息失败");
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    
                 }];
-            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                NSLog(@"获取jid信息失败");
-            }];
+            };
+            UIImage *userImage = _userImageView.image;
+            [self updateimg:userImage];
         }
         else{
             
@@ -167,15 +153,34 @@
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
     }];
-#warning 此处是测试时候用的代码，正式上线需要将一部分代码转移到上面去
+}
+
+-(void)updateimg:(UIImage *)headImg{
+    NSData *data = UIImageJPEGRepresentation(headImg, 0.2);
+    
+    NSUserDefaults *user=[NSUserDefaults standardUserDefaults];
+    NSString *yzuid = [user objectForKey:@"userUID"];
+    NSString *yztoken = [user objectForKey:@"userToken"];
+    NSString *url=[NSString stringWithFormat:@"%@user/updateimg?uid=%@&token=%@",Baseurl,yzuid,yztoken];
+    [[HttpManager ShareInstance]AFNetPOSTSupport:url Parameters:nil ConstructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+        [formData appendPartWithFileData:data name:@"image" fileName:@"tou" mimeType:@"png"];
+    } SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSData *data = UIImagePNGRepresentation(headImg);
+        [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:data];
+        [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
+        if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[[NSUserDefaults standardUserDefaults] valueForKey:@"userJID"],httpServer]]) {
+            
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
 }
 
 #pragma xmpp登录结果的delegate
 -(void)ConnectXMPPResult:(BOOL)result{
     NSLog(@"xmpp登录结果");
     if (result) {
-        
-//        [[XMPPSupportClass ShareInstance] getMyQueryRoster];
+        [[NSUserDefaults standardUserDefaults] setObject:@YES forKey:@"NotFirstTime"];
         
         UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];

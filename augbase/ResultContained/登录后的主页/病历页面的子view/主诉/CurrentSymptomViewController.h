@@ -1,0 +1,17 @@
+//
+//  CurrentSymptomViewController.h
+//  ResultContained
+//
+//  Created by 李胜书 on 15/9/18.
+//  Copyright © 2015年 李胜书. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface CurrentSymptomViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate>
+
+@property (nonatomic,strong) UICollectionView *currentSymptomCollection;
+
+@property (nonatomic,strong) NSDictionary *infoDic;//传过来的所有数据字典
+
+@end

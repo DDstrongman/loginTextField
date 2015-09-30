@@ -13,6 +13,7 @@
 
 - (void)imageWithRedPoint;
 - (void)imageWithRedNumber:(NSInteger)number;
+- (void)imageRemoveRedNumber;
 - (void)imageWithRedNumber:(NSInteger)number Radio:(float)radio FontFloat:(float)fontFloat;
 
 @end

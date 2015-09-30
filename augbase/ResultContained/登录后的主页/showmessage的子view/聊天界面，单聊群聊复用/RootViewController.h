@@ -8,19 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-#import "RootPrivateInfoViewController.h"
-#import "StrangerViewController.h"
+
 #import "GroupDetailViewController.h"
 
 #import "ChatModel.h"
-#import "XMPPSupportClass.h"
 #import "DBItem.h"
 #import "WriteFileSupport.h"
-@interface RootViewController : UIViewController<ReceiveMessDelegate,FlushTableDelegate>
+@interface RootViewController : UIViewController<ReceiveMessDelegate>
 
 @property (nonatomic) BOOL privateOrNot;//0,私聊；1，群聊.
 
 @property (nonatomic,strong) NSString *personJID;//选择的对象的jid,好友的jid。
+@property (nonatomic,strong) NSString *groupJID;//选择的对象的jid,好友的jid。
 
 
 @end

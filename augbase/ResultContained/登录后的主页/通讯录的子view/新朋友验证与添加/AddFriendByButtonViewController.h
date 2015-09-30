@@ -10,7 +10,7 @@
 #import "NearByFriendViewController.h"
 #import "SimilarFriendViewController.h"
 
-@interface AddFriendByButtonViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
+@interface AddFriendByButtonViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UITextFieldDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *addWaysTable;
 

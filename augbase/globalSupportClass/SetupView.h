@@ -14,11 +14,13 @@
 
 -(void)setupSearchbar:(UISearchController *)searchViewController;
 
--(void)setupNavigationRightButton:(UINavigationController *)navigation RightButton:(UIButton *)rightButton;
+-(void)setupNavigationRightButton:(UIViewController *)viewController RightButton:(UIButton *)rightButton;
 
--(void)setupNavigationLeftButton:(UINavigationController *)navigation RightButton:(UIButton *)leftButton;
+-(void)setupNavigationLeftButton:(UIViewController *)viewController RightButton:(UIButton *)leftButton;
 
 -(void)setupNavigationView:(UINavigationController *)navigation Image:(UIImage *)image;
 
 -(void)showAlertView:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller;
+
+- (NSString*) doDevicePlatform;
 @end

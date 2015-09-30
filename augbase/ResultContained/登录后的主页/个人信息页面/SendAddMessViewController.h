@@ -13,5 +13,6 @@
 
 @property (nonatomic,strong) UITableView *sendMessTable;
 
+@property (nonatomic,strong) NSString *addFriendJID;//添加好友的jid
 
 @end

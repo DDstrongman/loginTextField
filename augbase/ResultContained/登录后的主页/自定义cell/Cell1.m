@@ -26,8 +26,8 @@
         self.descriptionText.textColor=[UIColor whiteColor];
         self.descriptionText.backgroundColor=[UIColor clearColor];
         [self addSubview:self.descriptionText];
-        self.layer.borderWidth=0.5;
-        self.layer.borderColor=[UIColor grayColor].CGColor;
+//        self.layer.borderWidth=0.5;
+//        self.layer.borderColor=[UIColor grayColor].CGColor;
         
         self.titleText=[[UILabel alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.frame)/8*5, CGRectGetHeight(self.frame)/8)];
         self.titleText.center=CGPointMake(CGRectGetWidth(self.frame)/8*5, CGRectGetHeight(self.frame)/16*15);

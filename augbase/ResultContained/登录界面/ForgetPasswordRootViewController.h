@@ -14,6 +14,12 @@
 
 //键盘输入
 @property (nonatomic,strong) ImageViewLabelTextFieldView *phoneNumberView;
+//键盘输入
+@property (nonatomic,strong) ImageViewLabelTextFieldView *confirmNumberView;
+
+
+//底部输入图片验证码获取短信验证码的输入框
+@property (nonatomic,strong) ImageViewLabelTextFieldView *inputNumberView;
 
 //发送验证码按钮
 @property (nonatomic,strong) UIButton *sendMessButton;

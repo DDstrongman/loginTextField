@@ -13,11 +13,12 @@
 
 //三个注册框，具体ui见老王的登录流程图
 @property (nonatomic,strong) ImageViewLabelTextFieldView *registViewOne;
-@property (nonatomic,strong) ImageViewLabelTextFieldView *registViewTwo;
-@property (nonatomic,strong) ImageViewLabelTextFieldView *registViewThree;
 
-@property (nonatomic) NSString *phoneNumber;
 
 @property (nonatomic,strong) UIButton *finishButton;
+
+@property (nonatomic,strong) NSString *phoneNumber;
+@property (nonatomic,strong) NSString *confirmNumber;
+
 
 @end

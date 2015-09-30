@@ -39,8 +39,9 @@
     
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
-    searchViewController.dimsBackgroundDuringPresentation = YES;
+    searchViewController.dimsBackgroundDuringPresentation = NO;
     searchViewController.hidesNavigationBarDuringPresentation = YES;
+    searchViewController.delegate = self;
     [searchViewController.searchBar sizeToFit];
     //设置显示搜索结果的控制器
     searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
@@ -60,7 +61,7 @@
         }
     }
 //    @"咨询",@"群组",@"等待验证好友",
-    titleDataArray = [@[NSLocalizedString(@"群组", @""),NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
+    titleDataArray = [@[/*NSLocalizedString(@"群组", @""),*/NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
     titleImageNameArray = [@[@"groups",@"verify_friend"]mutableCopy];
     
     _contactsTableview.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
@@ -153,7 +154,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 45;
+    return 50;
 }
 
 
@@ -185,33 +186,22 @@
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 0) {
-        if (indexPath.row == 0){
-            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-            ContactGroupViewController *cgv = [main instantiateViewControllerWithIdentifier:@"contantgroup"];
-            [self.navigationController pushViewController:cgv animated:YES];
-        }else{
+//        if (indexPath.row == 0){
+//            UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//            ContactGroupViewController *cgv = [main instantiateViewControllerWithIdentifier:@"contantgroup"];
+//            [self.navigationController pushViewController:cgv animated:YES];
+//        }else{
             UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
             NewFriendNoticeViewController *nfnv = [main instantiateViewControllerWithIdentifier:@"addfriendnotice"];
             [self.navigationController pushViewController:nfnv animated:YES];
-        }
+//        }
     }else{
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-        cpdv.personJID = dataJID[indexPath.row];
+        cpdv.friendJID = dataJID[indexPath.row];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma cell滑入的动画效果
-- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-//    cell.frame = CGRectMake(-320, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-//    [UIView animateWithDuration:0.7 animations:^{
-//        cell.frame = CGRectMake(0, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-//    } completion:^(BOOL finished) {
-//        ;
-//    }];
 }
 
 #pragma 添加头和尾
@@ -230,6 +220,27 @@
     return headerView;
 }
 
+#pragma searchviewcontroller的delegate
+// 搜索界面将要出现
+- (void)willPresentSearchController:(UISearchController *)searchController{
+    NSLog(@"将要  开始  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
+    //    navigationBar.hidden = YES;
+    //    [[UIApplication sharedApplication]setStatusBarHidden:YES];
+}
+
+// 搜索界面将要消失
+-(void)willDismissSearchController:(UISearchController *)searchController{
+    NSLog(@"将要  取消  搜索时触发的方法");
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
+    //    navigationBar.hidden = NO;
+    //    [[UIApplication sharedApplication]setStatusBarHidden:NO];
+}
+
+-(void)didDismissSearchController:(UISearchController *)searchController{
+    
+}
+
 #pragma 滑动scrollview取消输入
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     [self.view endEditing:YES];
@@ -242,6 +253,8 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [self.tabBarController.navigationItem setRightBarButtonItem:nil];
+    [searchViewController setActive:NO];
+    [self.view endEditing:YES];
 }
 
 @end

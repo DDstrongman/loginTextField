@@ -24,7 +24,6 @@
         
         self.descriptionText=[[UILabel alloc] initWithFrame:CGRectMake(70, 37, ViewWidth-70-30, 15)];
 //        self.descriptionText.center=CGPointMake(CGRectGetWidth(self.frame)/2, CGRectGetHeight(self.frame)/4*3);
-        self.descriptionText.adjustsFontSizeToFitWidth=YES;
         self.descriptionText.textAlignment = NSTextAlignmentLeft;
         self.descriptionText.numberOfLines=1;
         self.descriptionText.font=[UIFont systemFontOfSize:13.0f];
@@ -37,7 +36,6 @@
         
         self.titleText=[[UILabel alloc] initWithFrame:CGRectMake(70, 15, ViewWidth-70-100, 20)];
 //        self.titleText.center=CGPointMake(CGRectGetWidth(self.frame)/8*5, CGRectGetHeight(self.frame)/16*15);
-        self.titleText.adjustsFontSizeToFitWidth=YES;
         self.titleText.textAlignment = NSTextAlignmentLeft;
         self.titleText.numberOfLines=1;
         self.titleText.font=[UIFont systemFontOfSize:15.0f];
@@ -46,12 +44,10 @@
         [self addSubview:self.titleText];
         
         
-        self.timeText = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-70, 15, 60, 15)];
-        self.timeText.text = @"19:00";
-        self.timeText.adjustsFontSizeToFitWidth=YES;
+        self.timeText = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-130, self.bounds.size.height/2-20/2, 120, 20)];
         self.timeText.textAlignment = NSTextAlignmentRight;
         self.timeText.numberOfLines=1;
-        self.timeText.font = [UIFont  systemFontOfSize:13.0];
+        self.timeText.font = [UIFont  systemFontOfSize:15.0];
         self.timeText.textColor = grayLabelColor;
         self.timeText.backgroundColor=[UIColor clearColor];
         [self addSubview:self.timeText];

@@ -7,7 +7,6 @@
 //
 
 #import "ContactGroupViewController.h"
-#import "SetupView.h"
 
 @interface ContactGroupViewController ()
 

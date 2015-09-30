@@ -12,4 +12,6 @@
 
 @property (nonatomic,strong) IBOutlet UITableView *sendAddMessTable;
 
+@property (nonatomic,strong) NSDictionary *doctorDic;//医生信息字典
+
 @end

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="7706" systemVersion="14E46" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="8191" systemVersion="14F27" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7703"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="8154"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="ConfirmPictureResultViewController">
@@ -16,7 +17,7 @@
             <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="orV-Ff-H4a">
+                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="orV-Ff-H4a">
                     <rect key="frame" x="0.0" y="0.0" width="600" height="520"/>
                 </imageView>
                 <tabBar contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rxx-dR-WAx">
@@ -26,14 +27,14 @@
                         <constraint firstAttribute="height" constant="80" id="R7g-v8-1GR"/>
                     </constraints>
                     <items>
-                        <tabBarItem tag="1" title="重拍" id="ywJ-1U-Vq1"/>
-                        <tabBarItem tag="2" title="再拍一张" id="drQ-fP-5CD"/>
-                        <tabBarItem tag="3" title="马赛克" id="wZb-uO-umr"/>
-                        <tabBarItem tag="4" title="识别" id="WH9-wL-YZD"/>
+                        <tabBarItem tag="1" title="重拍" image="retake.png" id="ywJ-1U-Vq1"/>
+                        <tabBarItem tag="2" title="再拍一张" image="again.png" id="drQ-fP-5CD"/>
+                        <tabBarItem tag="3" title="马赛克" image="eraser.png" selectedImage="eraser2.png" id="wZb-uO-umr"/>
+                        <tabBarItem tag="4" title="识别" image="recognition.png" id="WH9-wL-YZD"/>
                     </items>
                 </tabBar>
             </subviews>
-            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <color key="backgroundColor" red="0.16078431369999999" green="0.70980392160000005" blue="0.81176470590000005" alpha="1" colorSpace="calibratedRGB"/>
             <constraints>
                 <constraint firstAttribute="trailing" secondItem="rxx-dR-WAx" secondAttribute="trailing" id="3Iu-fI-q8k"/>
                 <constraint firstItem="orV-Ff-H4a" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="8lL-id-2sK"/>
@@ -45,4 +46,11 @@
             </constraints>
         </view>
     </objects>
+    <resources>
+        <image name="again.png" width="30" height="30"/>
+        <image name="eraser.png" width="30" height="30"/>
+        <image name="eraser2.png" width="30" height="30"/>
+        <image name="recognition.png" width="30" height="30"/>
+        <image name="retake.png" width="30" height="30"/>
+    </resources>
 </document>

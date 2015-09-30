@@ -8,14 +8,18 @@
 
 #import "NewFriendNoticeViewController.h"
 
-@interface NewFriendNoticeViewController (){
-    NSArray *dataOfSimilarArray;//获取的各个人相似数的数组
-    NSArray *userArray;//获取发送信息的人name
-    NSArray *boolAddArray;//每个通知添加与否的数组
-    NSMutableArray *dataArray;//搜索的数据元数组
-    NSMutableArray *searchResults;//搜索结果的数组
-    UISearchBar *mySearchBar;//ui，仅仅是个ui
-    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+#import "FriendDBManager.h"
+
+@interface NewFriendNoticeViewController ()
+
+{
+    NSMutableArray *picArray;//获取发送信息的人name
+    NSMutableArray *userArray;//获取发送信息的人name
+    NSMutableArray *dataOfSimilarArray;//获取的各个人相似数的数组
+    NSMutableArray *strangerAgeArray;
+    NSMutableArray *strangerGenderArray;
+    NSMutableArray *strangerDescribeArray;
+    NSMutableArray *strangerJIDArray;
 }
 
 @end
@@ -24,54 +28,47 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self setupView];
+    [self setupData];
+}
+
+-(void)setupView{
+    self.title = NSLocalizedString(@"新的朋友", @"");
     _addFriendNotictTable.delegate = self;
     _addFriendNotictTable.dataSource = self;
-    
-    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
-    searchViewController.active = NO;
-    searchViewController.dimsBackgroundDuringPresentation = NO;
-    searchViewController.hidesNavigationBarDuringPresentation = NO;
-    [searchViewController.searchBar sizeToFit];
-    //设置显示搜索结果的控制器
-    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
-    //将搜索控制器的搜索条设置为页眉视图
-    _addFriendNotictTable.tableHeaderView = searchViewController.searchBar;
-    
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
-    dataArray = [@[@"上海大三阳战友群",@"上海大三阳战友群",@"上海大三阳战友群"]mutableCopy];
-    if (!searchResults) {
-        searchResults = dataArray;
-    }
+    _addFriendNotictTable.backgroundColor = grayBackgroundLightColor;
+    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+    headerView.backgroundColor = [UIColor clearColor];
+    _addFriendNotictTable.tableHeaderView = headerView;
 }
 
--(void)viewWillAppear:(BOOL)animated{
-    NSLog(@"需要加入获取的通知数目，网络获取，测试用均取数组第一个");
-    self.navigationController.navigationBarHidden = NO;
-    self.title = NSLocalizedString(@"新的朋友", @"");
-    dataOfSimilarArray = [NSArray arrayWithObjects:@"83%",@"63%",@"43%",nil];
-    userArray = [NSArray arrayWithObjects:@"小月打飞机",@"小月打飞机",@"小月打飞机",nil];
-    boolAddArray = [NSArray arrayWithObjects:@NO,@NO,@NO,nil];
-//    if (_confirmAddMessOrNot) {
-//        [_addFriendNotictTable reloadData];
-//        _confirmAddMessOrNot = NO;
-//    }
-}
-
-#pragma searcheViewController的delegate
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
-    //谓词检测
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:
-                              @"self contains [cd] %@", searchController.searchBar.text];
-    if ([searchController.searchBar.text isEqualToString:@""]){
-        searchResults = dataArray;
-        [_addFriendNotictTable reloadData];
-    }else{
-        //将所有和搜索有关的内容存储到arr数组
-        searchResults = [NSMutableArray arrayWithArray:
-                         [dataArray filteredArrayUsingPredicate:predicate]];
-        //重新加载数据
-        [_addFriendNotictTable reloadData];
+-(void)setupData{
+    picArray = [NSMutableArray array];
+    userArray = [NSMutableArray array];
+    dataOfSimilarArray = [NSMutableArray array];
+    strangerAgeArray = [NSMutableArray array];
+    strangerGenderArray = [NSMutableArray array];
+    strangerDescribeArray = [NSMutableArray array];
+    strangerJIDArray = [NSMutableArray array];
+    FMResultSet *addStrangerList = [[FriendDBManager ShareInstance] SearchAllFriend:StrangerTBName];
+    while ([addStrangerList next]) {
+        NSString *picPath = [addStrangerList stringForColumn:@"friendImageUrl"];
+        NSString *strangerName = [addStrangerList stringForColumn:@"friendName"];
+        NSString *strangerAge = [addStrangerList stringForColumn:@"friendAge"];
+        NSString *strangerGender = [addStrangerList stringForColumn:@"friendGender"];
+        NSString *strangerNote = [addStrangerList stringForColumn:@"friendDescribe"];
+        NSString *strangerJID = [addStrangerList stringForColumn:@"friendJID"];
+        [picArray addObject:picPath];
+        [userArray addObject:strangerName];
+        [strangerAgeArray addObject:strangerAge];
+        [strangerGenderArray addObject:strangerGender];
+        [strangerDescribeArray addObject:strangerNote];
+        [strangerJIDArray addObject:strangerJID];
+        if ([strangerNote isEqualToString:@""]) {
+            [dataOfSimilarArray addObject:@"83%"];
+        }else{
+            [dataOfSimilarArray addObject:strangerNote];
+        }
     }
 }
 
@@ -81,7 +78,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return searchResults.count;//获取的通知数目，网络获取
+    return userArray.count;//获取的通知数目，网络获取
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -91,48 +88,53 @@
 #pragma 此处需要加入showDetal为YES的cell，即显示病种和用药的cell，暂未加入
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell;
-    
     cell = [tableView dequeueReusableCellWithIdentifier:@"imageandlabelcell" forIndexPath:indexPath];
-    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
+    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:picArray[indexPath.row]];
     [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
-    ((UILabel *)[cell.contentView viewWithTag:2]).text = userArray[0];
+    ((UILabel *)[cell.contentView viewWithTag:2]).text = userArray[indexPath.row];
     UIView *addLabelAndButtonView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];
     UILabel *numberLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 10, 40, 30)];
-    numberLabel.text = dataArray[0];
     numberLabel.font = [UIFont systemFontOfSize:17.0];
     numberLabel.textColor = [UIColor blackColor];
     UIButton *addFriendButton = [[UIButton alloc]initWithFrame:CGRectMake(45,10, 50, 30)];
     [addFriendButton addTarget:self action:@selector(addFriendYes:) forControlEvents:UIControlEventTouchUpInside];
-//    NSLog(@"bool===%@",boolAddArray[0]);
-    if (boolAddArray[0] == 0) {
-        addFriendButton.backgroundColor = grayLabelColor;
-        [addFriendButton setTitle:NSLocalizedString(@"已添加", @"") forState:UIControlStateNormal];
-        addFriendButton.userInteractionEnabled = NO;
-    }else{
-        addFriendButton.backgroundColor = themeColor;
-        [addFriendButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
-        addFriendButton.userInteractionEnabled = YES;
-    }
+    addFriendButton.tag = indexPath.row;
+    addFriendButton.backgroundColor = themeColor;
+    [addFriendButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
+    addFriendButton.userInteractionEnabled = YES;
     [addLabelAndButtonView addSubview:numberLabel];
     [addLabelAndButtonView addSubview:addFriendButton];
     
     cell.accessoryView = addLabelAndButtonView;
-    cell.tag = 100;
     return cell;
 }
 
 -(void)addFriendYes:(UIButton *)sender{
-    NSLog(@"加上同意加为好友的响应函数，网络通讯");
-//    boolAddArray[0] = YES;
-    NSLog(@"cell的tag===%ld",(long)sender.superview.superview.tag);
-    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    AddFriendConfirmViewController *afcv = [main instantiateViewControllerWithIdentifier:@"addfriendconfirmdetail"];
-    afcv.personJid =[NSString stringWithFormat:@"%ld",(long)sender.superview.superview.tag];
-    [self.navigationController pushViewController:afcv animated:YES];
+    [[XMPPSupportClass ShareInstance] confirmAddFriend:strangerJIDArray[sender.tag]];
+    [self setupData];
+    [_addFriendNotictTable reloadData];
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
+    NSMutableDictionary *strangerDic = [NSMutableDictionary dictionary];
+    [strangerDic setObject:strangerJIDArray[indexPath.row] forKey:@"strangerJID"];
+    [strangerDic setObject:picArray[indexPath.row] forKey:@"strangerPic"];
+    [strangerDic setObject:userArray[indexPath.row] forKey:@"strangerName"];
+    [strangerDic setObject:strangerAgeArray[indexPath.row] forKey:@"strangerAge"];
+    if([strangerGenderArray[indexPath.row] intValue] == 0){
+        [strangerDic setObject:NSLocalizedString(@"男", @"") forKey:@"strangerGender"];
+    }else{
+        [strangerDic setObject:NSLocalizedString(@"女", @"") forKey:@"strangerGender"];
+    }
+    
+#warning 此处的location以后要换为网络获取的地址
+    [strangerDic setObject:@"上海" forKey:@"strangerLocation"];
+    [strangerDic setObject:strangerDescribeArray[indexPath.row] forKey:@"strangerNote"];
+    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    AddFriendConfirmViewController *afcv = [main instantiateViewControllerWithIdentifier:@"addfriendconfirmdetail"];
+    afcv.strangerDic = strangerDic;
+    [self.navigationController pushViewController:afcv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 

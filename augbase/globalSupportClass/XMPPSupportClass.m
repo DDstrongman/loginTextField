@@ -10,8 +10,6 @@
 
 #import "WriteFileSupport.h"
 
-#import "HttpManager.h"
-
 @implementation XMPPSupportClass
 
 @synthesize xmppStream;
@@ -51,6 +49,7 @@
 -(BOOL)boolConnect:(NSString *)userName{
     NSLog(@"开始连接Bool");
     password = @"123456";//设定死的，为xmpp服务器的密码，用户密码为web端的
+    isOpen = YES;
     [self setupStream];
     if ([xmppStream isConnected]) {
         return YES;
@@ -71,10 +70,12 @@
 
 - (void)connect:(NSString *)userName{
     password = @"123456";
+    isOpen = YES;
     NSLog(@"开始连接");
     if (self.xmppStream == nil) {
         self.xmppStream = [[XMPPStream alloc] init];
-        [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];    }
+        [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    }
     if (![self.xmppStream isConnected]) {
         XMPPJID *jid = [XMPPJID jidWithString:userName];
         [self.xmppStream setMyJID:jid];
@@ -92,15 +93,18 @@
     NSLog(@"断开连接");
     [self goOffline];
     [xmppStream disconnect];
+    isOpen = YES;
 }
 
 #pragma 设定时间内连接服务器成功
 - (void)xmppStreamDidConnect:(XMPPStream *)sender{
     NSLog(@"登录验证");
-    isOpen = YES;
     NSError *error = nil;
     //验证密码
-    [[self xmppStream] authenticateWithPassword:password error:&error];
+    if (isOpen) {
+        [[self xmppStream] authenticateWithPassword:password error:&error];
+        isOpen = NO;
+    }
 }
 
 #pragma 连接超时
@@ -131,7 +135,7 @@
     NSString *messTime = [[message elementForName:@"messTime"]stringValue];
     NSString *timeStamp = [[message elementForName:@"timeStamp"]stringValue];
     NSString *personJID = [[message elementForName:@"personJID"]stringValue];
-    NSString *sendPersonJID = [[message elementForName:@"sendPersonJID"]stringValue];
+    NSString *toPersonJID = [[message elementForName:@"toPersonJID"]stringValue];
     NSString *personNickName = [[message elementForName:@"personNickName"]stringValue];
     NSString *personImageUrl = [[message elementForName:@"personImageUrl"]stringValue];
     NSString *chatType = [[message elementForName:@"chatType"]stringValue];
@@ -145,7 +149,7 @@
     chatItem.messVoiceTime = messTime;
     chatItem.timeStamp = timeStamp;
     chatItem.personJID = personJID;
-    chatItem.sendPersonJID = sendPersonJID;
+    chatItem.toPersonJID = toPersonJID;
     chatItem.personNickName = personNickName;
     chatItem.personImageUrl = personImageUrl;
     
@@ -155,10 +159,22 @@
     chatItem.FromMeOrNot = 1;
     chatItem.ReadOrNot = 0;
     
-    [[DBManager ShareInstance] creatDatabase:DBName];
-    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID]];
-    [[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID] andchatobj:chatItem];
-    [[DBManager ShareInstance] closeDB];
+    if (chatItem.chatType == 0) {
+        [[DBManager ShareInstance] creatDatabase:DBName];
+        [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID]];
+        [[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,personJID] andchatobj:chatItem];
+        [[DBManager ShareInstance] closeDB];
+    }else{
+        if ([personJID isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"]]) {
+            
+        }else{
+            [[DBGroupManager ShareInstance] creatDatabase:GroupChatDBName];
+            [[DBGroupManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,toPersonJID]];
+            [[DBGroupManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,toPersonJID] andchatobj:chatItem];
+            [[DBGroupManager ShareInstance] closeDB];
+        }
+    }
+    
     [_receiveMessDelegate ReceiveMessArray:personJID ChatItem:chatItem];
 }
 
@@ -170,11 +186,65 @@
     NSString *presenceType = [presence type];
     //available
     [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+    [[FriendDBManager ShareInstance] isFriendTableExist:StrangerTBName];
     if ([presenceType isEqualToString:@"available"]) {
         [[FriendDBManager ShareInstance] updateFriendState:YizhenFriendName FriendJid:presenceFromUser andState:@"1"];
+    }else if ([presenceType isEqualToString:@"subscribe"]){
+        FriendDBItem *fItem = [[FriendDBItem alloc]init];
+        fItem.friendJID = presenceFromUser;
+        
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        
+        NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,presenceFromUser,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+        jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+        [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *friendInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            fItem.friendAge = [[friendInfo objectForKey:@"age"] stringValue];
+            fItem.friendGender = [[friendInfo objectForKey:@"gender"] stringValue];
+            fItem.friendName = [friendInfo objectForKey:@"nickname"];
+            NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[friendInfo objectForKey:@"picture"]];
+            imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+            [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:presenceFromUser Contents:responseObject];
+                fItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,presenceFromUser];
+                fItem.friendOnlineOrNot = @"2";
+                [[FriendDBManager ShareInstance]addFriendObjTablename:StrangerTBName andchatobj:fItem];
+            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                NSLog(@"获取图片信息失败");
+            }];
+        }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"获取jid信息失败");
+        }];
     }else{
         [[FriendDBManager ShareInstance] updateFriendState:YizhenFriendName FriendJid:presenceFromUser andState:@"0"];
     }
+}
+
+-(void)confirmAddFriend:(NSString *)addJID{
+    if (_xmppRosterDataStorage == nil) {
+        _xmppRosterDataStorage = [[XMPPRosterCoreDataStorage alloc]init];
+    }
+    [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    xmppReconnect=[[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    [xmppReconnect activate:self.xmppStream];
+    xmppRoster = [[XMPPRoster alloc] initWithRosterStorage:_xmppRosterDataStorage];
+    [xmppRoster removeDelegate:self delegateQueue:dispatch_get_main_queue()];
+    xmppRoster.autoFetchRoster = YES;
+    xmppRoster.autoAcceptKnownPresenceSubscriptionRequests = YES;
+    [xmppRoster activate:self.xmppStream];
+    [xmppRoster addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    
+    XMPPJID *jid = [XMPPJID jidWithString:[NSString stringWithFormat:@"%@@%@",addJID,httpServer]];
+    [xmppRoster acceptPresenceSubscriptionRequestFrom:jid andAddToRoster:YES];
+    [[FriendDBManager ShareInstance]deleteFriendObjTablename:StrangerTBName andinterobj:addJID];
+    [self getMyQueryRoster];
 }
 
 #pragma 发送状态失败
@@ -188,7 +258,7 @@
     NSXMLElement *body = [NSXMLElement elementWithName:@"body"];//发送内容的主题必须是body，xmpp需求
     NSXMLElement *timeStamp = [NSXMLElement elementWithName:@"timeStamp"];
     NSXMLElement *personJID = [NSXMLElement elementWithName:@"personJID"];
-    NSXMLElement *sendPersonJID = [NSXMLElement elementWithName:@"sendPersonJID"];
+    NSXMLElement *toPersonJID = [NSXMLElement elementWithName:@"toPersonJID"];
     NSXMLElement *personNickName = [NSXMLElement elementWithName:@"personNickName"];
     NSXMLElement *personImageUrl = [NSXMLElement elementWithName:@"personImageUrl"];
     NSXMLElement *chatType = [NSXMLElement elementWithName:@"chatType"];
@@ -196,7 +266,6 @@
     NSXMLElement *ReadOrNot = [NSXMLElement elementWithName:@"ReadOrNot"];
     NSXMLElement *FromMeOrNot = [NSXMLElement elementWithName:@"FromMeOrNot"];
     NSXMLElement *messTime = [NSXMLElement elementWithName:@"messTime"];
-    
     
     if (allContents.messType == 1) {
 #warning 在这里要加入delegate刷新，因为获取图片使用了多线程，无法直接return获取必要信息，暂时测试用其他代替
@@ -207,7 +276,7 @@
     
     [body setStringValue:allContents.messContent];
     [personJID setStringValue:allContents.personJID];
-    [sendPersonJID setStringValue:allContents.sendPersonJID];
+    [toPersonJID setStringValue:allContents.toPersonJID];
     [timeStamp setStringValue:allContents.timeStamp];
     [personNickName setStringValue:allContents.personNickName];
     [personImageUrl setStringValue:allContents.personImageUrl];
@@ -220,13 +289,22 @@
     [ReadOrNot setStringValue:@"1"];
     
     NSXMLElement *TextMessage = [NSXMLElement elementWithName:@"message"];//发送消息的最外层xml，必须是message。xmpp的要求
-    [TextMessage addAttributeWithName:@"type" stringValue:@"chat"];
-    NSString *to = [NSString stringWithFormat:@"%@@%@", friendUserJid,httpServer];
+    if (allContents.chatType == 0) {
+        [TextMessage addAttributeWithName:@"type" stringValue:@"chat"];
+    }else{
+        [TextMessage addAttributeWithName:@"type" stringValue:@"groupchat"];
+    }
+    NSString *to;
+    if (allContents.chatType == 0) {
+        to = [NSString stringWithFormat:@"%@@%@",friendUserJid,httpServer];
+    }else{
+        to = [NSString stringWithFormat:@"%@@%@.%@",friendUserJid,@"conference",httpServer];
+    }
     [TextMessage addAttributeWithName:@"to" stringValue:to];
     [TextMessage addChild:body];
     [TextMessage addChild:timeStamp];
     [TextMessage addChild:personJID];
-    [TextMessage addChild:sendPersonJID];
+    [TextMessage addChild:toPersonJID];
     [TextMessage addChild:personNickName];
     [TextMessage addChild:personImageUrl];
     [TextMessage addChild:chatType];
@@ -239,15 +317,26 @@
     
     
 //    [self sendapns:allContents ToPerson:friendUserJid];
-    
-    [[DBManager ShareInstance] creatDatabase:DBName];
-    [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid]];
-    if ([[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid] andchatobj:allContents]) {
-        [[DBManager ShareInstance] closeDB];
-        return YES;
+    if (allContents.chatType == 0) {
+        [[DBManager ShareInstance] creatDatabase:DBName];
+        [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid]];
+        if ([[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid] andchatobj:allContents]) {
+            [[DBManager ShareInstance] closeDB];
+            return YES;
+        }else{
+            [[DBManager ShareInstance] closeDB];
+            return NO;
+        }
     }else{
-        [[DBManager ShareInstance] closeDB];
-        return NO;
+        [[DBManager ShareInstance] creatDatabase:GroupChatDBName];
+        [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid]];
+        if ([[DBManager ShareInstance] addChatobjTablename:[NSString stringWithFormat:@"%@%@",YizhenTableName,friendUserJid] andchatobj:allContents]) {
+            [[DBManager ShareInstance] closeDB];
+            return YES;
+        }else{
+            [[DBManager ShareInstance] closeDB];
+            return NO;
+        }
     }
 }
 
@@ -259,7 +348,7 @@
 }
 
 #pragma 初始化聊天室创建或者加入
--(void)setUpChatRoom:(NSString *)ROOM_JID{
+-(void)setUpChatRoom:(NSString *)ROOM_JID NickName:(NSString *)nickName{
     NSLog(@"创建聊天室");
 //    XMPPRoomMemoryStorage * _roomMemory = [[XMPPRoomMemoryStorage alloc]init];
     
@@ -271,66 +360,67 @@
     
     xmppRoom = [[XMPPRoom alloc] initWithRoomStorage:_roomMemory jid:roomJID dispatchQueue:dispatch_get_main_queue()];
     
+    [self setupStream];
+    
     [xmppRoom activate:xmppStream];
     [xmppRoom addDelegate:self delegateQueue:dispatch_get_main_queue()];
     
-    [xmppRoom configureRoomUsingOptions:nil];//修改聊天室信息
+//    [xmppRoom configureRoomUsingOptions:nil];//修改聊天室信息
+    [self configNewRoom:xmppRoom];
+    NSXMLElement *chatHistory;
     
-    [xmppRoom joinRoomUsingNickname:@"xx聊天室" history:nil password:@""];
+    [xmppRoom joinRoomUsingNickname:nickName history:chatHistory password:@""];
 }
 
 #pragma 初始化聊天室成功的delegate
 - (void)xmppRoomDidCreate:(XMPPRoom *)sender
 {
     NSLog(@"创建聊天室成功");
-//    [xmppRoom joinRoomUsingNickname:@"xx聊天室" history:nil password:@""];//加入聊天室
-//    [xmppRoom deactivate:xmppStream];//离开聊天室
-//    [xmppRoom deactivate];//离开聊天室
 }
 
 -(void)xmppRoomDidJoin:(XMPPRoom *)sender{
     NSLog(@"加入聊天室成功");
     [xmppRoom fetchConfigurationForm];
-    [xmppRoom fetchBanList];
+//    [xmppRoom fetchBanList];
     [xmppRoom fetchMembersList];
-    [xmppRoom fetchModeratorsList];
+//    [xmppRoom fetchModeratorsList];
+//    [self inviteFriendToChatRoom:@"p21308@115.29.143.102" Message:@"test"];
 }
 
--(void)xmppRoomSendMess:(NSString *)roomJid ChatMess:(DBItem *)chatMess FromUser:(NSString *)userJid{
-    NSXMLElement *body = [NSXMLElement elementWithName:@"body"];
-    [body setStringValue:chatMess.messContent];
-    
-    NSXMLElement *message = [NSXMLElement elementWithName:@"message"];
-    [message addAttributeWithName:@"type" stringValue:@"groupchat"];
-    [message addAttributeWithName:@"to" stringValue:userJid];
-    [message addChild:body];
-    
-    [self.xmppStream sendElement:message];
+-(void)leaveChatRoom:(NSString *)ROOM_JID{
+    NSLog(@"离开聊天室");
+    [xmppRoom deactivate];//离开聊天室
+}
+
+-(void)inviteFriendToChatRoom:(NSString *)friendJID Message:(NSString *)message{
+    NSLog(@"发出群邀请");
+    [xmppRoom inviteUser:[XMPPJID jidWithString:friendJID] withMessage:message];
+}
+
+-(void)xmppMUC:(XMPPMUC *)sender roomJID:(XMPPJID *)roomJID didReceiveInvitation:(XMPPMessage *)message{
+    NSLog(@"收到群邀请");
 }
 
 - (void)xmppRoom:(XMPPRoom *)sender didFetchConfigurationForm:(DDXMLElement *)configForm{
-    
-    NSLog(@"config : %@", configForm);
-    
-    NSXMLElement *newConfig = [configForm copy];
-    
-    NSArray* fields = [newConfig elementsForName:@"field"];
-    
-    for (NSXMLElement *field in fields) {
-        
-        NSString *var = [field attributeStringValueForName:@"var"];
-        
-        if ([var isEqualToString:@"muc#roomconfig_persistentroom"]) {
-            
-            [field removeChildAtIndex:0];
-            
-            [field addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
-            
-        }
-        
-    }
-    
-    [sender configureRoomUsingOptions:newConfig];
+//    NSXMLElement *newConfig = [configForm copy];
+//    
+//    NSArray* fields = [newConfig elementsForName:@"field"];
+//    
+//    for (NSXMLElement *field in fields) {
+//        
+//        NSString *var = [field attributeStringValueForName:@"var"];
+//        
+//        if ([var isEqualToString:@"muc#roomconfig_openroom"]) {
+//            
+//            [field removeChildAtIndex:0];
+//            
+//            [field addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
+//            
+//        }
+//        
+//    }
+//    
+//    [sender configureRoomUsingOptions:newConfig];
     
 }
 
@@ -363,16 +453,59 @@
     NSLog(@"离开聊天室");
 }
 //新人入群
-- (void)xmppRoom:(XMPPRoom *)sender occupantDidJoin:(XMPPJID *)occupantJID{
+- (void)xmppRoom:(XMPPRoom *)sender occupantDidJoin:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence{
     NSLog(@"新人入群");
+    NSString *jid = occupantJID.user;
+    NSString *domain = occupantJID.domain;
+    NSString *resource = occupantJID.resource;
+    NSString *presenceType = [presence type];
+    NSString *userId = [sender myRoomJID].user;
+    NSString *presenceFromUser = [[presence from] user];
+    
+    NSLog(@"在线用户：%@-jid=%@,domain=%@,resource=%@,当前用户:%@ ,出席用户:%@,presenceType:%@",occupantJID,jid,domain,resource,userId,presenceFromUser,presenceType);
+    
+    
+//    if (![presenceFromUser isEqualToString:userId]) {
+//        //对收到的用户的在线状态的判断在线状态
+//        
+//        //在线用户
+//        if ([presenceType isEqualToString:@"available"]) {
+//            NSString *buddy = [NSString stringWithFormat:@"%@@%@", presenceFromUser, @"1"];
+//            //            [chatDelegate newBuddyOnline:buddy];//用户列表委托
+//        }
+//        
+//        //用户下线
+//        else if ([presenceType isEqualToString:@"unavailable"]) {
+//            //            [chatDelegate buddyWentOffline:[NSString stringWithFormat:@"%@@%@", presenceFromUser, OpenFireHostName]];//用户列表委托
+//        }
+//    }
 }
 //有人退出
-- (void)xmppRoom:(XMPPRoom *)sender occupantDidLeave:(XMPPJID *)occupantJID{
-  NSLog(@"有人退出");
+- (void)xmppRoom:(XMPPRoom *)sender occupantDidLeave:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence{
+    NSLog(@"有人退出");
+    NSString *jid = occupantJID.user;
+    NSString *domain = occupantJID.domain;
+    NSString *resource = occupantJID.resource;
+    NSString *presenceType = [presence type];
+    NSString *userId = [sender myRoomJID].user;
+    NSString *presenceFromUser = [[presence from] user];
+    NSLog(@"occupantDidLeave----jid=%@,domain=%@,resource=%@,当前用户:%@ ,出席用户:%@,presenceType:%@",jid,domain,resource,userId,presenceFromUser,presenceType);
 }
+
+//房间人员加入
+-(void)xmppRoom:(XMPPRoom *)sender occupantDidUpdate:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence{
+    NSString *jid = occupantJID.user;
+    NSString *domain = occupantJID.domain;
+    NSString *resource = occupantJID.resource;
+    NSString *presenceType = [presence type];
+    NSString *userId = [sender myRoomJID].user;
+    NSString *presenceFromUser = [[presence from] user];
+    NSLog(@"occupantDidUpdate----jid=%@,domain=%@,resource=%@,当前用户:%@ ,出席用户:%@,presenceType:%@",jid,domain,resource,userId,presenceFromUser,presenceType);
+}
+
 //有人群里发言
 - (void)xmppRoom:(XMPPRoom *)sender didReceiveMessage:(XMPPMessage *)message fromOccupant:(XMPPJID *)occupantJID{
-   NSLog(@"有人群里发言");
+    
 }
 
 #pragma 上传图片和音频，并返回url
@@ -439,20 +572,18 @@
     [xmppRoster activate:self.xmppStream];
     [xmppRoster addDelegate:self delegateQueue:dispatch_get_main_queue()];
     XMPPJID *jid = [XMPPJID jidWithString:[NSString stringWithFormat:@"%@@%@",keyjid,httpServer]];
-    // [presence addAttributeWithName:@"subscription" stringValue:@"好友"];
+// [presence addAttributeWithName:@"subscription" stringValue:@"好友"];
     //发送好友请求
     [xmppRoster subscribePresenceToUser:jid];
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,keyjid,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-    NSLog(@"好友url====%@",url);
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
     [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
-        NSLog(@"获取好友列表的返回＝＝＝%d,返回的具体结果为＝＝＝%@",res,source);
         if (res == 0) {
             FriendDBItem *fdItem = [[FriendDBItem alloc]init];
             fdItem.friendName = [source objectForKey:@"nickname"];
@@ -470,7 +601,6 @@
             
             NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
-            NSLog(@"imageurl === %@",imageurl);
             imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
             manager.responseSerializer = [AFHTTPResponseSerializer serializer];
@@ -509,6 +639,7 @@
 
 #pragma 好友请求列表,获取好友列表
 - (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq{
+#warning 这里的好友判断条件需要进一步优化，会加自己为好友
     if ([@"result" isEqualToString:iq.type]) {
         NSXMLElement *query = iq.childElement;
         if ([@"query" isEqualToString:query.name]) {
@@ -527,14 +658,12 @@
                 NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                 
                 NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,name,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-                NSLog(@"好友url====%@",url);
                 AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
                 manager.responseSerializer = [AFHTTPResponseSerializer serializer];
                 manager.requestSerializer=[AFHTTPRequestSerializer serializer];
                 [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
                     NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                     int res=[[source objectForKey:@"res"] intValue];
-                    NSLog(@"获取好友列表的返回＝＝＝%d,返回的具体结果为＝＝＝%@",res,source);
                     if (res == 0) {
                         FriendDBItem *fdItem = [[FriendDBItem alloc]init];
                         fdItem.friendName = [source objectForKey:@"nickname"];
@@ -577,6 +706,22 @@
     }
     return YES;
 }
+
+//- (void)xmppRoster:(XMPPRoster *)sender didReceivePresenceSubscriptionRequest:(XMPPPresence *)presence
+//{
+//    //取得好友状态
+//    NSString *presenceType = [NSString stringWithFormat:@"%@", [presence type]]; //online/offline
+//    //请求的用户
+//    NSString *presenceFromUser =[NSString stringWithFormat:@"%@", [[presence from] user]];
+//    NSLog(@"presenceType:%@",presenceType);
+//    
+//    NSLog(@"presence2:%@  sender2:%@",presence,sender);
+//    
+//    XMPPJID *jid = [XMPPJID jidWithString:presenceFromUser];
+//    //接收添加好友请求
+//    [xmppRoster acceptPresenceSubscriptionRequestFrom:jid andAddToRoster:YES];
+//    NSLog(@"接收到的好友添加请求===%@",jid);
+//}
 
 #pragma mark-发送离线消息 ——————————————————————————————————
 -(void)sendapns:(DBItem *)messObj ToPerson:(NSString *)personJid{
@@ -627,28 +772,54 @@
 
 #pragma 成功与失败的反应函数
 -(void)creatsuccess:(NSString *)success{
-    [HUD hide:YES];
     
-    HUD = [[MBProgressHUD alloc] initWithView:JWindow];
-    [JWindow addSubview:HUD];
-#warning 此处可以加入图像
-    HUD.customView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@""]];
-    HUD.mode = MBProgressHUDModeCustomView;
-    HUD.labelText = success;
-    [HUD show:YES];
-    [HUD hide:YES afterDelay:3];
 }
     
 -(void)creatfaile:(NSString *)success{
-    [HUD hide:YES];
     
-    HUD = [[MBProgressHUD alloc] initWithView:JWindow];
-    [JWindow addSubview:HUD];
-    HUD.mode = MBProgressHUDModeText;
+}
+
+-(void)configNewRoom:(XMPPRoom *)xmppGroupRoom{
+    NSXMLElement *x = [NSXMLElement elementWithName:@"x" xmlns:@"jabber:x:data"];
+    NSXMLElement *p;
+    p = [NSXMLElement elementWithName:@"field" ];
+    [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_persistentroom"];//永久房间
+    [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
+    [x addChild:p];
     
-    HUD.labelText = success;
-    [HUD show:YES];
-    [HUD hide:YES afterDelay:3];
+    p = [NSXMLElement elementWithName:@"field" ];
+    [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_maxusers"];//最大用户
+    [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1000"]];
+    [x addChild:p];
+    
+    p = [NSXMLElement elementWithName:@"field" ];
+    [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_changesubject"];//允许改变主题
+    [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
+    [x addChild:p];
+    
+    p = [NSXMLElement elementWithName:@"field" ];
+    [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_openroom"];//公共房间
+    [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
+    [x addChild:p];
+    
+    p = [NSXMLElement elementWithName:@"field" ];
+    [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_allowinvites"];//允许邀请
+    [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"1"]];
+    [x addChild:p];
+    
+    /*
+     p = [NSXMLElement elementWithName:@"field" ];
+     [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_roomname"];//房间名称
+     [p addChild:[NSXMLElement elementWithName:@"value" stringValue:self.roomTitle]];
+     [x addChild:p];
+     
+     p = [NSXMLElement elementWithName:@"field" ];
+     [p addAttributeWithName:@"var" stringValue:@"muc#roomconfig_enablelogging"];//允许登录对话
+     [p addChild:[NSXMLElement elementWithName:@"value" stringValue:@"0"]];
+     [x addChild:p];
+     */
+    
+    [xmppGroupRoom configureRoomUsingOptions:x];
 }
 
 @end

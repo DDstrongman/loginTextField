@@ -24,7 +24,6 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.title = NSLocalizedString(@"群信息", @"");
-    self.navigationController.navigationBarHidden = NO;
 }
 
 #pragma mark - Table view data source
@@ -33,7 +32,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 6;
+    return 4;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -49,13 +48,8 @@
         case 2:
             return 100;
             break;
-            
-        case 5:
-            return 90;
-            break;
-            
         default:
-            return 45;
+            return 90;
             break;
     }
 }
@@ -68,8 +62,8 @@
         cell = [tableView dequeueReusableCellWithIdentifier:@"titlecell" forIndexPath:indexPath];
         [[cell.contentView viewWithTag:1] imageWithRound:NO];
         
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"小月达尔比", @"");
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"小月达尔比", @"");
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = _groupTitle;
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"群号: %@",_groupJID];
     }else if(indexPath.row == 1){
         cell = [tableView dequeueReusableCellWithIdentifier:@"groupmembercell" forIndexPath:indexPath];
         ((UILabel *)[cell.contentView viewWithTag:10]).text = NSLocalizedString(@"群成员", @"");
@@ -90,7 +84,6 @@
         ((UIImageView *)[cell.contentView viewWithTag:7]).image =  [UIImage imageNamed:@"persontitle8"];
         ((UIImageView *)[cell.contentView viewWithTag:8]).image =  [UIImage imageNamed:@"persontitle9"];
         NSInteger space =(NSInteger)(ViewWidth - 30*2-50*4 - 20)/3;
-        NSLog(@"space === %ld",(long)space);
         [[cell.contentView viewWithTag:2] mas_updateConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo([cell.contentView viewWithTag:1].mas_right).with.offset(space);
         }];
@@ -115,17 +108,11 @@
     }else if(indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
         ((UILabel *)[cell.contentView viewWithTag:1]).text = NSLocalizedString(@"群描述：", @"");
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"    永超就是喜欢卖屁股", @"");
-    }else if(indexPath.row == 5){
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = _groupNote;
+    }else{
         cell = [tableView dequeueReusableCellWithIdentifier:@"quitgroupcell" forIndexPath:indexPath];
         [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(quitGroup:) forControlEvents:UIControlEventTouchUpInside];
-    }else{
-        cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-        if (cell == nil) {
-            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-        }
     }
-//    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.layer.borderWidth = 0.5;
     cell.layer.borderColor = grayBackColor.CGColor;
     return cell;
@@ -154,7 +141,8 @@
 //}
 
 -(void)quitGroup:(UIButton *)sender{
-    NSLog(@"退群");
+    [[XMPPSupportClass ShareInstance] leaveChatRoom:_groupJID];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 @end

@@ -23,18 +23,40 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager GET:url parameters:dic success:sucess failure:failed];
+}
+
+-(void)AFNetPOSTNobodySupport:(NSString *)url Parameters:(NSDictionary *)dic SucessBlock:(void(^)(AFHTTPRequestOperation *operation, id responseObject))sucess FailedBlock:(void(^)(AFHTTPRequestOperation *operation, NSError *error))failed{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 8;
+    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [manager POST:url parameters:dic success:sucess failure:failed];
 }
 
 -(void)AFNetPOSTSupport:(NSString *)url Parameters:(NSDictionary *)dic ConstructingBodyWithBlock:(void(^)(id<AFMultipartFormData> formData))bodyblock SucessBlock:(void(^)(AFHTTPRequestOperation *operation, id responseObject))sucess FailedBlock:(void(^)(AFHTTPRequestOperation *operation, NSError *error))failed{
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 8;
+    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager POST:url parameters:dic constructingBodyWithBlock:bodyblock success:sucess failure:failed];
+}
+
+-(void)AFNetPUTSupport:(NSString *)url Parameters:(NSDictionary *)dic SucessBlock:(void(^)(AFHTTPRequestOperation *operation, id responseObject))sucess FailedBlock:(void(^)(AFHTTPRequestOperation *operation, NSError *error))failed{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 8;
+    url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [manager PUT:url parameters:dic success:sucess failure:failed];
 }
 
 -(NSData *)httpGetSupport:(NSString *)urlString{
     //第一步，创建URL
+    urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURL *url = [NSURL URLWithString:urlString];
     //第二步，通过URL创建网络请求
     NSURLRequest *request = [[NSURLRequest alloc]initWithURL:url cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:3];
@@ -60,6 +82,7 @@
 
 -(NSData *)httpPostSupport:(NSString *)urlString PostName:(NSData *)fileData FileType:(NSString *)fileType FileTrail:(NSString *)fileTrail{
     NSString *TWITTERFON_FORM_BOUNDARY = @"AaB03x";
+    urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     //根据url初始化request
     NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlString]
                                                            cachePolicy:NSURLRequestReloadIgnoringLocalCacheData

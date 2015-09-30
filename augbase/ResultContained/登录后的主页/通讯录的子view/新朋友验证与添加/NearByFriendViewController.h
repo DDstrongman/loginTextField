@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "StrangerViewController.h"
 
 @interface NearByFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
 

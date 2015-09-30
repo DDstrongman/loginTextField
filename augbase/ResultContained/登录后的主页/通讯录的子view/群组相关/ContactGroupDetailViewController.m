@@ -78,7 +78,6 @@
         [((UIImageView *)[cell.contentView viewWithTag:7]) imageWithRound];
         [((UIImageView *)[cell.contentView viewWithTag:8]) imageWithRound];
         NSInteger space =(NSInteger)(ViewWidth - 30*2-50*4 - 20)/3;
-        NSLog(@"space === %ld",(long)space);
         [[cell.contentView viewWithTag:2] mas_updateConstraints:^(MASConstraintMaker *make) {
             make.left.equalTo([cell.contentView viewWithTag:1].mas_right).with.offset(space);
         }];

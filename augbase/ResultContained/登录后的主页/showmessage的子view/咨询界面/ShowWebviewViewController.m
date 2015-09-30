@@ -16,9 +16,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = grayBackColor;
+    self.view.backgroundColor = grayBackgroundLightColor;
     _webView = [[UIWebView alloc] init];
-    NSURLRequest *request =[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://api.augbase.com/yiserver/infoArticle.html"]];
+    NSURLRequest *request =[NSURLRequest requestWithURL:[NSURL URLWithString:_url]];
     [_webView loadRequest:request];
     [self.view addSubview: _webView];
     [_webView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -31,9 +31,6 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.navigationController.navigationBarHidden = NO;
-    [self.navigationController.navigationBar setBarTintColor:[UIColor whiteColor]];
-    [self.navigationController.navigationBar setTintColor:themeColor];
     self.title = NSLocalizedString(@"资讯详情", @"");
 }
 

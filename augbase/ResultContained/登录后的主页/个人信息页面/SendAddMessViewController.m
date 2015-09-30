@@ -8,8 +8,6 @@
 
 #import "SendAddMessViewController.h"
 
-#import "XMPPSupportClass.h"
-
 @interface SendAddMessViewController ()
 
 {
@@ -55,7 +53,9 @@
 -(void)sendAddFriend{
     NSLog(@"发送加好友信息");
 #warning 此处添加好友需要加入jid判定
-    [[XMPPSupportClass ShareInstance] addfriend:@"p20865"];
+    [[XMPPSupportClass ShareInstance] addfriend:_addFriendJID];
+//    [[XMPPSupportClass ShareInstance] addfriend:@"p1686"];
+    
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
 

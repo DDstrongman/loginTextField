@@ -13,10 +13,13 @@
 #import "UUMessageFrame.h"
 #import "UUMessage.h"
 
+#import "ContactPersonDetailViewController.h"
+
 @interface RootViewController ()<UUInputFunctionViewDelegate,UUMessageCellDelegate,UITableViewDataSource,UITableViewDelegate>
 
 @property (strong, nonatomic) MJRefreshHeaderView *head;
 @property (strong, nonatomic) ChatModel *chatModel;
+@property (nonatomic) NSInteger messTime;
 
 @property (weak, nonatomic) IBOutlet UITableView *chatTableView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
@@ -30,7 +33,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     NSLog(@"通讯好友的jid====%@",_personJID);
-    
+    _messTime = 1;
     [self initBar];
     [self addRefreshViews];
     [self loadBaseViewsAndData];
@@ -49,14 +52,7 @@
     [XMPPSupportClass ShareInstance].receiveMessDelegate = self;
     self.navigationController.navigationBarHidden = NO;
     _chatModel.isGroupChat = _privateOrNot;
-    if (_privateOrNot == 1) {
-        UIButton *groupDetailButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
-        [groupDetailButton setBackgroundImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
-        [groupDetailButton addTarget:self action:@selector(groupDetail) forControlEvents:UIControlEventTouchUpInside];
-        [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:groupDetailButton]];
-    }else{
-        self.navigationItem.rightBarButtonItem = nil;
-    }
+    self.navigationItem.rightBarButtonItem = nil;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -72,7 +68,7 @@
     NSLog(@"接收到通知");
 #warning 此处需要加入从数据库获取数据
     [self.chatModel.dataSource removeAllObjects];
-    [self.chatModel addCellFromDB:_personJID];
+    [self.chatModel addCellFromDB:_personJID MessNumber:10];
     [self.chatTableView reloadData];
     [self tableViewScrollToBottom];
     [[DBManager ShareInstance] creatDatabase:DBName];
@@ -86,14 +82,6 @@
     [[NSNotificationCenter defaultCenter]removeObserver:self];
 }
 
-#pragma 群聊查看群信息
--(void)groupDetail{
-    NSLog(@"加入查看群信息函数");
-    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    GroupDetailViewController *gdv = [main instantiateViewControllerWithIdentifier:@"groupdetail"];
-    [self.navigationController pushViewController:gdv animated:YES];
-}
-
 - (void)initBar{
     if(_privateOrNot == 0){
         self.title = NSLocalizedString(@"私聊", @"");
@@ -105,25 +93,23 @@
 - (void)addRefreshViews
 {
     __weak typeof(self) weakSelf = self;
-    
     //load more
-    int pageNum = 3;
-    
+    int pageNum = 5;
     _head = [MJRefreshHeaderView header];
     _head.scrollView = self.chatTableView;
     _head.beginRefreshingBlock = ^(MJRefreshBaseView *refreshView) {
         
 #warning 此处需要加入从数据库获取数据
-//        [weakSelf.chatModel addRandomItemsToDataSource:_MessTableArray];
+        [weakSelf.chatModel addCellFromDB:weakSelf.personJID MessNumber:10+pageNum*weakSelf.messTime];
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
         
-        if (weakSelf.chatModel.dataSource.count > pageNum) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:pageNum inSection:0];
-            
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [weakSelf.chatTableView reloadData];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf.chatTableView reloadData];
+            if (weakSelf.chatModel.dataSource.count>0) {
                 [weakSelf.chatTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
-            });
-        }
+            }
+            weakSelf.messTime++;
+        });
         [weakSelf.head endRefreshing];
     };
 }
@@ -131,11 +117,10 @@
 - (void)loadBaseViewsAndData
 {
     self.chatModel = [[ChatModel alloc]init];
-    _chatModel.flushTableDelegate = self;
     self.chatModel.isGroupChat = NO;
     //    [self.chatModel populateRandomDataSource:_MessTableArray];
 #warning 此处需要加入从数据库获取数据
-    [self.chatModel addCellFromDB:_personJID];
+    [self.chatModel addCellFromDB:_personJID MessNumber:10];
     
     IFView = [[UUInputFunctionView alloc]initWithSuperVC:self];
     IFView.delegate = self;
@@ -235,7 +220,7 @@
     NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
     NSString *userJID = [userDefault objectForKey:@"userJID"];
     chatDBItem.personJID = userJID;
-    chatDBItem.sendPersonJID = _personJID;
+    chatDBItem.toPersonJID = _personJID;
     if ([[userDefault objectForKey:@"userNickName"] isEqualToString:@""]) {
         chatDBItem.personNickName = defaultUserName;
     }else{
@@ -259,7 +244,7 @@
     
     
     if ([[XMPPSupportClass ShareInstance] sendMess:chatDBItem toUserJID:_personJID FromUserJID:userJID]) {
-        [self.chatModel addCellFromDB:_personJID];
+        [self.chatModel addCellFromDB:_personJID MessNumber:10];
         [self.chatTableView reloadData];
 //        [self.chatTableView beginUpdates];
 //        NSMutableArray *path = [NSMutableArray array];
@@ -305,15 +290,14 @@
 //    [alert show];
     if (!_privateOrNot) {
         UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        RootPrivateInfoViewController *rpiv = [story instantiateViewControllerWithIdentifier:@"rootprivate"];
-        rpiv.personJID = _personJID;
-        rpiv.personImage = [cell.btnHeadImage backgroundImageForState:UIControlStateNormal];
-        [self.navigationController pushViewController:rpiv animated:YES];
+        ContactPersonDetailViewController *cpdv = [story instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.friendJID = _personJID;
+        [self.navigationController pushViewController:cpdv animated:YES];
     }else{
-        UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        StrangerViewController *rpiv = [story instantiateViewControllerWithIdentifier:@"stranger"];
-        rpiv.strangerImage = [cell.btnHeadImage backgroundImageForState:UIControlStateNormal];
-        [self.navigationController pushViewController:rpiv animated:YES];
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.friendJID = _personJID;
+        [self.navigationController pushViewController:cpdv animated:YES];
     }
 }
 

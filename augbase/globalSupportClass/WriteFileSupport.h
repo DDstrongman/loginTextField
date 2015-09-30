@@ -38,4 +38,6 @@
 //读取图片
 -(UIImage *)getLocalMark:(NSString *)filePath;
 
+-(void)removeAllDirDocuments;//删除documents下所有文件，用以重置用户信息
+
 @end

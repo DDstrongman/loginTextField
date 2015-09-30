@@ -18,7 +18,7 @@
 
 //person xmpp端的JID,xmpp服务器类似uid的东西，唯一区分用户
 @property (nonatomic,strong) NSString *personJID;
-@property (nonatomic,strong) NSString *sendPersonJID;
+@property (nonatomic,strong) NSString *toPersonJID;
 #warning 此处的账户名是否需要需要慎重考虑
 //@property (nonatomic,strong) NSString *personName;
 

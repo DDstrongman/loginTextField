@@ -11,11 +11,10 @@
 #import "UserItem.h"
 #import "DBItem.h"
 #import "FriendDBManager.h"
-#import "SetupView.h"
 
-#warning 测试用的类
-#import "OcrDetailResultViewController.h"
+#import "MessNewsViewController.h"
 
+#import "NSDate+Utils.h"
 
 @interface ShowAllMessageViewController ()
 
@@ -26,6 +25,8 @@
     NSMutableArray *titleImageNameArray;//官方提供的图片名称数组
     NSMutableArray *titleColorArray;//官方提供的图片背景色数组
     NSMutableArray *searchResults;//搜索结果的数组
+    NSMutableArray *chatCellJID;//每个显示的chatcell的JID数组，用来传递jid，需要注意的是私聊和群聊的jid拼接方式不一样
+    
     UISearchBar *mySearchBar;//ui，仅仅是个ui
     UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
     BOOL NotFirstTimeLogin;//no为初次登录，yes则不是
@@ -40,12 +41,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSLog(@"userJID===%@",[defaults objectForKey:@"userJID"]);
-    _messageTableview.delegate = self;
-    _messageTableview.dataSource = self;
-    
-    
     [self setupView];
     [self setupData];
     [self setupConnect];
@@ -80,12 +75,6 @@
     NSLog(@"数据源为：%@",dataArray);
     searchResults = dataArray;
     [_messageTableview reloadData];
-#warning 加入聊天室的功能
-//    [[XMPPSupportClass ShareInstance] setUpChatRoom:[NSString stringWithFormat: @"%@@%@.%@",@"998899",@"conference",httpServer]];
-//    
-//    DBItem *groupChat = [[DBItem alloc]init];
-//    groupChat.messContent = receiveMess;
-//    [[XMPPSupportClass ShareInstance] xmppRoomSendMess:[NSString stringWithFormat: @"%@@%@.%@",@"998899",@"conference",httpServer] ChatMess:groupChat FromUser:testMineJID];
 }
 
 #pragma xmpp登录成功与否的delegate
@@ -138,10 +127,9 @@
     [[FriendDBManager ShareInstance]creatDatabase:FriendDBName];
     
     tableJidName = [[DBManager ShareInstance] getAllTableName];
-    dataArray = [NSMutableArray arrayWithCapacity:0];
+    dataArray = [NSMutableArray array];
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSLog(@"FriendList===%@",[defaults objectForKey:@"FriendList"]);
     if ([defaults objectForKey:@"FriendList"]) {
         if ([tableJidName count] >0) {
             for (NSString *JID in tableJidName) {
@@ -162,7 +150,6 @@
         if ([tableJidName count] >0) {
             for (NSString *JID in tableJidName) {
                 NSString *url = [NSString stringWithFormat:@"%@user?jid=%@",Baseurl,JID];
-                NSLog(@"url===%@",url);
                 NSURL *urlWithUrl = [NSURL URLWithString:url];
                 //第二步，通过URL创建网络请求
                 NSURLRequest *request = [[NSURLRequest alloc]initWithURL:urlWithUrl cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:3];
@@ -222,7 +209,11 @@
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+//    if (searchResults.count == 0) {
+//        return 1;
+//    }else{
+        return 2;
+//    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
@@ -252,19 +243,30 @@
         cell.iconImageView.image = [UIImage imageNamed:titleImageNameArray[indexPath.row]];
         cell.iconImageView.backgroundColor = titleColorArray[indexPath.row];
         cell.titleText.text = titleDataArray[indexPath.row];
-        cell.descriptionText.text = NSLocalizedString(@"小月你又打飞机", @"");//测试用，以后改为传来的讯息,以下同
-        cell.timeText.text = @"18:00";
+        if (indexPath.row == 0) {
+            cell.descriptionText.text = NSLocalizedString(@"群聊助手", @"");
+        }else{
+            cell.descriptionText.text = NSLocalizedString(@"咨询信息", @"");
+        }
     }else{
         FMResultSet *lastMessResult = [[DBManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
         NSString *lastMess;
         NSString *lastTime;
+        NSString *lastType;
         while ([lastMessResult next]){
             lastMess = [lastMessResult stringForColumn:@"messContent"];
             lastTime = [lastMessResult stringForColumn:@"timeStamp"];
+            lastType = [lastMessResult stringForColumn:@"messType"];
         }
         cell.titleText.text = searchResults[indexPath.row];
-        cell.descriptionText.text = lastMess;
-        cell.timeText.text = lastTime;
+        if ([lastType isEqualToString:@"0"]) {
+            cell.descriptionText.text = lastMess;
+        }else if ([lastType isEqualToString:@"1"]){
+            cell.descriptionText.text = NSLocalizedString(@"[图片]", @"");
+        }else{
+            cell.descriptionText.text = NSLocalizedString(@"[语音]", @"");
+        }
+        cell.timeText.text = [self changeTheDateString:lastTime];
         
         FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:tableJidName[indexPath.row]];
         while ([messPicPath next]){
@@ -272,14 +274,16 @@
             cell.iconImageView.image = [UIImage imageWithContentsOfFile:picPath];
         }
         
-        cell.tag = [[tableJidName[indexPath.row] substringFromIndex:1] integerValue];
-        NSLog(@"cell.tag === %ld",(long)[tableJidName[indexPath.row] integerValue]);
         FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] ItemName:@"ReadOrNot" ItemValue:0];
         NSInteger messNumer = 0;
         while ([messWithNumber next]) {
             messNumer++;
         }
-        [cell.timeText imageWithRedNumber:messNumer];
+        if (messNumer == 0) {
+            [cell.timeText imageRemoveRedNumber];
+        }else{
+            [cell.timeText imageWithRedNumber:messNumer];
+        }
     }
 #warning 设置分割线
     tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
@@ -291,22 +295,18 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 0&&indexPath.row == 0) {
-#warning 此处测试用
         ChooseGroupViewController *cgv = [[ChooseGroupViewController alloc]init];
         [self.navigationController pushViewController:cgv animated:YES];
     }else if(indexPath.section == 0&&indexPath.row == 1){
-        HACollectionViewSmallLayout *smallLayout = [[HACollectionViewSmallLayout alloc] init];
-        HASmallCollectionViewController *collectionViewController = [[HASmallCollectionViewController alloc] initWithCollectionViewLayout:smallLayout];
-        
-        self.transitionController = [[HATransitionController alloc] initWithCollectionView:collectionViewController.collectionView];
-        self.transitionController.delegate = self;
-        [self.navigationController pushViewController:collectionViewController animated:YES];
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        MessNewsViewController *mnc = [main instantiateViewControllerWithIdentifier:@"messnews"];
+        [self.navigationController pushViewController:mnc animated:YES];
     }else if(indexPath.section == 0&&indexPath.row == 2){
         
     }else{
         RootViewController *rtv = [[RootViewController alloc]init];
         rtv.privateOrNot = 0;//私聊
-        rtv.personJID = [NSString stringWithFormat:@"%@%ld",@"p",(long)[_messageTableview cellForRowAtIndexPath:indexPath].tag];
+        rtv.personJID = tableJidName[indexPath.row];
         [self.navigationController pushViewController:rtv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -360,31 +360,12 @@
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-//    headerView.layer.borderWidth = 0.5;
-//    return headerView;
-//}
-
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = grayBackgroundLightColor;
     headerView.layer.borderColor = lightGrayBackColor.CGColor;
     headerView.layer.borderWidth = 0.5;
     return headerView;
-}
-
-#pragma 加cell进入动画
-- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-//    if (cell.frame.origin.y>ViewHeight/2) {
-//        cell.frame = CGRectMake(-320, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-//        [UIView animateWithDuration:0.7 animations:^{
-//            cell.frame = CGRectMake(0, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-//        } completion:^(BOOL finished) {
-//            ;
-//        }];
-//    }
 }
 
 #pragma 滑动scrollview取消输入
@@ -398,8 +379,8 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
-//    [[DBManager ShareInstance] closeDB];
-//    [[FriendDBManager ShareInstance] closeDB];
+    [searchViewController setActive:NO];
+    [self.view endEditing:YES];
 }
 
 #pragma searchviewcontroller的delegate
@@ -407,16 +388,12 @@
 - (void)willPresentSearchController:(UISearchController *)searchController{
     NSLog(@"将要  开始  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
-//    navigationBar.hidden = YES;
-//    [[UIApplication sharedApplication]setStatusBarHidden:YES];
 }
 
 // 搜索界面将要消失
 -(void)willDismissSearchController:(UISearchController *)searchController{
     NSLog(@"将要  取消  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-//    navigationBar.hidden = NO;
-//    [[UIApplication sharedApplication]setStatusBarHidden:NO];
 }
 
 -(void)didDismissSearchController:(UISearchController *)searchController{
@@ -425,6 +402,8 @@
 
 #pragma viewdidload等中初始化的方法写在这里
 -(void)setupView{
+    _messageTableview.delegate = self;
+    _messageTableview.dataSource = self;
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
     searchViewController.active = NO;
     searchViewController.dimsBackgroundDuringPresentation = NO;
@@ -439,37 +418,22 @@
     _messageTableview.tableFooterView = [[UIView alloc]init];
     
     searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
-    
     [[SetupView ShareInstance]setupSearchbar:searchViewController];
-    
-    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
-    titleImageNameArray = [@[@"groups",@"news"]mutableCopy];
-    titleColorArray = [@[themeColor,yellowTitleColor,themeColor]mutableCopy];
 }
 
 -(void)setupData{
-#warning 此处加入收到信息的dataarray
-//    [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
-//    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-//    FriendDBItem *testItem = [[FriendDBItem alloc]init];
-//    testItem.friendJID = testToJID;
-//    testItem.friendName = @"小月卖屁股";
-//    testItem.friendDescribe = @"永超卖屁股";
-//    testItem.friendImageUrl = @"永超卖屁股";//头像url
-//    testItem.friendAge = @"永超卖屁股";//
-//    testItem.friendGender = @"永超卖屁股";//
-//    testItem.friendOnlineOrNot = @"0";//
-//    for (int i=0; i<5; i++) {
-//        [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:testItem];
-//    }
+#warning 此处加入收到信息的dataarra
+    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
+    titleImageNameArray = [@[@"groups",@"news"]mutableCopy];
+    titleColorArray = [@[themeColor,yellowTitleColor,themeColor]mutableCopy];
+    chatCellJID = [NSMutableArray array];
 }
 
 -(void)setupConnect{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NotFirstTimeLogin = [defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
+    NotFirstTimeLogin = (BOOL)[defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
     if (NotFirstTimeLogin) {
         NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
-        NSLog(@"url===%@",url);
         NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
         [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
         [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
@@ -480,7 +444,6 @@
         [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res=[[source objectForKey:@"res"] intValue];
-            NSLog(@"device activitation res=%d",res);
             if (res == 0) {
                 //请求完成
                 if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]]) {
@@ -497,49 +460,46 @@
 
 }
 
-#pragma 咨询的delegat
-- (void)interactionBeganAtPoint:(CGPoint)point
+//"08-10 晚上08:09:41.0" ->
+//"昨天 上午10:09"或者"2012-08-10 凌晨07:09"
+- (NSString *)changeTheDateString:(NSString *)Str
 {
-    // Very basic communication between the transition controller and the top view controller
-    // It would be easy to add more control, support pop, push or no-op
-    HASmallCollectionViewController *presentingVC = (HASmallCollectionViewController *)[self.navigationController topViewController];
-    HASmallCollectionViewController *presentedVC = (HASmallCollectionViewController *)[presentingVC nextViewControllerAtPoint:point];
-    if (presentedVC!=nil)
-    {
-        [self.navigationController pushViewController:presentedVC animated:YES];
-    }
-    else
-    {
-        [self.navigationController popViewControllerAnimated:YES];
-    }
-}
-
-
-- (id <UIViewControllerInteractiveTransitioning>)navigationController:(UINavigationController *)navigationController
-                          interactionControllerForAnimationController:(id <UIViewControllerAnimatedTransitioning>) animationController
-{
-    if (animationController==self.transitionController) {
-        return self.transitionController;
-    }
-    return nil;
-}
-
-
-- (id <UIViewControllerAnimatedTransitioning>)navigationController:(UINavigationController *)navigationController
-                                   animationControllerForOperation:(UINavigationControllerOperation)operation
-                                                fromViewController:(UIViewController *)fromVC
-                                                  toViewController:(UIViewController *)toVC
-{
-    if (![fromVC isKindOfClass:[UICollectionViewController class]] || ![toVC isKindOfClass:[UICollectionViewController class]])
-    {
-        return nil;
-    }
-    if (!self.transitionController.hasActiveInteraction)
-    {
-        return nil;
+    NSString *subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    NSDate *lastDate = [NSDate dateFromString:subString withFormat:@"yyyy-MM-dd HH:mm:ss"];
+    NSTimeZone *zone = [NSTimeZone systemTimeZone];
+    NSInteger interval = [zone secondsFromGMTForDate:lastDate];
+    lastDate = [lastDate dateByAddingTimeInterval:interval];
+    
+    NSString *dateStr;  //年月日
+    NSString *period;   //时间段
+    NSString *hour;     //时
+    
+    if ([lastDate year]==[[NSDate date] year]) {
+        NSInteger days = [NSDate daysOffsetBetweenStartDate:lastDate endDate:[NSDate date]];
+        if (days <= 2) {
+            dateStr = [lastDate stringYearMonthDayCompareToday];
+        }else{
+            dateStr = [lastDate stringMonthDay];
+        }
+    }else{
+        dateStr = [lastDate stringYearMonthDay];
     }
     
-    self.transitionController.navigationOperation = operation;
-    return self.transitionController;
+    
+    if ([lastDate hour]>=5 && [lastDate hour]<12) {
+        period = @"上午";
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
+    }else if ([lastDate hour]>=12 && [lastDate hour]<=18){
+        period = @"下午";
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+    }else if ([lastDate hour]>18 && [lastDate hour]<=23){
+        period = @"晚上";
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+    }else{
+        period = @"凌晨";
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
+    }
+    return [NSString stringWithFormat:@"%@ %@ %@:%02d",dateStr,period,hour,(int)[lastDate minute]];
 }
+
 @end

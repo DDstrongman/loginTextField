@@ -15,6 +15,8 @@
 @property (nonatomic,strong) ImageViewLabelTextFieldView *registViewOne;
 @property (nonatomic,strong) ImageViewLabelTextFieldView *registViewTwo;
 @property (nonatomic,strong) ImageViewLabelTextFieldView *registViewThree;
+//底部输入图片验证码获取短信验证码的输入框
+@property (nonatomic,strong) ImageViewLabelTextFieldView *inputNumberView;
 
 @property (nonatomic) NSString *phoneNumber;
 

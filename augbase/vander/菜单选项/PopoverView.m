@@ -86,10 +86,9 @@
         frame.origin.x = 5;
     }
     //右间隔最小5x
-    if ((frame.origin.x + frame.size.width) > 315) {
-        frame.origin.x = 315 - frame.size.width;
+    if ((frame.origin.x + frame.size.width) > ViewWidth-5) {
+        frame.origin.x = ViewWidth-5 - frame.size.width;
     }
-    
     return frame;
 }
 

@@ -6,9 +6,6 @@
 //  Copyright (c) 2015年 李胜书. All rights reserved.
 //
 #import "OcrResultGroupViewController.h"
-
-#import "HttpManager.h"
-
 #import "VOSegmentedControl.h"
 
 NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
@@ -23,8 +20,10 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     NSMutableArray *ocrProgressArray;//ocr图片头分组
     NSMutableArray *ocrSucessArray;//ocr图片头分组
     NSMutableArray *ocrFailedDetailArray;//ocr图片具体结果分组
-    NSMutableArray *ocrProgressDetailArray;//ocr图片具体结果分组
     NSMutableArray *ocrSucessDetailArray;//ocr图片具体结果分组
+    
+    NSArray *sucessOrderArray;//成功的排序；
+    NSArray *failedOrderArray;//失败的排序;
 }
 
 @end
@@ -34,10 +33,11 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupView];
-    [self setupData];
+    _SegIndex = 0;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    [self setupData];
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"原始报告", @"");
 }
@@ -47,7 +47,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     if (_SegIndex == 0) {
         return ocrFailedArray.count;
     }else if(_SegIndex == 1){
-        return ocrProgressArray.count;
+        return 1;
     }else{
         return ocrSucessArray.count;
     }
@@ -57,7 +57,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     if (_SegIndex == 0) {
         return ((NSArray *)ocrFailedDetailArray[section]).count;
     }else if(_SegIndex == 1){
-        return ((NSArray *)ocrProgressDetailArray[section]).count;
+        return ocrProgressArray.count;
     }else{
         return ((NSArray *)ocrSucessDetailArray[section]).count;
     }
@@ -69,38 +69,49 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     // Here we use the new provided sd_setImageWithURL: method to load the web image
     NSString *urlString;
     if (_SegIndex == 0) {
-        urlString = ((NSArray *)ocrFailedDetailArray[indexPath.section])[indexPath.row];
+        urlString = [(NSDictionary *)[(NSDictionary *)((NSArray *)ocrFailedDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];
     }else if(_SegIndex == 1){
-        urlString = ((NSArray *)ocrProgressDetailArray[indexPath.section])[indexPath.row];
+        NSDictionary *tempDic = ocrProgressArray[indexPath.row];
+        NSArray *tempArray = [tempDic objectForKey:@"picsInfo"];
+        NSDictionary *progressTempDic = tempArray[0];
+        urlString = [progressTempDic objectForKey:@"pic"];
     }else{
-        urlString = ((NSArray *)ocrSucessDetailArray[indexPath.section])[indexPath.row];
+        urlString = [(NSDictionary *)[(NSDictionary *)((NSArray *)ocrSucessDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];
     }
-    [cell.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString]]
+    [cell.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin_thumb/%@",urlString]]
                       placeholderImage:[UIImage imageNamed:@"test.png"]];
-//    cell.titleText.text = @"小月是逗比";
-//    cell.descriptionText.text = @"小月是逗比";
-    cell.backgroundColor = [UIColor brownColor];
+    cell.backgroundColor = grayBackgroundLightColor;
     return cell;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     NSLog(@"选择了section===%ld,row===%ld",(long)indexPath.section,(long)indexPath.row);
-    if (indexPath.section != 0) {
-        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        DetailImageOcrViewController *diov = [main instantiateViewControllerWithIdentifier:@"detailocrimage"];
-        if (indexPath.section == 1) {
-            diov.ResultOrING = NO;//识别中
-        }else{
-            diov.ResultOrING = YES;//识别结果
-        }
-        diov.showImage = ((Cell1 *)[_ocrResultCollection cellForItemAtIndexPath:indexPath]).imageView.image;
-        [self.navigationController pushViewController:diov animated:YES];
-    }else{
+    if (_SegIndex == 0) {
+        NSString *urlString;
+        urlString = [(NSDictionary *)[(NSDictionary *)((NSArray *)ocrFailedDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         FailedOcrResultViewController *forv = [main instantiateViewControllerWithIdentifier:@"ocrfailedresult"];
-        forv.failedImage = ((Cell1 *)[_ocrResultCollection cellForItemAtIndexPath:indexPath]).imageView.image;
+        forv.failedImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString];
+        forv.detailDic = ocrFailedDetailArray[indexPath.section][indexPath.row];
         [self.navigationController pushViewController:forv animated:YES];
+    }else{
+        NSString *urlString;
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        DetailImageOcrViewController *diov = [main instantiateViewControllerWithIdentifier:@"detailocrimage"];
+        if (_SegIndex == 1) {
+            diov.ResultOrING = NO;//识别中
+            NSDictionary *tempDic = ocrProgressArray[indexPath.row];
+            NSArray *tempArray = [tempDic objectForKey:@"picsInfo"];
+            NSDictionary *progressTempDic = tempArray[0];
+            urlString = [progressTempDic objectForKey:@"pic"];
+        }else{
+            diov.ResultOrING = YES;//识别结果
+            diov.detailDic = ocrSucessDetailArray[indexPath.section][indexPath.row];
+            urlString = [(NSDictionary *)[(NSDictionary *)((NSArray *)ocrSucessDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];
+        }
+        diov.showImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString];
+        [self.navigationController pushViewController:diov animated:YES];
     }
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }
@@ -111,11 +122,11 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     if (_SegIndex == 0) {
         ((UILabel *)[headerView viewWithTag:1]).text = ocrFailedArray[indexPath.section];
     }else if(_SegIndex == 1){
-        ((UILabel *)[headerView viewWithTag:1]).text = ocrProgressArray[indexPath.section];
+        ((UILabel *)[headerView viewWithTag:1]).text = NSLocalizedString(@"识别中", @"");
     }else{
         ((UILabel *)[headerView viewWithTag:1]).text = ocrSucessArray[indexPath.section];
     }
-    headerView.backgroundColor = themeColor;
+    headerView.backgroundColor = [UIColor colorWithRed:240.0/255 green:240.0/255 blue:240.0/255 alpha:0.7];
     return headerView;
 }
 
@@ -126,7 +137,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     segctrl1.contentStyle = VOContentStyleTextAlone;
     segctrl1.indicatorStyle = VOSegCtrlIndicatorStyleBottomLine;
     segctrl1.textColor = [UIColor blackColor];
-    segctrl1.backgroundColor = grayBackColor;
+    segctrl1.backgroundColor = [UIColor colorWithRed:240.0/255 green:240.0/255 blue:240.0/255 alpha:1.0];
     segctrl1.allowNoSelection = NO;
     segctrl1.frame = CGRectMake(0,0,ViewWidth,44);
     segctrl1.selectedTextFont = [UIFont systemFontOfSize:17];
@@ -145,13 +156,12 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     lineLayout=[[KRLCollectionViewGridLayout alloc] init];
     
     //改变layout属性：
-    lineLayout.sectionInset = UIEdgeInsetsMake(1, 1, 1, 1);
-    //    lineLayout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+    lineLayout.sectionInset = UIEdgeInsetsMake(0, 1, 1, 1);
     lineLayout.numberOfItemsPerLine = 3;
-    lineLayout.interitemSpacing = 2;
-    lineLayout.lineSpacing = 2;
+    lineLayout.interitemSpacing = 10;
+    lineLayout.lineSpacing = 1;
     lineLayout.aspectRatio = 1.0/1.0;
-    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 22);
+    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 45);
     
     _ocrResultCollection.collectionViewLayout = lineLayout;
     _ocrResultCollection.alwaysBounceVertical = YES;
@@ -160,7 +170,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     
     [_ocrResultCollection setClipsToBounds:YES];
     
-    _ocrResultCollection.backgroundColor = grayBackColor;
+    _ocrResultCollection.backgroundColor = [UIColor whiteColor];
     _ocrResultCollection.pagingEnabled = NO;
     
     _ocrResultCollection.translatesAutoresizingMaskIntoConstraints = NO;
@@ -171,39 +181,33 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 }
 
 -(void)setupData{
-    _SegIndex = 0;
     
     ocrFailedArray = [NSMutableArray array];
     ocrProgressArray = [NSMutableArray array];
     ocrSucessArray = [NSMutableArray array];
     ocrSucessDetailArray = [NSMutableArray array];
-    ocrProgressDetailArray = [NSMutableArray array];
     ocrFailedDetailArray = [NSMutableArray array];
     
-    NSString *urlFailedSucess = [NSString stringWithFormat:@"%@ltr/month/list?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
-    NSString *urlProgressing = [NSString stringWithFormat:@"%@ltr/nodislist?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
-    [[HttpManager ShareInstance] AFNetGETSupport:urlFailedSucess Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/ltr/all/?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+    NSLog(@"url===%@",url);
+    [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
-        NSDictionary *picSucessList = [source objectForKey:@"ltr"];
-        NSArray *picFailedList = [source objectForKey:@"faillist"];
+        NSDictionary *picSucessList = [source objectForKey:@"successedLtr"];
+        NSDictionary *picFailedList = [source objectForKey:@"failedLtr"];
+        sucessOrderArray = [source objectForKey:@"successedLtrOrder"];
+        failedOrderArray = [source objectForKey:@"failedLtrOrder"];
+        ocrSucessArray = [NSMutableArray arrayWithArray:sucessOrderArray];
+        ocrFailedArray = [NSMutableArray arrayWithArray:failedOrderArray];
+        ocrProgressArray = [source objectForKey:@"onProgressLtr"];
         if (res == 0) {
-#warning 此处的结构在后端重构合理的json结构后需要改变，具体参考识别失败的结构
-            for (id key in picSucessList) {
-                [ocrSucessArray addObject:key];
-                NSArray *sucListArray = [picSucessList objectForKey:key];
-                for(id picDetail in sucListArray){
-                    NSDictionary *picDic = picDetail;
-                    [ocrSucessDetailArray addObject:[picDic objectForKey:@"pics"]];
-                }
+            for (int i = 0;i<failedOrderArray.count;i++) {
+                NSString *failDate = failedOrderArray[i];
+                [ocrFailedDetailArray addObject:[picFailedList objectForKey:failDate]];
             }
-            for (int i = 0;i<picFailedList.count;i++) {
-                NSDictionary *failDic = picFailedList[i];
-                [ocrFailedArray addObject:[failDic objectForKey:@"createtime"]];
-//                for (id pic in [failDic objectForKey:@"pics"]) {
-//                    [ocrFailedDetailArray addObject:pic];
-//                }
-                [ocrFailedDetailArray addObject:[failDic objectForKey:@"pics"]];
+            for (int i = 0;i<sucessOrderArray.count;i++) {
+                NSString *sucessDate = sucessOrderArray[i];
+                [ocrSucessDetailArray addObject:[picSucessList objectForKey:sucessDate]];
             }
             [_ocrResultCollection reloadData];
         }else{
@@ -211,24 +215,6 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB获取成功失败列表失败%@",error);
-    }];
-    
-    [[HttpManager ShareInstance] AFNetGETSupport:urlProgressing Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-        int res=[[source objectForKey:@"res"] intValue];
-        NSArray *ocrProgressing = [source objectForKey:@"nodislist"];
-        if (res == 0) {
-            for (id progress in ocrProgressing) {
-                NSDictionary *progressDic = progress;
-                [ocrProgressArray addObject:[progressDic objectForKey:@"createtime"]];
-                [ocrProgressDetailArray addObject:[progressDic objectForKey:@"pics"]];
-            }
-            [_ocrResultCollection reloadData];
-        }else{
-            
-        }
-    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"WEB获取进行中列表失败：%@",error);
     }];
 }
 

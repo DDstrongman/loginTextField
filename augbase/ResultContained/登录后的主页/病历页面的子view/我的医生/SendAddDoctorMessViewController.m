@@ -11,6 +11,11 @@
 
 @interface SendAddDoctorMessViewController ()
 
+{
+    NSString *message;//发送给医生的信息
+    NSString *realName;//填写的真实名称
+}
+
 @end
 
 @implementation SendAddDoctorMessViewController
@@ -25,7 +30,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-//    [[IQKeyboardManager sharedManager] setEnable:YES];
+    
 }
 
 #pragma mark - Table view data source
@@ -76,24 +81,33 @@
 }
 
 -(void)sendMess:(UIButton *)sender{
-    NSLog(@"确认发送加医生信息");
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/myDoctor/%@",Baseurl,[_doctorDic objectForKey:@"id"]];
+//    uid=1686&token=19a3c2c73bcf94ce3d40ca807c020c5a&nickName=闪电侠&gender=0&age=88&msg=加我咯2
+    message = ((UITextView *)[_sendAddMessTable viewWithTag:999]).text;
+    realName = ((UITextView *)[_sendAddMessTable viewWithTag:998]).text;
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    [dic setObject:[user objectForKey:@"userUID"] forKey:@"uid"];
+    [dic setObject:[user objectForKey:@"userToken"] forKey:@"token"];
+    [dic setObject:realName forKey:@"nickName"];
+    [dic setObject:[user objectForKey:@"userGender"] forKey:@"gender"];
+    [dic setObject:[user objectForKey:@"userAge"] forKey:@"age"];
+    [dic setObject:message forKey:@"msg"];
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res = [[source objectForKey:@"res"] intValue];
+        if (res == 0) {
+            NSLog(@"添加成功");
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
 }
 
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
-    //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-#pragma cell滑入的动画效果
-- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    //    cell.frame = CGRectMake(-320, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-    //    [UIView animateWithDuration:0.7 animations:^{
-    //        cell.frame = CGRectMake(0, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-    //    } completion:^(BOOL finished) {
-    //        ;
-    //    }];
 }
 
 #pragma 添加头和尾
@@ -116,5 +130,13 @@
 //-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
 //    return nil;
 //}
+
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
+    [self.view endEditing:YES];
+}
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    [self.view endEditing:YES];
+}
 
 @end

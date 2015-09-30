@@ -13,6 +13,7 @@
 #import "DBItem.h"
 
 #import "XMPP.h"
+#import "XMPPMUC.h"
 #import "XMPPReconnect.h"
 #import "XMPPRoster.h"
 #import "XMPPRosterCoreDataStorage.h"
@@ -21,6 +22,7 @@
 #import <XMPPRoomCoreDataStorage.h>
 
 #import "DBManager.h"
+#import "DBGroupManager.h"
 #import "FriendDBManager.h"
 #import "ChatSupportItem.h"
 
@@ -45,13 +47,18 @@
 
 @end
 
+@protocol GroupMemberListDelegate <NSObject>
+@required
+-(void)GroupMemberList:(NSMutableArray *)result;//获取群用户
+
+@end
+
 @interface XMPPSupportClass : NSObject
 
 {
 //    XMPPStream *xmppStream;
     NSString *password;  //密码,均为123456
     BOOL isOpen;  //xmppStream是否开着
-    MBProgressHUD *HUD;//进度条
     
     XMPPReconnect *xmppReconnect;
     XMPPRoster *xmppRoster;
@@ -61,6 +68,7 @@
 @property (nonatomic,weak)  id<ReceiveMessDelegate> receiveMessDelegate;
 @property (nonatomic,weak)  id<ConnectXMPPDelegate> connectXMPPDelegate;
 @property (nonatomic,weak)  id<GetFriendListDelegate> getFriendListDelegate;
+@property (nonatomic,weak)  id<GroupMemberListDelegate> groupMemberListDelegate;
 
 @property (nonatomic,strong) XMPPStream *xmppStream;
 @property (nonatomic,strong) XMPPRosterCoreDataStorage  *xmppRosterDataStorage;
@@ -79,14 +87,11 @@
 -(void)goOnline;
 //下线
 -(void)goOffline;
-//发送文字图片，音频等信息 MessType  0:文字  1:图片 2:音频
+//发送文字图片，音频等信息 MessType  0:文字  1:图片 2:音频;发送群消息和私聊消息共用一个，发送群消息即发送给群jid的消息
 -(BOOL)sendMess:(DBItem *)allContents toUserJID:(NSString *)friendUserJid FromUserJID:(NSString *)myJID;
 //发送音频图片信息的时候上传服务器之后返回url，发送url文本信息过去
 -(NSString *)uploadPic:(UIImage *)image;
 -(NSString *)uploadMP3:(NSData *)mp3;
-
-//获取实时接收的信息，暂时用为test
-//-(NSMutableArray *)recieveMess;
 
 @property (nonatomic,strong) NSMutableArray *messArray;
 
@@ -94,11 +99,14 @@
 -(void)getMyQueryRoster;
 //添加好友
 -(void)addfriend:(NSString *)keyjid;
+-(void)confirmAddFriend:(NSString *)addJID;
 //删除好友
 -(void)removeFriend:(NSString *)friendJID;
 //初始化聊天室
--(void)setUpChatRoom:(NSString *)ROOM_JID;
-//发送群聊信息
--(void)xmppRoomSendMess:(NSString *)roomJid ChatMess:(DBItem *)chatMess FromUser:(NSString *)userJid;
+-(void)setUpChatRoom:(NSString *)ROOM_JID NickName:(NSString *)nickName;
+
+-(void)leaveChatRoom:(NSString *)ROOM_JID;
+
+-(void)inviteFriendToChatRoom:(NSString *)friendJID Message:(NSString *)message;
 
 @end

@@ -9,8 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "UIView+Shadow.h"
 
-#import "detailViewController.h"
-
 @interface OcrTextResultViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIScrollViewDelegate>
 
 @property (nonatomic,strong )IBOutlet UITableView *nameTable;
@@ -44,6 +42,10 @@
 
 @property (nonatomic,strong )IBOutlet UIScrollView *titleScroller;
 @property (nonatomic,strong )IBOutlet UIScrollView *resultScroller;
+
+
+@property (nonatomic) BOOL isMine;//是否是自己的大表结果
+@property (nonatomic,strong) NSString *personJID;//查询其他患者的jid
 
 
 @end

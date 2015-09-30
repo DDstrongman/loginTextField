@@ -8,14 +8,23 @@
 
 #import <UIKit/UIKit.h>
 
-#import "ItemOne.h"
-#import "ReportTableViewController.h"
-
 @interface ContactPersonDetailViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
-@property (nonatomic,strong) ItemOne *allInfo;//传输过来的用户信息
 @property (nonatomic,strong) IBOutlet UITableView *contactPersonTable;//查看和设置的tableview
 
-@property (nonatomic,strong) NSString *personJID;//好友的jid
+@property (nonatomic,strong) NSString *friendJID;//好友的jid
+
+
+//网络获取的各个个人数据
+@property (nonatomic,strong) NSString *friendImageUrl;//头像
+@property (nonatomic) NSString *friendName;//昵称
+@property (nonatomic) NSString *friendGender;//性别
+@property (nonatomic) int friendAge;//年龄
+@property (nonatomic) NSString *friendRelative;//患者相似度
+@property (nonatomic) NSString *friendLocation;//患者位置
+@property (nonatomic) NSString *friendNote;//患者签名
+@property (nonatomic) BOOL isFriend;//是否是好友
+@property (nonatomic,strong) NSArray *friendMedicalArray;//用药数组
+@property (nonatomic,strong) NSArray *friendDiseaseArray;//患病数组
 
 @end

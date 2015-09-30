@@ -7,7 +7,6 @@
 //
 
 #import "ConfirmPictureResultViewController.h"
-#import "XMPPSupportClass.h"
 
 @interface ConfirmPictureResultViewController ()
 
@@ -31,7 +30,9 @@
     switch (item.tag) {
         case 1:
         {
-            [self.navigationController popViewControllerAnimated:YES];
+            [self dismissViewControllerAnimated:YES completion:^{
+                
+            }];
         }
             break;
         case 2:
@@ -65,7 +66,6 @@
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer = [AFHTTPRequestSerializer serializer];
     NSString *uurl=[NSString stringWithFormat:@"%@ltr/create?uid=%@&token=%@&ltrid=-1&partnum=0&source=2&picinfo=%@",Baseurl,yzuid,yztoken,picinfo];
-    NSLog(@"上传的url===%@",uurl);
     NSDictionary *dic=[NSDictionary dictionaryWithObjects:@[yzuid,yztoken,@"-1",@"0",@"2",picinfo] forKeys:@[@"uid",@"token",@"ltrid",@"partnum",@"type",@"picinfo"]];
     [manager POST:uurl parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:data name:@"image" fileName:[self gettime] mimeType:@"png"];

@@ -179,7 +179,6 @@
     if (bRet)
     {
         [fileMgr removeItemAtPath:filePath error:&err];
-        NSLog(@"%",err);
     }
 }
 
@@ -271,7 +270,6 @@
 //获取documents路径
 -(NSString *)dirDoc
 {
-    //[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     return documentsDirectory;
@@ -343,6 +341,18 @@
     UIImage *returnImage;
     returnImage = [UIImage imageNamed:filePath];
     return returnImage;
+}
+
+//删除所有documents下文件用以重置用户信息
+-(void)removeAllDirDocuments{
+    NSString *documentsDirectory = [self dirDoc];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *contents = [fileManager contentsOfDirectoryAtPath:documentsDirectory error:NULL];
+    NSEnumerator *e = [contents objectEnumerator];
+    NSString *filename;
+    while ((filename = [e nextObject])) {
+        [fileManager removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:filename] error:NULL];
+    }
 }
 
 @end

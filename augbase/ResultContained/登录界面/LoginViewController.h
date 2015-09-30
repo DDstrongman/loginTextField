@@ -9,8 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "ImageViewLabelTextFieldView.h"
 
-#import "XMPPSupportClass.h"
-
 #import "WriteFileSupport.h"
 
 @interface LoginViewController : UIViewController<ConnectXMPPDelegate>

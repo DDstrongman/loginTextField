@@ -41,6 +41,7 @@
 //数据库是否打开
 -(BOOL)isDBOpen;
 -(void)closeDB;
+-(void)deleteDB;
 
 
 

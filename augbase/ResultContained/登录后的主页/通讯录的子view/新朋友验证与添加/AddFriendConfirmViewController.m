@@ -16,12 +16,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    _confirmInfoTable.delegate = self;
-    _confirmInfoTable.dataSource = self;
-}
-
--(void)viewWillAppear:(BOOL)animated{
-    self.navigationController.navigationBarHidden = NO;
+    [self setupView];
+    [self setupData];
 }
 
 #pragma mark - Table view data source
@@ -30,7 +26,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 5;
+    return 3;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -41,16 +37,7 @@
         case 1:
             return 60;
             break;
-            
         case 2:
-            return 90;
-            break;
-            
-        case 3:
-            return 50;
-            break;
-            
-        case 4:
             return 95;
             break;
         default:
@@ -65,30 +52,20 @@
     switch (indexPath.row) {
         case 0:{
             cell = [tableView dequeueReusableCellWithIdentifier:@"showinfocell" forIndexPath:indexPath];
-            [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
+            [[cell.contentView viewWithTag:1] imageWithRound];
+            ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:[_strangerDic objectForKey:@"strangerPic"]];
+            ((UILabel *)[cell.contentView viewWithTag:2]).text = [_strangerDic objectForKey:@"strangerName"];
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = [_strangerDic objectForKey:@"strangerPic"];
+            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ %@",[_strangerDic objectForKey:@"strangerGender"],[_strangerDic objectForKey:@"strangerAge"]] ;
+            [((UIButton *)[cell.contentView viewWithTag:5]) setTitle:[_strangerDic objectForKey:@"strangerLocation"] forState:UIControlStateNormal];
         }
             break;
         case 1:{
             cell = [tableView dequeueReusableCellWithIdentifier:@"privatenotecell" forIndexPath:indexPath];
+            ((UILabel *)[cell.contentView viewWithTag:1]).text = [_strangerDic objectForKey:@"strangerNote"];
         }
             break;
         case 2:{
-            static NSString *CellIdentifier = @"confirmaddfriendmesscell";
-            cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-            if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-            }
-        }
-            break;
-        case 3:{
-            static NSString *CellIdentifier = @"addfriendreportcell";
-            cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-            if (cell == nil) {
-                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
-            }
-        }
-            break;
-        case 4:{
             cell = [tableView dequeueReusableCellWithIdentifier:@"confirminfocell" forIndexPath:indexPath];
             [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(addFriendYes) forControlEvents:UIControlEventTouchUpInside];
         }
@@ -102,9 +79,8 @@
 
 #pragma 需要与后端交互,更新数据
 -(void)addFriendYes{
-    NSLog(@"加上同意加为好友的响应函数，网络通讯,同时需要加上一个noticefacation,样例即拓代码里有，即注册通知过去通知一下刷新即可");
-    //    boolAddArray[0] = YES;
-    [self.navigationController popViewControllerAnimated:YES];
+    [[XMPPSupportClass ShareInstance] confirmAddFriend:[_strangerDic objectForKey:@"strangerJID"]];
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -122,6 +98,15 @@
 
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     return nil;
+}
+
+-(void)setupView{
+    _confirmInfoTable.delegate = self;
+    _confirmInfoTable.dataSource = self;
+}
+
+-(void)setupData{
+    
 }
 
 @end

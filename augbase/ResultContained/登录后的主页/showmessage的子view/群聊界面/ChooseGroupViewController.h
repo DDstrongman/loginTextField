@@ -8,9 +8,9 @@
 
 #import <UIKit/UIKit.h>
 #import "MessTableViewCell.h"
-#import "RootViewController.h"
+#import "GroupRootViewController.h"
 
-@interface ChooseGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
+@interface ChooseGroupViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,ReceiveMessDelegate>
 
 @property (nonatomic,strong) UITableView *groupTable;
 @property (nonatomic,strong) UISearchBar *searchGroup;

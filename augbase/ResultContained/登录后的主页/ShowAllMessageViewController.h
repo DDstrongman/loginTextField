@@ -13,23 +13,11 @@
 
 #import "RootViewController.h"
 #import "ChooseGroupViewController.h"
-#import "ShowWebviewViewController.h"
-
-
-#import "HATransitionController.h"
-#import "HACollectionViewSmallLayout.h"
-#import "HASmallCollectionViewController.h"
-
-#import "XMPPSupportClass.h"
 
 #import "WriteFileSupport.h"
 
-@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,HATransitionControllerDelegate,UINavigationControllerDelegate,ReceiveMessDelegate,ConnectXMPPDelegate,GetFriendListDelegate>
+@interface ShowAllMessageViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating,ReceiveMessDelegate,ConnectXMPPDelegate,GetFriendListDelegate>
 
 @property (nonatomic,strong) IBOutlet UITableView *messageTableview;
-
-@property (nonatomic) HATransitionController *transitionController;
-
-//@property (nonatomic,strong) 
 
 @end

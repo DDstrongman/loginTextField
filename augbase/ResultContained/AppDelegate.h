@@ -32,12 +32,14 @@
 #import <UIKit/UIKit.h>
 
 #import <ADTransitionController.h>
-#import "XMPPSupportClass.h"
 
 #import "RZTransitionsManager.h"
 #import "RZTransitionsNavigationController.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+
+#import "WXApi.h"
+
+@interface AppDelegate : UIResponder <UIApplicationDelegate,WXApiDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 

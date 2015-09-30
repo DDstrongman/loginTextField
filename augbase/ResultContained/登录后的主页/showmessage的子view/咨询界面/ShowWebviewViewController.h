@@ -12,4 +12,6 @@
 
 @property (nonatomic,strong) UIWebView *webView;
 
+@property (nonatomic,strong) NSString *url;//传入的页面url
+
 @end

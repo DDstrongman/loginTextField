@@ -8,6 +8,8 @@
 
 #import "SimilarFriendViewController.h"
 
+#import "ContactPersonDetailViewController.h"
+
 @interface SimilarFriendViewController ()
 
 {
@@ -95,8 +97,9 @@
 -(void)addFriend:(UIButton *)sender{
     NSLog(@"加上加为好友的响应函数，网络通讯");
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    StrangerViewController *svc = [main instantiateViewControllerWithIdentifier:@"stranger"];
-    [self.navigationController pushViewController:svc animated:YES];
+    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+//    cpdv.friendJID = _personJID;
+    [self.navigationController pushViewController:cpdv animated:YES];
 }
 
 -(void)addFriendYes{

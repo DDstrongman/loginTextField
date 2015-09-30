@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MyDoctorRootViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
+@interface MyDoctorRootViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
 @property (nonatomic,strong) UIButton *rightPlusButton;//右侧添加按钮,添加医生
 @property (nonatomic,strong) UITableView *showDoctorMessTable;//显示医生的tableview

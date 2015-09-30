@@ -20,25 +20,28 @@
     self.navigationController.navigationBarHidden = NO;
     UIButton *deleteButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
     [deleteButton setTitle:NSLocalizedString(@"删除", @"") forState:UIControlStateNormal];
-//    deleteButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    [deleteButton setTitleColor:themeColor forState:UIControlStateNormal];
     deleteButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [deleteButton addTarget:self action:@selector(deleteReport) forControlEvents:UIControlEventTouchUpInside];
     [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:deleteButton]];
     
     
     self.title = NSLocalizedString(@"识别失败", @"");
-    
-    _failResultImageView.image = _failedImage;
+    _failedImageUrl = [_failedImageUrl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    [_failResultImageView sd_setImageWithURL:[NSURL URLWithString:_failedImageUrl] placeholderImage:[UIImage imageNamed:@"test"]];
     NSLog(@"此处需要网络获取失败原因种类和详情");
     NSString *failedCategory = @"网络获取中";
     NSString *failedDetail = @"网络获取中";
+    if (_detailDic != nil) {
+        failedCategory = [_detailDic objectForKey:@"content"];
+        failedDetail = [_detailDic objectForKey:@"suggest"];
+    }
     _failCategoryText.text = [NSString stringWithFormat:@"无法识别原因:%@",failedCategory];
     _failDetailText.text = [NSString stringWithFormat:@"建议:%@",failedDetail];
-    
+    [_cameraAgainButton addTarget:self action:@selector(cameraAgain:) forControlEvents:UIControlEventTouchUpInside];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    
 }
 
 #pragma 此处要添加右侧删除按钮响应函数
@@ -46,5 +49,8 @@
     NSLog(@"此处要添加右侧删除按钮响应函数");
 }
 
+-(void)cameraAgain:(UIButton *)sender{
+    [self.navigationController popToRootViewControllerAnimated:YES];
+}
 
 @end

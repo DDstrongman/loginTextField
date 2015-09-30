@@ -15,7 +15,7 @@
 @property (nonatomic,strong) IBOutlet UITableView *confirmInfoTable;
 
 
-@property (nonatomic,strong) NSString *personJid;
+@property (nonatomic,strong) NSDictionary *strangerDic;
 
 
 @end

@@ -19,6 +19,7 @@
     
     _inviteDoctorTable.delegate = self;
     _inviteDoctorTable.dataSource = self;
+    _inviteDoctorTable.tableFooterView = [[UIView alloc]init];
     
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"邀请医生", @"");
@@ -31,7 +32,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (section == 0) {
-        return 2;
+        return 3;
     }else{
         return 2;
     }
@@ -56,9 +57,11 @@
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
             cell = [tableView dequeueReusableCellWithIdentifier:@"namecell" forIndexPath:indexPath];
-        }else{
-            
+            [[cell.contentView viewWithTag:999] becomeFirstResponder];
+        }else if(indexPath.row == 1){
             cell = [tableView dequeueReusableCellWithIdentifier:@"hospitalcell" forIndexPath:indexPath];
+        }else{
+            cell = [tableView dequeueReusableCellWithIdentifier:@"telecell" forIndexPath:indexPath];
         }
     }else{
         if (indexPath.row == 0) {
@@ -74,23 +77,41 @@
 
 -(void)sendMess:(UIButton *)sender{
     NSLog(@"发送邀请医生信息");
+    NSString *docName = ((UITextField *)[_inviteDoctorTable viewWithTag:999]).text;
+    NSString *hosName =((UITextField *)[_inviteDoctorTable viewWithTag:998]).text;
+    NSString *docTele =((UITextField *)[_inviteDoctorTable viewWithTag:997]).text;
+    NSString *userMes =((UITextView *)[_inviteDoctorTable viewWithTag:996]).text;
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/toinvite?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    if (docName != nil) {
+        [dic setObject:docName forKey:@"docname"];
+    }
+    if (hosName != nil) {
+        [dic setObject:hosName forKey:@"hospitalname"];
+    }
+    if (docTele != nil) {
+        [dic setObject:docTele forKey:@"tel"];
+    }
+    if (userMes != nil) {
+        [dic setObject:userMes forKey:@"comment"];
+    }
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res = [[source objectForKey:@"res"] intValue];
+        if (res == 0) {
+            NSLog(@"邀请成功");
+            [self.navigationController popToRootViewControllerAnimated:YES];
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
 }
 
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
-    //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-#pragma cell滑入的动画效果
-- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    //    cell.frame = CGRectMake(-320, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-    //    [UIView animateWithDuration:0.7 animations:^{
-    //        cell.frame = CGRectMake(0, cell.frame.origin.y, cell.frame.size.width, cell.frame.size.height);
-    //    } completion:^(BOOL finished) {
-    //        ;
-    //    }];
 }
 
 #pragma 添加头和尾
@@ -103,9 +124,9 @@
     sectionTitleText.textColor = [UIColor blackColor];
     [headerView addSubview:sectionTitleText];
     if (section == 0) {
-        sectionTitleText.text = NSLocalizedString(@"验证信息", @"");
+        sectionTitleText.text = NSLocalizedString(@"医生信息", @"");
     }else{
-        sectionTitleText.text = NSLocalizedString(@"填写真实信息，让医生记住你", @"");
+        sectionTitleText.text = NSLocalizedString(@"填写邀请信息，让医生知道你是谁", @"");
     }
     return headerView;
 }
@@ -113,5 +134,13 @@
 //-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
 //    return nil;
 //}
+
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
+    [self.view endEditing:YES];
+}
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView{
+    [self.view endEditing:YES];
+}
 
 @end

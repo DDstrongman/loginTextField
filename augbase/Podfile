@@ -8,5 +8,6 @@ pod 'AFNetworking'
 pod 'MBProgressHUD'
 pod 'FMDB'
 pod 'SDWebImage'
+pod 'MJRefresh'
 
 pod 'XMPPFramework'

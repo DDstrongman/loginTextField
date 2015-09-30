@@ -1,0 +1,24 @@
+{
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "646fb212-6d06-11e3-a2a4-57cd746879f3++1155" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "646fb212-6d06-11e3-a2a4-57cd746879f3++1155" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "68CDA4A5-5109-4722-B251-6B9DF2088EFD",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "646fb212-6d06-11e3-a2a4-57cd746879f3++1155" : "%E6%98%93%E8%AF%8A4.0.1\/vander\/%E5%8D%95%E8%81%8A%E7%BE%A4%E8%81%8A\/OtherResources\/MJRefresh\/MJRefresh.bundle\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Yizhenapp",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Yizhenapp.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "svn:\/\/192.168.0.179\/BloodSugar",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "646fb212-6d06-11e3-a2a4-57cd746879f3++1155"
+    }
+  ]
+}

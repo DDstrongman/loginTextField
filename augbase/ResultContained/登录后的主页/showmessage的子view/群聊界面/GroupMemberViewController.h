@@ -8,11 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-#import "StrangerViewController.h"
 #import "SendAddMessViewController.h"
 
 @interface GroupMemberViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
 
 @property (nonatomic,strong) IBOutlet UITableView *memberTable;
+
+
 
 @end

@@ -15,8 +15,6 @@
 
 #import "DBManager.h"
 
-#import "HttpManager.h"
-
 #import "WriteFileSupport.h"
 
 @implementation ChatModel
@@ -34,13 +32,13 @@
     }
 }
 
--(void)addCellFromDB:(NSString *)userJID{
+-(void)addCellFromDB:(NSString *)userJID MessNumber:(NSInteger)messNumber{
     self.dataSource = [NSMutableArray array];
     
     NSMutableDictionary *dataDic = [NSMutableDictionary dictionary];
     [[DBManager ShareInstance] creatDatabase:DBName];
     [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID]];
-    FMResultSet *searchFMSet = [[DBManager ShareInstance] SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID] MessNumber:10 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+    FMResultSet *searchFMSet = [[DBManager ShareInstance] SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,userJID] MessNumber:messNumber SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
     [[FriendDBManager ShareInstance]creatDatabase:FriendDBName];
     FMResultSet *searchFriendImage = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:userJID];
     NSString *personImageFriendUrl;
@@ -74,7 +72,9 @@
             }else{
                 personImageUrl = personImageFriendUrl;
             }
-            [dataDic setObject:personImageUrl forKey:@"strIcon"];
+            if (personImageFriendUrl != nil) {
+                [dataDic setObject:personImageUrl forKey:@"strIcon"];
+            }
             
             [message setWithDict:dataDic];
             [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
