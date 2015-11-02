@@ -24,8 +24,11 @@
     NSMutableArray *titleDataArray;//官方提供的选项的名称数组
     NSMutableArray *titleImageNameArray;//官方提供的选项的头像名称数组
     NSMutableArray *searchResults;//搜索结果的数组
+    NSMutableArray *similarResults;//相似度的数组
     UISearchBar *mySearchBar;//ui，仅仅是个ui
     UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+    
+    BOOL isStranger;//
 }
 
 @end
@@ -48,11 +51,11 @@
     //将搜索控制器的搜索条设置为页眉视图
     _contactsTableview.tableHeaderView = searchViewController.searchBar;
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"联系人姓名", @"");
     searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
     searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
-    searchViewController.searchBar.layer.borderWidth = 0.5;
-    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
+//    searchViewController.searchBar.layer.borderWidth = 0.5;
+//    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
     for (UIView *sb in [[searchViewController.searchBar subviews][0] subviews]) {
         if ([sb isKindOfClass:[UITextField class]]) {
             sb.layer.borderColor = themeColor.CGColor;
@@ -62,13 +65,19 @@
     }
 //    @"咨询",@"群组",@"等待验证好友",
     titleDataArray = [@[/*NSLocalizedString(@"群组", @""),*/NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
-    titleImageNameArray = [@[@"groups",@"verify_friend"]mutableCopy];
+    titleImageNameArray = [@[/*@"groups",*/@"verify_friend"]mutableCopy];
     
     _contactsTableview.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     _contactsTableview.separatorColor = lightGrayBackColor;
     _contactsTableview.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
     _contactsTableview.backgroundColor = grayBackgroundLightColor;
     self.view.backgroundColor = grayBackgroundLightColor;
+    isStranger = NO;
+    FMResultSet *addStrangerList = [[FriendDBManager ShareInstance] SearchAllFriend:StrangerTBName];
+    while ([addStrangerList next]) {
+        isStranger = YES;
+    }
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -93,6 +102,7 @@
     NSMutableArray *tableFrindName = [NSMutableArray arrayWithCapacity:0];
     NSMutableArray *tableFrindDescribe = [NSMutableArray arrayWithCapacity:0];
     NSMutableArray *tableFrindJID = [NSMutableArray arrayWithCapacity:0];
+    similarResults = [NSMutableArray array];
     [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
     FMResultSet *friendList = [[FriendDBManager ShareInstance] SearchAllFriend:YizhenFriendName];
     
@@ -105,6 +115,7 @@
             [tableFrindName addObject:[friendList stringForColumn:@"friendName"]];
         }
         [tableFrindJID addObject:[friendList stringForColumn:@"friendJID"]];
+        [similarResults addObject:[NSString stringWithFormat:@"%@ %@",[friendList stringForColumn:@"friendSimilarity"],@"%"]];
     }
     
     dataArray = [[NSMutableArray alloc]initWithArray:tableFrindName];
@@ -141,7 +152,11 @@
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    if (searchResults.count == 0) {
+        return 1;
+    }else{
+        return 2;
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
@@ -157,18 +172,20 @@
     return 50;
 }
 
-
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell;
     cell = [tableView dequeueReusableCellWithIdentifier:@"contactcell" forIndexPath:indexPath];
-    //    [cellContact setSelectionStyle:UITableViewCellSelectionStyleNone];
     if (indexPath.section == 0) {
-        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:titleImageNameArray[indexPath.row]];
-        [cell.contentView viewWithTag:1].backgroundColor = themeColor;
-    }
-    [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
-    if (indexPath.section == 0) {
+        if (isStranger) {
+            ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:titleImageNameArray[indexPath.row]];
+        }else{
+            ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"verify_friend_no"];
+        }
+//        [cell.contentView viewWithTag:1].backgroundColor = themeColor;
         ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
+        cell.layer.borderColor = lightGrayBackColor.CGColor;
+        cell.layer.borderWidth = 0.5;
+        [cell.contentView viewWithTag:3].hidden = YES;
     }else{
         FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:dataJID[indexPath.row]];
         while ([messPicPath next]) {
@@ -176,14 +193,14 @@
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:picPath];
         }
         ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = similarResults[indexPath.row];
         ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[indexPath.row];
+        [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     }
     return cell;
 }
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
-    //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 0) {
 //        if (indexPath.row == 0){
@@ -198,6 +215,7 @@
     }else{
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.isJIDOrYizhenID = YES;
         cpdv.friendJID = dataJID[indexPath.row];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
@@ -205,19 +223,39 @@
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    headerView.backgroundColor = grayBackgroundLightColor;
-    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-    headerView.layer.borderWidth = 0.5;
-    return headerView;
+    if (searchResults.count == 0) {
+        UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+        footerView.backgroundColor = grayBackgroundLightColor;
+        [footerView makeInsetShadowWithRadius:0.5 Color:lightGrayBackColor Directions:[NSArray arrayWithObjects:@"top", nil]];
+        return footerView;
+    }else{
+        if (section == 0) {
+            UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+            footerView.backgroundColor = grayBackgroundLightColor;
+            footerView.layer.borderColor = lightGrayBackColor.CGColor;
+            footerView.layer.borderWidth = 0.5;
+            return footerView;
+        }else{
+            UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+            footerView.backgroundColor = grayBackgroundLightColor;
+            [footerView makeInsetShadowWithRadius:0.5 Color:lightGrayBackColor Directions:[NSArray arrayWithObjects:@"top", nil]];
+            return footerView;
+        }
+    }
+    
+    
+//    if (searchResults.count == 0&&section == 1) {
+//        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+//        headerView.backgroundColor = grayBackgroundLightColor;
+//        return headerView;
+//    }else{
+//        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+//        headerView.backgroundColor = grayBackgroundLightColor;
+//        headerView.layer.borderColor = lightGrayBackColor.CGColor;
+//        headerView.layer.borderWidth = 0.5;
+//        return headerView;
+//    }
 }
 
 #pragma searchviewcontroller的delegate
@@ -225,16 +263,12 @@
 - (void)willPresentSearchController:(UISearchController *)searchController{
     NSLog(@"将要  开始  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
-    //    navigationBar.hidden = YES;
-    //    [[UIApplication sharedApplication]setStatusBarHidden:YES];
 }
 
 // 搜索界面将要消失
 -(void)willDismissSearchController:(UISearchController *)searchController{
     NSLog(@"将要  取消  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-    //    navigationBar.hidden = NO;
-    //    [[UIApplication sharedApplication]setStatusBarHidden:NO];
 }
 
 -(void)didDismissSearchController:(UISearchController *)searchController{

@@ -22,12 +22,14 @@
 
 -(void)editNickName:(UIButton *)sender{
     if (_editNickName.contentTextField.text.length >0) {
-        NSString *url = [NSString stringWithFormat:@"%@/user/updatenickname",Baseurl];
+        NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo",Baseurl];
         NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
-        url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&nickname=%@",url,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],_editNickName.contentTextField.text];
-        [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&username=%@",url,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],_editNickName.contentTextField.text];
+        NSLog(@"url====%@",url);
+        [[HttpManager ShareInstance] AFNetPOSTNobodySupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *resource = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res = [[resource objectForKey:@"res"] intValue];
+            NSLog(@"res===%d",res);
             if (res == 0) {
                 [user setObject:_editNickName.contentTextField.text forKey:@"userNickName"];
                 [_editResultDele editNickNameResult:YES];

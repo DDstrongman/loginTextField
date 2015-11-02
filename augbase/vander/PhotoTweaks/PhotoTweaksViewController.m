@@ -49,11 +49,13 @@
 -(void)viewWillAppear:(BOOL)animated
 {
     self.navigationController.navigationBarHidden = YES;
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
 }
 
 -(void)viewWillDisappear:(BOOL)animated
 {
     self.navigationController.navigationBarHidden = NO;
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
 }
 
 - (void)setupSubviews
@@ -76,8 +78,9 @@
     
     
     //UIButton *cancelBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    UIButton *cancelBtn = [[UIButton alloc] initWithFrame:CGRectMake(10, ViewHeight - 40, 30, 30)];
-    [cancelBtn setImage:[UIImage imageNamed:@"modify_back"] forState:UIControlStateNormal];
+    UIButton *cancelBtn = [[UIButton alloc] initWithFrame:CGRectMake(10,5, 30, 30)];
+    cancelBtn.tintColor = themeColor;
+    [cancelBtn setImage:[UIImage imageNamed:@"back"] forState:UIControlStateNormal];
     
     //cancelBtn.frame = CGRectMake(8, CGRectGetHeight(self.view.frame) - 40, 60, 40);
     //cancelBtn.titleLabel.textAlignment = NSTextAlignmentLeft;
@@ -95,8 +98,10 @@
     
     //UIButton *cropBtn = [UIButton buttonWithType:UIButtonTypeCustom];
     
-    UIButton *cropBtn = [[UIButton alloc] initWithFrame:CGRectMake(ViewWidth - 40,ViewHeight-40, 30, 30)];
-    [cropBtn setImage:[UIImage imageNamed:@"btn_right"] forState:UIControlStateNormal];
+    UIButton *cropBtn = [[UIButton alloc] initWithFrame:CGRectMake(ViewWidth - 70,5, 60, 30)];
+//    [cropBtn setImage:[UIImage imageNamed:@"btn_right"] forState:UIControlStateNormal];
+    [cropBtn setTitle:NSLocalizedString(@"完成", @"") forState:UIControlStateNormal];
+    cropBtn.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     
     
     //cropBtn.titleLabel.textAlignment = NSTextAlignmentRight;
@@ -108,7 +113,7 @@
     //UIColor *saveButtonHighlightTitleColor = !self.saveButtonHighlightTitleColor ?[UIColor saveButtonHighlightedColor] : self.saveButtonHighlightTitleColor;
     //[cropBtn setTitleColor:saveButtonHighlightTitleColor forState:UIControlStateHighlighted];
     //cropBtn.titleLabel.font = [UIFont systemFontOfSize:17];
-    [cropBtn addTarget:self action:@selector(saveBtnTapped) forControlEvents:UIControlEventTouchUpInside];
+    [cropBtn addTarget:self action:@selector(confirmCamera:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:cropBtn];
     
     
@@ -117,8 +122,13 @@
 
 - (void)cancelBtnTapped
 {
-    [self dismissViewControllerAnimated:YES completion:^{}];
-//    [self.navigationController popViewControllerAnimated:YES];
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)confirmCamera:(UIButton *)sender{
+    //先将未到时间执行前的任务取消。
+    [[self class] cancelPreviousPerformRequestsWithTarget:self selector:@selector(saveBtnTapped) object:sender];
+    [self performSelector:@selector(saveBtnTapped) withObject:sender afterDelay:0.2f];
 }
 
 - (void)saveBtnTapped
@@ -263,11 +273,6 @@
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
     return UIStatusBarStyleLightContent;
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
 }
 
 @end

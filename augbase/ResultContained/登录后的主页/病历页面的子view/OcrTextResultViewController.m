@@ -13,7 +13,9 @@
 #import "DetailImageOcrViewController.h"
 #import "DrugHistroyViewController.h"
 
-#import "WXApi.h"
+#import "SetShareContentRootViewController.h"
+
+#import "SetupView.h"
 
 @interface OcrTextResultViewController ()
 
@@ -59,6 +61,13 @@
     
     
     NSString *changeStatus;//需要改变为isviewed（查看过）状态的id组合字符串
+    
+    UIButton *firstButton;//底部分享按钮
+    UIButton *secondButton;//底部排序按钮
+    
+    NSDictionary *picList;//总详情
+    
+    UITableView *bChaoTable;//b超的表
 }
 
 @end
@@ -70,13 +79,10 @@
     [self setupView];
 }
 
-
-
 - (void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
     [[UIApplication sharedApplication]setStatusBarHidden:YES];
     [self setupData];
-    self.navigationController.navigationBarHidden = YES;
 }
 
 #pragma mark - Table view data source
@@ -95,7 +101,6 @@
         }else{
             return bottomValueArray.count;
         }
-        return titleArray.count;
     }else{
         return titleArray.count;
     }
@@ -111,24 +116,57 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell;
-    
-    if (tableView == _nameTable) {
-        if (indexPath.row%3 == 2 ) {
-            cell = [tableView dequeueReusableCellWithIdentifier:@"doubleresult" forIndexPath:indexPath];
-            ((UIButton *)[cell.contentView viewWithTag:2]).imageView.backgroundColor = themeColor;
-            [((UIButton *)[cell.contentView viewWithTag:2]).imageView viewWithRadis:10.0];
-//            [self initGesture:cell];
+    if (tableView.tag == 555) {
+        NSString static *cellIndentify = @"bChaoInfoCell";
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
+        }
+        if (ocrDetailValueArray.count>0) {
+            if ([[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] != [NSNull null]) {
+                if ([[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] intValue] == 1) {
+                    //                cell.imageView.image = [UIImage imageNamed:@"the_b_of_super"];
+                    UIImageView *tailImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"the_b_of_super"]];
+                    cell.accessoryView = tailImageView;
+                }
+            }
+        }
+        if (indexPath.row%2 == 0) {
+            cell.backgroundColor = [UIColor whiteColor];
+        }else{
+            cell.backgroundColor = [UIColor colorWithRed:248.0/255.0 green:248.0/255.0 blue:248.0/255.0 alpha:1.0];
+        }
+    }else if (tableView == _nameTable) {
+        BOOL tempIsFinished = YES;
+        if (ocrDetailValueArray.count>0) {
+            for (NSDictionary *dic in [ocrDetailValueArray[indexPath.row] objectForKey:@"medhis"]) {
+                if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]) {
+                    cell = [tableView dequeueReusableCellWithIdentifier:@"doubleresult" forIndexPath:indexPath];
+                    ((UIButton *)[cell.contentView viewWithTag:2]).imageView.backgroundColor = themeColor;
+                    [((UIButton *)[cell.contentView viewWithTag:2]).imageView viewWithRadis:10.0];
+                    [((UIButton *)[cell.contentView viewWithTag:2]) setTitle:[dic objectForKey:@"medname"] forState:UIControlStateNormal];
+                    tempIsFinished = NO;
+                    break;
+                }
+            }
+            if (tempIsFinished) {
+                cell = [tableView dequeueReusableCellWithIdentifier:@"result" forIndexPath:indexPath];
+            }
         }else{
             cell = [tableView dequeueReusableCellWithIdentifier:@"result" forIndexPath:indexPath];
         }
-        ((UILabel *)[cell.contentView viewWithTag:1]).text = titleArray[indexPath.row];
+        if (titleArray.count>0) {
+            ((UILabel *)[cell.contentView viewWithTag:1]).text = [(NSString *)titleArray[indexPath.row] substringFromIndex:2];
+        }
         cell.backgroundColor = [UIColor whiteColor];
         
         cell.layer.borderWidth = 0.25;
         cell.layer.borderColor = grayBackgroundDarkColor.CGColor;
         
-        //添加阴影
-        [cell makeInsetShadowWithRadius:8.0 Color:[UIColor colorWithRed:238.0 green:238.0 blue:238.0 alpha:0.1] Directions:[NSArray arrayWithObjects:@"right", nil]];
+        if (cell.tag != indexPath.row) {
+            //添加阴影
+            [cell makeInsetShadowWithRadius:8.0 Color:[UIColor colorWithRed:238.0 green:238.0 blue:238.0 alpha:0.1] Directions:[NSArray arrayWithObjects:@"right", nil]];
+            cell.tag = indexPath.row;
+        }
     }else if(tableView.tag == 3){
         NSDictionary *lineDetailDic;
         if (ocrDetailValueArray.count > 0) {
@@ -151,8 +189,18 @@
             NSDictionary *valuesDetailDic;
             if (tableTag > 100) {
                 bottomTitleLabel.text = [showNameTempArray[tableTag-100-1] objectForKey:@"showname"];
-                detailTextView.text = [showNameTempArray[tableTag-100-1] objectForKey:@"description"];
+                NSString *tempString = [showNameTempArray[tableTag-100-1] objectForKey:@"description"];
+                tempString  = [tempString stringByReplacingOccurrencesOfString:@"<p>"  withString:@"  "];
+                tempString  = [tempString stringByReplacingOccurrencesOfString:@"</p>"  withString:@"  "];
+                detailTextView.text = tempString;
+                NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+                paragraphStyle.lineSpacing = 8; //行距
+                
+                NSDictionary *attributes = @{ NSFontAttributeName:[UIFont systemFontOfSize:15], NSParagraphStyleAttributeName:paragraphStyle};
+                
+                detailTextView.attributedText = [[NSAttributedString alloc]initWithString: detailTextView.text attributes:attributes];
                 NSDictionary *valuestempDic = [lineDetailDic objectForKey:@"values"];
+                
                 valuesDetailDic = [valuestempDic objectForKey:customizedIdsTempOrder[tableTag-100-1]];
             }
             cell.textLabel.text = bottomValueArray[indexPath.row];
@@ -176,24 +224,25 @@
         if (ocrDetailTempValueArray.count > 0) {
             lineDetailDic = ocrDetailTempValueArray[indexPath.row];
         }
-        
-        if (showNameTempArray.count>10) {
-            for (int i = 0; i<10; i++) {
-                NSDictionary *tempDic = showNameTempArray[i];
-                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1)];
-                if (tempDic != nil && tempButton != nil) {
-                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
-                }
-            }
-        }else{
-            for (int i = 0; i<showNameTempArray.count; i++) {
-                NSDictionary *tempDic = showNameTempArray[i];
-                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1)];
-                if (tempDic != nil && tempButton != nil) {
-                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
-                }
-            }
-        }
+//        UIButton *bChaoButton = (UIButton *)[_titleScroller viewWithTag:(901)];
+//        [bChaoButton setTitle:NSLocalizedString(@"B超", @"") forState:UIControlStateNormal];
+//        if (showNameTempArray.count>10) {
+//            for (int i = 0; i<10; i++) {
+//                NSDictionary *tempDic = showNameTempArray[i];
+//                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1+1)];
+//                if (tempDic != nil && tempButton != nil) {
+//                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+//                }
+//            }
+//        }else{
+//            for (int i = 0; i<showNameTempArray.count; i++) {
+//                NSDictionary *tempDic = showNameTempArray[i];
+//                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1+1)];
+//                if (tempDic != nil && tempButton != nil) {
+//                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+//                }
+//            }
+//        }
         
 #warning 此处加入需要的cell
         if (tableView == _firstResultTable) {
@@ -205,19 +254,24 @@
             [firstWeekButton setTitle:[@"1" stringByAppendingString:@"周"] forState:UIControlStateNormal];
             firstWeekButton.backgroundColor = themeColor;
             [cell addSubview:firstWeekButton];
-            [firstWeekButton viewWithRadis:10.0];
+            [firstWeekButton viewWithRadis:5.0];
             UIButton *secondWeekButton = [[UIButton alloc]init];
             secondWeekButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
             secondWeekButton.backgroundColor = themeColor;
             [secondWeekButton setTitle:[@"12" stringByAppendingString:@"周"] forState:UIControlStateNormal];
-            [secondWeekButton viewWithRadis:10.0];
+            [secondWeekButton viewWithRadis:5.0];
             [cell addSubview:secondWeekButton];
             UIButton *thirdWeekButton = [[UIButton alloc]init];
             thirdWeekButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
             thirdWeekButton.backgroundColor = themeColor;
             [thirdWeekButton setTitle:[@"31" stringByAppendingString:@"周"] forState:UIControlStateNormal];
-            [thirdWeekButton viewWithRadis:10.0];
+            [thirdWeekButton viewWithRadis:5.0];
             [cell addSubview:thirdWeekButton];
+            UILabel *pointLabel = [[UILabel alloc]init];
+            pointLabel.text = @"...";
+            pointLabel.textColor = [UIColor colorWithRed:50.0/255.0 green:50.0/255.0 blue:50.0/255.0 alpha:1.0];
+            [cell addSubview:pointLabel];
+            pointLabel.hidden = YES;
             
             firstWeekButton.tag = indexPath.row;
             secondWeekButton.tag = indexPath.row;
@@ -233,10 +287,12 @@
                 firstWeekButton.hidden = YES;
                 secondWeekButton.hidden = YES;
                 thirdWeekButton.hidden = YES;
+                pointLabel.hidden = YES;
             }else if(medHis.count == 1){
                 firstWeekButton.hidden = NO;
                 secondWeekButton.hidden = YES;
                 thirdWeekButton.hidden = YES;
+                pointLabel.hidden = YES;
                 NSDictionary *medDic = medHis[0];
                 [firstWeekButton setTitle:[[[medDic objectForKey:@"week"] stringValue] stringByAppendingString:@"周"] forState:UIControlStateNormal];
                 for (int i= 0; i<medicineArray.count; i++) {
@@ -248,6 +304,7 @@
                 firstWeekButton.hidden = NO;
                 secondWeekButton.hidden = NO;
                 thirdWeekButton.hidden = YES;
+                pointLabel.hidden = YES;
                 NSDictionary *medDicOne = medHis[0];
                 NSDictionary *medDicTwo = medHis[1];
                 [firstWeekButton setTitle:[[numberFormatter stringFromNumber:[medDicOne objectForKey:@"week"]] stringByAppendingString:@"周"] forState:UIControlStateNormal];
@@ -266,6 +323,11 @@
                 firstWeekButton.hidden = NO;
                 secondWeekButton.hidden = NO;
                 thirdWeekButton.hidden = NO;
+                if (medHis.count == 3) {
+                    pointLabel.hidden = YES;
+                }else{
+                    pointLabel.hidden = NO;
+                }
                 NSDictionary *medDicOne = medHis[0];
                 NSDictionary *medDicTwo = medHis[1];
                 NSDictionary *medDicThree = medHis[2];
@@ -287,7 +349,6 @@
                         thirdWeekButton.backgroundColor = colorArray[(i%10)];
                     }
                 }
-                
             }
             
             firstWidth = [NSNumber numberWithInt:(25+(int)firstWeekButton.titleLabel.text.length*5)];
@@ -309,6 +370,12 @@
                 make.width.equalTo(thirdWidth);
                 make.centerY.mas_equalTo(cell.mas_centerY);
             }];
+            [pointLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+                make.left.equalTo(thirdWeekButton.mas_right).with.offset(5);
+                make.width.equalTo(@30);
+                make.height.equalTo(@20);
+                make.top.equalTo(@7);
+            }];
         }else{
             UILabel *contentLabel = [[UILabel alloc]init];
             contentLabel.tag = 1;
@@ -319,14 +386,21 @@
             }
             NSDictionary *finalValues = [tempValues objectForKey:key];
             if ([finalValues objectForKey:@"value"] == nil) {
-                contentLabel.text = @"--";
+                contentLabel.text = @"-";
+                contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
             }else{
 #warning 以后要尽量避免在cell里使用stringformat提升效率
                 contentLabel.text = [NSString stringWithFormat:@"%@ %@",[finalValues objectForKey:@"value"],[finalValues objectForKey:@"unit"]];
+                float max = [[finalValues objectForKey:@"upperlimit"] floatValue];
+                float min = [[finalValues objectForKey:@"lowerlimit"] floatValue];
+                if ([[finalValues objectForKey:@"value"] floatValue] > min && [[finalValues objectForKey:@"value"] floatValue] < max) {
+                    contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
+                }else{
+                    contentLabel.textColor = [UIColor redColor];
+                }
             }
             contentLabel.textAlignment = NSTextAlignmentRight;
             contentLabel.font = [UIFont systemFontOfSize:14.0];
-            contentLabel.textColor = themeColor;
             [cell addSubview:contentLabel];
             [contentLabel mas_makeConstraints:^(MASConstraintMaker *make) {
                 make.left.equalTo(@5);
@@ -336,9 +410,9 @@
             }];
         }
         if (indexPath.row%2 == 0) {
-            cell.backgroundColor = [UIColor colorWithRed:238/255.0 green:238/255.0 blue:238/255.0 alpha:1.0];
+            cell.backgroundColor = [UIColor whiteColor];
         }else{
-            cell.backgroundColor = [UIColor colorWithRed:248/255.0 green:248/255.0 blue:248/255.0 alpha:1.0];
+            cell.backgroundColor = [UIColor colorWithRed:248.0/255.0 green:248.0/255.0 blue:248.0/255.0 alpha:1.0];
         }
     }
     return cell;
@@ -346,17 +420,37 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"点击了第几个表===%ld，点击了第几列====%ld",tableView.tag,(long)indexPath.row);
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (tableView.tag != 3) {
-        [self popSpringAnimationOut:bottomMessView];
+    if (tableView.tag == 555) {
+        if ([[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] != [NSNull null]) {
+            if ([[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] intValue] == 1) {
+                UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+                DetailImageOcrViewController *div = [main instantiateViewControllerWithIdentifier:@"detailocrimage"];
+                
+                NSString *urlString = [[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];;
+                NSMutableDictionary *dic = [ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0];
+                div.showImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString];
+                div.detailDic = dic;
+                div.ResultOrING = YES;
+                [self.navigationController pushViewController:div animated:YES];
+            }
+        }
+    }else if (tableView.tag != 3) {
         tableTag = tableView.tag;
+        [self popSpringAnimationOut:bottomMessView];
+    }
+    if (tableView.tag == 100) {
+        [bottomMessView viewWithTag:123].hidden = YES;
+    }else{
+        [bottomMessView viewWithTag:123].hidden = NO;
     }
     tableIndexRow = indexPath.row;
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 -(void)weekButtonClick:(UIButton *)sender{
     tableTag = 100;
     tableIndexRow = sender.tag;
+    [bottomMessView viewWithTag:123].hidden = YES;
     [self popSpringAnimationOut:bottomMessView];
 }
 
@@ -364,116 +458,51 @@
     if ([scrollView isKindOfClass:[UITableView class]]&&scrollView.tag != 3) {
         _nameTable.contentOffset = scrollView.contentOffset;
 #warning 改成动态加载tableview之后需要改变同步运动方式,主要的卡吨集中在这里
-        for (int i = 100; i<111; i++) {
-            if ([_resultScroller viewWithTag:i] != nil) {
-                ((UITableView *)[_resultScroller viewWithTag:i]).contentOffset = scrollView.contentOffset;
-            }
-        }
-    }
-    else if(scrollView == _titleScroller|scrollView == _resultScroller){
-        if (scrollView.contentOffset.x == 0 &&flushResult&&ocrResultIndex>0) {
-            NSLog(@"刷新");
-            flushResult = NO;
-            if (ocrResultIndex>0) {
-                ocrResultIndex -= 1;
-                NSRange range = NSMakeRange(ocrResultIndex*10, 10);
-                NSRange rangeName = NSMakeRange(ocrResultIndex*10, showNameArray.count-10*ocrResultIndex);
-                NSRange rangeIds = NSMakeRange(ocrResultIndex*10, customizedIdsOrder.count-10*ocrResultIndex);
-                if (showNameArray.count>10+ocrResultIndex*10) {
-                    showNameTempArray = [NSMutableArray arrayWithArray:[showNameArray subarrayWithRange:range]];
-                }else{
-                    showNameTempArray = [NSMutableArray arrayWithArray:[showNameArray subarrayWithRange:rangeName]];
-                }
-                if (customizedIdsOrder.count>10+ocrResultIndex*10) {
-                    customizedIdsTempOrder = [NSMutableArray arrayWithArray:[customizedIdsOrder subarrayWithRange:range]];
-                }else{
-                    customizedIdsTempOrder = [NSMutableArray arrayWithArray:[customizedIdsOrder subarrayWithRange:rangeIds]];
-                }
-            }
-            
-            //请求完成
-            [_firstResultTable reloadData];
-            [_secondResultTable reloadData];
-            [_thirdsultTable reloadData];
-            [_forthsultTable reloadData];
-            [_fifthsultTable reloadData];
-            [_sixthsultTable reloadData];
-            [_sevensultTable reloadData];
-            [_eightsultTable reloadData];
-            [_ninesultTable reloadData];
-            [_tensultTable reloadData];
-            [_elevensultTable reloadData];
-            
-            [_resultScroller setContentOffset:CGPointMake(1430, scrollView.contentOffset.y) animated:NO];
-        }
-        
-        if (scrollView.contentOffset.x == 1500 &&flushResult) {
-            NSLog(@"刷新");
-            flushResult = NO;
-            ocrResultIndex += 1;
-            if (ocrResultIndex*10<showNameArray.count&&ocrResultIndex*10<customizedIdsOrder.count) {
-                NSRange range = NSMakeRange(ocrResultIndex*10, 10);
-                NSRange rangeName = NSMakeRange(ocrResultIndex*10, showNameArray.count-10*ocrResultIndex);
-                NSRange rangeIds = NSMakeRange(ocrResultIndex*10, customizedIdsOrder.count-10*ocrResultIndex);
-                if (showNameArray.count>10+ocrResultIndex*10) {
-                    showNameTempArray = [NSMutableArray arrayWithArray:[showNameArray subarrayWithRange:range]];
-                }else{
-                    showNameTempArray = [NSMutableArray arrayWithArray:[showNameArray subarrayWithRange:rangeName]];
-                }
-                if (customizedIdsOrder.count>10+ocrResultIndex*10) {
-                    customizedIdsTempOrder = [NSMutableArray arrayWithArray:[customizedIdsOrder subarrayWithRange:range]];
-                }else{
-                    customizedIdsTempOrder = [NSMutableArray arrayWithArray:[customizedIdsOrder subarrayWithRange:rangeIds]];
-                }
-            }
-            
-            //请求完成
-            [_firstResultTable reloadData];
-            [_secondResultTable reloadData];
-            [_thirdsultTable reloadData];
-            [_forthsultTable reloadData];
-            [_fifthsultTable reloadData];
-            [_sixthsultTable reloadData];
-            [_sevensultTable reloadData];
-            [_eightsultTable reloadData];
-            [_ninesultTable reloadData];
-            [_tensultTable reloadData];
-            [_elevensultTable reloadData];
-            
-            [_resultScroller setContentOffset:CGPointMake(150, scrollView.contentOffset.y) animated:NO];
-        }
-        
-#warning 将10个获取一次数据加在这里
-        _titleScroller.contentOffset = CGPointMake(scrollView.contentOffset.x, _titleScroller.contentOffset.y);// scrollView.contentOffset;
-        _resultScroller.contentOffset = CGPointMake(scrollView.contentOffset.x, _resultScroller.contentOffset.y);
-    }
-    
-}
-
-#pragma 仅仅移动的时候触发该delegate
-//- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-//    if(scrollView == _titleScroller|scrollView == _resultScroller){
-//        if ((int)(scrollView.contentOffset.x) % 100 !=0) {
-//            int tempNumber = (int)(scrollView.contentOffset.x)/100 + 1;
-//            _titleScroller.contentOffset = CGPointMake(tempNumber*100, scrollView.contentOffset.y);
-//            _resultScroller.contentOffset = CGPointMake(tempNumber*100, scrollView.contentOffset.y);
+//        for (int i = 100; i<111; i++) {
+//            if ([_resultScroller viewWithTag:i] != nil) {
+//                ((UITableView *)[_resultScroller viewWithTag:i]).contentOffset = scrollView.contentOffset;
+//            }
 //        }
-//    }
-//}
+        bChaoTable.contentOffset = scrollView.contentOffset;
+        _firstResultTable.contentOffset = scrollView.contentOffset;
+        _secondResultTable.contentOffset = scrollView.contentOffset;
+        _thirdsultTable.contentOffset = scrollView.contentOffset;
+        _forthsultTable.contentOffset = scrollView.contentOffset;
+        _fifthsultTable.contentOffset = scrollView.contentOffset;
+        _sixthsultTable.contentOffset = scrollView.contentOffset;
+        _sevensultTable.contentOffset = scrollView.contentOffset;
+        _eightsultTable.contentOffset = scrollView.contentOffset;
+        _ninesultTable.contentOffset = scrollView.contentOffset;
+        _tensultTable.contentOffset = scrollView.contentOffset;
+        _elevensultTable.contentOffset = scrollView.contentOffset;
+    }
+    else if(scrollView == _titleScroller||scrollView == _resultScroller){
+        if (scrollView == _titleScroller) {
+            _resultScroller.contentOffset = CGPointMake(scrollView.contentOffset.x, _resultScroller.contentOffset.y);
+        }else{
+            _titleScroller.contentOffset = CGPointMake(scrollView.contentOffset.x, _titleScroller.contentOffset.y);// scrollView.contentOffset;
+        }
+    }
+}
 
 #pragma 有滚动的时候滚动完毕之后触发delegate
 -(void)scrollViewDidEndDecelerating:(UIScrollView*)scrollView
 {
-    if(scrollView == _titleScroller|scrollView == _resultScroller){
+    if(scrollView == _titleScroller||scrollView == _resultScroller){
         if ((int)(scrollView.contentOffset.x) % 150 !=0) {
-            int tempNumber = (int)(scrollView.contentOffset.x)/150 + 1;
+            int tempNumber = (int)(scrollView.contentOffset.x-260)/150+1;
             //设置了_titlescroller和resultscroller一样的offset，所以此处只能设置一次animate，否则出错
-            [_titleScroller setContentOffset:scrollView.contentOffset animated:YES];
-            
-            [_resultScroller setContentOffset:CGPointMake(tempNumber*150, scrollView.contentOffset.y) animated:YES];
+            //            [_titleScroller setContentOffset:scrollView.contentOffset animated:YES];
+            if (tempNumber<7&&tempNumber>1) {
+                [_resultScroller setContentOffset:CGPointMake(260+tempNumber*150, scrollView.contentOffset.y) animated:YES];
+            }
         }
     }
-    flushResult = YES;
+//    flushResult = YES;
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 #pragma 返回函数
@@ -481,50 +510,109 @@
     [self.navigationController popViewControllerAnimated:YES];
 }
 
--(void)viewWillDisappear:(BOOL)animated{
-    [[UIApplication sharedApplication]setStatusBarHidden:NO];
-    self.navigationController.navigationBarHidden = NO;
-}
-
 -(void)setupView{
-    //初始化各个tableview和tableview顶上的uiimagview
-    
     _nameTable.delegate = self;
     _nameTable.dataSource = self;
     
     //初始化两个scrollerview
+    _titleScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 0, ViewWidth-100, 66)];
+    _titleScroller.contentSize = CGSizeMake(1760, 66-20);
     _titleScroller.delegate = self;
+    _titleScroller.backgroundColor = [UIColor blackColor];
+    _titleScroller.scrollEnabled = YES;
+    _resultScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 66, ViewWidth-100, ViewHeight-66-49)];
+    _resultScroller.contentSize = CGSizeMake(1760, ViewHeight-66-49-20);
+    _resultScroller.backgroundColor = grayBackgroundLightColor;
+    _resultScroller.scrollEnabled = YES;
     _resultScroller.delegate = self;
+    [self.view addSubview:_titleScroller];
+    [self.view addSubview:_resultScroller];
     
-    UITableView *firstTable = [[UITableView alloc]init];
+    _firstTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 190, 66)];
+    [_titleScroller addSubview:_firstTitleButton];
+    [_firstTitleButton setTitle:NSLocalizedString(@"用药周期", @"") forState:UIControlStateNormal];
+    _firstTitleButton.backgroundColor = [UIColor blackColor];
+    _secondTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_firstTitleButton.frame.origin.x+_firstTitleButton.bounds.size.width, 0, 70, 66)];
+    [_secondTitleButton setTitle:NSLocalizedString(@"B超", @"") forState:UIControlStateNormal];
+    _secondTitleButton.backgroundColor = [UIColor blackColor];
+    [_titleScroller addSubview:_secondTitleButton];
+    
+    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 150, 66)];
+    _thirdTitleButton.backgroundColor = [UIColor blackColor];
+    _thirdTitleButton.tag = 901;
+    _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_thirdTitleButton];
+    _forthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_thirdTitleButton.frame.origin.x+_thirdTitleButton.bounds.size.width, 0, 150, 66)];
+    _forthTitleButton.backgroundColor = [UIColor blackColor];
+    _forthTitleButton.tag = 902;
+    _forthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_forthTitleButton];
+    _fifthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_forthTitleButton.frame.origin.x+_forthTitleButton.bounds.size.width, 0, 150, 66)];
+    _fifthTitleButton.backgroundColor = [UIColor blackColor];
+    _fifthTitleButton.tag = 903;
+    _fifthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_fifthTitleButton];
+    _sixthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_fifthTitleButton.frame.origin.x+_fifthTitleButton.bounds.size.width, 0, 150, 66)];
+    _sixthTitleButton.backgroundColor = [UIColor blackColor];
+    _sixthTitleButton.tag = 904;
+    _sixthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_sixthTitleButton];
+    _sevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sixthTitleButton.frame.origin.x+_sixthTitleButton.bounds.size.width, 0, 150, 66)];
+    _sevenTitleButton.backgroundColor = [UIColor blackColor];
+    _sevenTitleButton.tag = 905;
+    _sevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_sevenTitleButton];
+    _eightTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sevenTitleButton.frame.origin.x+_sevenTitleButton.bounds.size.width, 0, 150, 66)];
+    _eightTitleButton.backgroundColor = [UIColor blackColor];
+    _eightTitleButton.tag = 906;
+    _eightTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_eightTitleButton];
+    _nineTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_eightTitleButton.frame.origin.x+_eightTitleButton.bounds.size.width, 0, 150, 66)];
+    _nineTitleButton.backgroundColor = [UIColor blackColor];
+    _nineTitleButton.tag = 907;
+    _nineTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_nineTitleButton];
+    _tenthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_nineTitleButton.frame.origin.x+_nineTitleButton.bounds.size.width, 0, 150, 66)];
+    _tenthTitleButton.backgroundColor = [UIColor blackColor];
+    _tenthTitleButton.tag = 908;
+    _tenthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_tenthTitleButton];
+    _elevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_tenthTitleButton.frame.origin.x+_tenthTitleButton.bounds.size.width, 0, 150, 66)];
+    _elevenTitleButton.backgroundColor = [UIColor blackColor];
+    _elevenTitleButton.tag = 909;
+    _elevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_elevenTitleButton];
+    _twelveTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_elevenTitleButton.frame.origin.x+_elevenTitleButton.bounds.size.width, 0, 150, 66)];
+    _twelveTitleButton.backgroundColor = [UIColor blackColor];
+    _twelveTitleButton.tag = 910;
+    _twelveTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [_titleScroller addSubview:_twelveTitleButton];
+    
+    
+    UITableView *firstTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, 190, ViewHeight-66-49)];
     firstTable.delegate = self;
     firstTable.dataSource = self;
     firstTable.tag = 100;
     firstTable.showsVerticalScrollIndicator = NO;
     firstTable.separatorStyle = UITableViewCellSelectionStyleNone;
     [_resultScroller addSubview:firstTable];
-    [firstTable mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(@0);
-        make.bottom.equalTo(@0);
-        make.width.equalTo(@150);
-        make.left.equalTo(@0);
-    }];
+    
+    bChaoTable = [[UITableView alloc]initWithFrame:CGRectMake(firstTable.frame.origin.x+firstTable.bounds.size.width, 0, 70, ViewHeight-66-49)];
+    bChaoTable.dataSource = self;
+    bChaoTable.delegate = self;
+    bChaoTable.tag = 555;
+    bChaoTable.showsVerticalScrollIndicator = NO;
+    bChaoTable.separatorStyle = UITableViewCellSelectionStyleNone;
+    [_resultScroller addSubview:bChaoTable];
     
     for (int i = 101; i<111; i++) {
-        UITableView *tempTable = [[UITableView alloc]init];
+        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((150*(i - 100+1)-40), 0, 150, ViewHeight-66-49)];
         tempTable.delegate = self;
         tempTable.dataSource = self;
         tempTable.tag = i;
         tempTable.showsVerticalScrollIndicator = NO;
         tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
-        NSNumber *decideNumber = [NSNumber numberWithInt:(150*(i - 100))];
         [_resultScroller addSubview:tempTable];
-        [tempTable mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.top.equalTo(@0);
-            make.bottom.equalTo(@0);
-            make.width.equalTo(@150);
-            make.left.equalTo(decideNumber);
-        }];
     }
     
     _firstResultTable = (UITableView *)[_resultScroller viewWithTag:100];
@@ -544,8 +632,8 @@
     //底部工具条
     UIView *bottomToolBar = [[UIView alloc]initWithFrame:CGRectMake(0, ViewHeight-49, ViewWidth, 49)];
     bottomToolBar.backgroundColor = themeColor;
-    UIButton *firstButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
-    UIButton *secondButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
+    firstButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
+    secondButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
     
     firstButton.center = CGPointMake(ViewWidth/(2*[bottomArray count])*1, 24.5);
     firstButton.backgroundColor = themeColor;
@@ -553,7 +641,13 @@
     secondButton.backgroundColor = themeColor;
     
     [firstButton setTitle:bottomArray[0] forState:UIControlStateNormal];
+    firstButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
+    firstButton.titleEdgeInsets = UIEdgeInsetsMake(0,15, 0, 0);
+    [firstButton setImage:[UIImage imageNamed:@"share"] forState:UIControlStateNormal];
     [secondButton setTitle:bottomArray[1] forState:UIControlStateNormal];
+    [secondButton setImage:[UIImage imageNamed:@"sequence"] forState:UIControlStateNormal];
+    secondButton.titleEdgeInsets = UIEdgeInsetsMake(0,15, 0, 0);
+    secondButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
     
     [bottomToolBar addSubview:firstButton];
     [bottomToolBar addSubview:secondButton];
@@ -564,7 +658,6 @@
     
     [self setUpBottomTable];
     [self setUpBottomRightView];
-    [self setupShareView];
 }
 
 -(void)setUpBottomTable{
@@ -579,11 +672,16 @@
     [bottomMessView addSubview:cancelButton];
     bottomTitleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 200, 30)];
     bottomTitleLabel.center = CGPointMake(bottomMessView.center.x,23);
-    bottomTitleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        bottomTitleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        bottomTitleLabel.font = [UIFont systemFontOfSize:17.0];
+    }
     bottomTitleLabel.textAlignment = NSTextAlignmentCenter;
     bottomTitleLabel.text = @"";
     [bottomMessView addSubview:bottomTitleLabel];
     UIButton *detailButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+    detailButton.tag = 123;
     detailButton.center = CGPointMake(ViewWidth-30, 23);
     [detailButton setBackgroundImage:[UIImage imageNamed:@"detail"] forState:UIControlStateNormal];
     [detailButton addTarget:self action:@selector(showDetail:) forControlEvents:UIControlEventTouchUpInside];
@@ -636,18 +734,26 @@
     [bottomRightView addSubview:backButton];
     bottomRightLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 200, 30)];
     bottomRightLabel.center = CGPointMake(bottomMessView.center.x,23);
-    bottomRightLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        bottomRightLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        bottomRightLabel.font = [UIFont systemFontOfSize:17.0];
+    }
     bottomRightLabel.textAlignment = NSTextAlignmentCenter;
-    bottomRightLabel.text = @"永超卖屁股";
+    bottomRightLabel.text = @"";
     [bottomRightView addSubview:bottomRightLabel];
     
     detailTextView = [[UITextView alloc]init];
     detailTextView.text = @"";
-    detailTextView.userInteractionEnabled = NO;
+    detailTextView.scrollEnabled = YES;
+    detailTextView.editable = NO;
+    detailTextView.font = [UIFont systemFontOfSize:15.0];
+    
     [bottomRightView addSubview:detailTextView];
     [detailTextView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.equalTo(@45);
-        make.right.left.bottom.equalTo(@0);
+        make.left.equalTo(@10);
+        make.right.bottom.equalTo(@-10);
     }];
 }
 
@@ -655,101 +761,8 @@
     [self popSpringAnimationHidden:shareView];
 }
 
--(void)setupShareView{
-    shareView = [[UIView alloc]initWithFrame:CGRectMake(0, ViewHeight, ViewWidth, 175)];
-    shareView.backgroundColor = [UIColor whiteColor];
-    
-    UIScrollView *shareScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(0, 10, shareView.bounds.size.width, 95)];
-    shareScroller.contentSize = CGSizeMake(shareView.bounds.size.width+50, 95);
-    [shareView addSubview:shareScroller];
-    
-    
-    UIButton *shareWeChatButton = [[UIButton alloc]init];
-    [shareWeChatButton setBackgroundImage:[UIImage imageNamed:@"wechat_friend"] forState:UIControlStateNormal];
-    [shareWeChatButton setTitle:NSLocalizedString(@"微信好友", @"") forState:UIControlStateNormal];
-    [shareWeChatButton addTarget:self action:@selector(shareWechatFriend:) forControlEvents:UIControlEventTouchUpInside];
-    shareWeChatButton.imageEdgeInsets = UIEdgeInsetsMake(5,13,21,shareWeChatButton.titleLabel.bounds.size.width);//设置image在button上的位置（上top，左left，下bottom，右right）这里可以写负值，对上写－5，那么image就象上移动5个像素
-    shareWeChatButton.titleLabel.font = [UIFont systemFontOfSize:12];//title字体大小
-    shareWeChatButton.titleLabel.textAlignment = NSTextAlignmentCenter;//设置title的字体居中
-    [shareWeChatButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//设置title在一般情况下为白色字体
-    [shareWeChatButton setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];//设置title在button被选中情况下为灰色字体
-    shareWeChatButton.titleEdgeInsets = UIEdgeInsetsMake(55, -shareWeChatButton.titleLabel.bounds.size.width, 0, 0);//设置title在button上的位置（上top，左left，下bottom，右right）
-    UIButton *shareWeChatGroupButton = [[UIButton alloc]init];
-    [shareWeChatGroupButton setBackgroundImage:[UIImage imageNamed:@"friend_quan"] forState:UIControlStateNormal];
-    [shareWeChatGroupButton addTarget:self action:@selector(shareWechatGroup:) forControlEvents:UIControlEventTouchUpInside];
-    [shareWeChatGroupButton setTitle:NSLocalizedString(@"朋友圈", @"") forState:UIControlStateNormal];
-    shareWeChatGroupButton.imageEdgeInsets = UIEdgeInsetsMake(5,13,21,shareWeChatGroupButton.titleLabel.bounds.size.width);//设置image在button上的位置（上top，左left，下bottom，右right）这里可以写负值，对上写－5，那么image就象上移动5个像素
-    shareWeChatGroupButton.titleLabel.font = [UIFont systemFontOfSize:12];//title字体大小
-    shareWeChatGroupButton.titleLabel.textAlignment = NSTextAlignmentCenter;//设置title的字体居中
-    [shareWeChatGroupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//设置title在一般情况下为白色字体
-    [shareWeChatGroupButton setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];//设置title在button被选中情况下为灰色字体
-    shareWeChatGroupButton.titleEdgeInsets = UIEdgeInsetsMake(55, -shareWeChatButton.titleLabel.bounds.size.width, 0, 0);//设置title在button上的位置（上top，左left，下bottom，右right）
-    UIButton *shareQQButton = [[UIButton alloc]init];
-    [shareQQButton setBackgroundImage:[UIImage imageNamed:@"qq_friends"] forState:UIControlStateNormal];
-    [shareQQButton setTitle:NSLocalizedString(@"QQ好友", @"") forState:UIControlStateNormal];
-    [shareQQButton addTarget:self action:@selector(shareQQFriend:) forControlEvents:UIControlEventTouchUpInside];
-    shareQQButton.imageEdgeInsets = UIEdgeInsetsMake(5,13,21,shareQQButton.titleLabel.bounds.size.width);//设置image在button上的位置（上top，左left，下bottom，右right）这里可以写负值，对上写－5，那么image就象上移动5个像素
-    shareQQButton.titleLabel.font = [UIFont systemFontOfSize:12];//title字体大小
-    shareQQButton.titleLabel.textAlignment = NSTextAlignmentCenter;//设置title的字体居中
-    [shareQQButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//设置title在一般情况下为白色字体
-    [shareQQButton setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];//设置title在button被选中情况下为灰色字体
-    shareQQButton.titleEdgeInsets = UIEdgeInsetsMake(55, -shareWeChatButton.titleLabel.bounds.size.width, 0, 0);//设置title在button上的位置（上top，左left，下bottom，右right）
-    UIButton *shareQQGroupButton = [[UIButton alloc]init];
-    [shareQQGroupButton setBackgroundImage:[UIImage imageNamed:@"qq_zone"] forState:UIControlStateNormal];
-    [shareQQGroupButton addTarget:self action:@selector(shareQQZone:) forControlEvents:UIControlEventTouchUpInside];
-    [shareQQGroupButton setTitle:NSLocalizedString(@"QQ空间", @"") forState:UIControlStateNormal];
-    shareQQGroupButton.imageEdgeInsets = UIEdgeInsetsMake(5,13,21,shareQQGroupButton.titleLabel.bounds.size.width);//设置image在button上的位置（上top，左left，下bottom，右right）这里可以写负值，对上写－5，那么image就象上移动5个像素
-    shareQQGroupButton.titleLabel.font = [UIFont systemFontOfSize:12];//title字体大小
-    shareQQGroupButton.titleLabel.textAlignment = NSTextAlignmentCenter;//设置title的字体居中
-    [shareQQGroupButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//设置title在一般情况下为白色字体
-    [shareQQGroupButton setTitleColor:[UIColor grayColor] forState:UIControlStateHighlighted];//设置title在button被选中情况下为灰色字体
-    shareQQGroupButton.titleEdgeInsets = UIEdgeInsetsMake(55, -shareWeChatButton.titleLabel.bounds.size.width, 0, 0);//设置title在button上的位置（上top，左left，下bottom，右right）
-    UIButton *cancelButton = [[UIButton alloc]init];
-    [cancelButton setTitle:NSLocalizedString(@"取消", @"") forState:UIControlStateNormal];
-    cancelButton.layer.borderWidth = 0.5;
-    cancelButton.layer.borderColor = [UIColor colorWithRed:180.0/255 green:180.0/255 blue:180.0/255 alpha:1.0].CGColor;
-    [cancelButton viewWithRadis:10.0];
-    [cancelButton setTitleColor:[UIColor redColor] forState:UIControlStateNormal];
-    [cancelButton addTarget:self action:@selector(cancelShareAction:) forControlEvents:UIControlEventTouchUpInside];
-    [shareView addSubview:cancelButton];
-    [shareScroller addSubview:shareWeChatButton];
-    [shareScroller addSubview:shareWeChatGroupButton];
-    [shareScroller addSubview:shareQQButton];
-    [shareScroller addSubview:shareQQGroupButton];
-    [self.view addSubview:shareView];
-    [shareWeChatButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(@20);
-        make.top.equalTo(@10);
-        make.width.equalTo(@57);
-        make.height.equalTo(@75);
-    }];
-    [shareWeChatGroupButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(shareWeChatButton.mas_right).with.offset(20);
-        make.top.equalTo(@10);
-        make.width.equalTo(@57);
-        make.height.equalTo(@75);
-    }];
-    [shareQQButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(shareWeChatGroupButton.mas_right).with.offset(20);
-        make.top.equalTo(@10);
-        make.width.equalTo(@57);
-        make.height.equalTo(@75);
-    }];
-    [shareQQGroupButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(shareQQButton.mas_right).with.offset(20);
-        make.top.equalTo(@10);
-        make.width.equalTo(@57);
-        make.height.equalTo(@75);
-    }];
-    [cancelButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(@20);
-        make.top.mas_equalTo(shareScroller.mas_bottom).with.offset(10);
-        make.right.equalTo(@-20);
-        make.height.equalTo(@50);
-    }];
-}
-
 -(void)setupData{
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
     ocrResultIndex = 0;
     flushResult = YES;
     titleArray = [NSMutableArray array];
@@ -778,18 +791,31 @@
     }else{
         url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@&userJId=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],_personJID];
     }
+    NSLog(@"url===%@",url);
     [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         if (res == 0) {
             //请求完成
-            NSDictionary *picList = [source objectForKey:@"indicator"];
+            picList = [source objectForKey:@"indicator"];
             medicineArray = [source objectForKey:@"medcine"];
             NSArray *keysOrder = [source objectForKey:@"keysOrder"];
+            if (keysOrder.count == 0) {
+                UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                [showNoticeAlert show];
+            }
             allCodeDetails = [source objectForKey:@"allCodeDetails"];
-            customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
-            
-            titleArray = [NSMutableArray arrayWithArray:keysOrder];
+            if (_isReView) {
+                customizedIdsOrder = _viewedTitleArray;
+                titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
+                firstButton.hidden = YES;
+                secondButton.hidden = YES;
+            }else{
+                customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
+                titleArray = [NSMutableArray arrayWithArray:keysOrder];
+                firstButton.hidden = NO;
+                secondButton.hidden = NO;
+            }
             for (int i = 0; i<customizedIdsOrder.count; i++) {
                 NSString *resultIndex = customizedIdsOrder[i];
                 if ([allCodeDetails objectForKey:resultIndex] != nil) {
@@ -806,6 +832,18 @@
                         }else{
                             changeStatus = [NSString stringWithFormat:@"%@,%@",changeStatus,[[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue]];
                         }
+                        NSString *changeStatusUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus/uid=%@&token=%@&isDoctor=false&ltrIds=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],changeStatus];
+                        NSLog(@"changestatusulr===%@",changeStatusUrl);
+                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:changeStatusUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            int res=[[source objectForKey:@"res"] intValue];
+                            NSLog(@"修改res===%d",res);
+                            if (res == 0) {
+                                NSLog(@"修改观察状态成功");
+                            }
+                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            
+                        }];
                     }
                     [ocrDetailValueArray addObject:tempValueDic];
                 }
@@ -853,6 +891,8 @@
             [_ninesultTable reloadData];
             [_tensultTable reloadData];
             [_elevensultTable reloadData];
+            [bChaoTable reloadData];
+            [[SetupView ShareInstance]hideHUD];
         }else{
             NSLog(@"web获取数据失败＝＝＝%d",res);
         }
@@ -869,7 +909,11 @@
 
 #pragma 分享
 - (void)shareAction{
-    [self popOutShareView:shareView];
+    SetShareContentRootViewController *ssv = [[SetShareContentRootViewController alloc]init];
+    ssv.titleDic = allCodeDetails;
+    ssv.titleArray = customizedIdsOrder;
+    ssv.timeArray = titleArray;
+    [self.navigationController pushViewController:ssv animated:YES];
 }
 
 #pragma 底部view出现和隐藏
@@ -991,6 +1035,7 @@
 }
 
 -(void)cancelBottomView:(UIButton *)sender{
+    [bottomMessView viewWithTag:123].hidden = NO;
     [self popSpringAnimationHidden:bottomMessView];
 }
 
@@ -1030,101 +1075,9 @@
     [self.navigationController pushViewController:otlv animated:YES];
 }
 
--(void)shareWechatFriend:(UIButton *)sender{
-    WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"易诊app";
-    message.description = @"易诊就是您的发展方向啊";
-    [message setThumbImage:[UIImage imageNamed:@"test"]];
-    
-    WXWebpageObject *ext = [WXWebpageObject object];
-    ext.webpageUrl = @"http://tech.qq.com/zt2012/tmtdecode/252.htm";
-    
-    message.mediaObject = ext;
-    
-    SendMessageToWXReq* req = [[SendMessageToWXReq alloc] init];
-    req.bText = NO;
-    req.message = message;
-    req.scene = WXSceneSession;//WXSceneTimeline
-    
-    [WXApi sendReq:req];
-    [self popSpringAnimationHidden:shareView];
-}
-
--(void)shareWechatGroup:(UIButton *)sender{
-    WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"易诊app";
-    message.description = @"易诊就是您的发展方向啊";
-    [message setThumbImage:[UIImage imageNamed:@"test"]];
-    
-    WXWebpageObject *ext = [WXWebpageObject object];
-    ext.webpageUrl = @"http://tech.qq.com/zt2012/tmtdecode/252.htm";
-    
-    message.mediaObject = ext;
-    
-    SendMessageToWXReq* req = [[SendMessageToWXReq alloc] init];
-    req.bText = NO;
-    req.message = message;
-    req.scene = WXSceneTimeline;//
-    
-    [WXApi sendReq:req];
-    [self popSpringAnimationHidden:shareView];
-}
-
--(void)shareQQFriend:(UIButton *)sender{
-    
-}
-
--(void)shareQQZone:(UIButton *)sender{
-    
-}
-
--(void) onReq:(BaseReq*)req
-{
-    if([req isKindOfClass:[GetMessageFromWXReq class]])
-    {
-        // 微信请求App提供内容， 需要app提供内容后使用sendRsp返回
-        NSString *strTitle = [NSString stringWithFormat:@"微信请求App提供内容"];
-        NSString *strMsg = @"微信请求App提供内容，App要调用sendResp:GetMessageFromWXResp返回给微信";
-        
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:strTitle message:strMsg delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        alert.tag = 1000;
-        [alert show];
-    }
-    else if([req isKindOfClass:[ShowMessageFromWXReq class]])
-    {
-        ShowMessageFromWXReq* temp = (ShowMessageFromWXReq*)req;
-        WXMediaMessage *msg = temp.message;
-        
-        //显示微信传过来的内容
-        WXAppExtendObject *obj = msg.mediaObject;
-        
-        NSString *strTitle = [NSString stringWithFormat:@"微信请求App显示内容"];
-        NSString *strMsg = [NSString stringWithFormat:@"标题：%@ \n内容：%@ \n附带信息：%@ \n缩略图:%lu bytes\n\n", msg.title, msg.description, obj.extInfo, (unsigned long)msg.thumbData.length];
-        
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:strTitle message:strMsg delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alert show];
-    }
-    else if([req isKindOfClass:[LaunchFromWXReq class]])
-    {
-        //从微信启动App
-        NSString *strTitle = [NSString stringWithFormat:@"从微信启动"];
-        NSString *strMsg = @"这是从微信启动的消息";
-        
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:strTitle message:strMsg delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alert show];
-    }
-}
-
--(void) onResp:(BaseResp*)resp
-{
-    if([resp isKindOfClass:[SendMessageToWXResp class]])
-    {
-        NSString *strTitle = [NSString stringWithFormat:@"发送媒体消息结果"];
-        NSString *strMsg = [NSString stringWithFormat:@"errcode:%d", resp.errCode];
-        
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:strTitle message:strMsg delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alert show];
-    }
+-(void)viewWillDisappear:(BOOL)animated{
+    [[UIApplication sharedApplication]setStatusBarHidden:NO];
+    self.navigationController.navigationBarHidden = NO;
 }
 
 @end

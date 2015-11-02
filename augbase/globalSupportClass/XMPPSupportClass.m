@@ -131,6 +131,7 @@
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message {
     _messArray = [NSMutableArray array];
     [_messArray removeAllObjects];
+//    NSLog(@"message====%@",message);
     NSString *messContent = [[message elementForName:@"body"]stringValue];//发送内容的主题必须是body，xmpp需求
     NSString *messTime = [[message elementForName:@"messTime"]stringValue];
     NSString *timeStamp = [[message elementForName:@"timeStamp"]stringValue];
@@ -205,7 +206,8 @@
             NSDictionary *friendInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             fItem.friendAge = [[friendInfo objectForKey:@"age"] stringValue];
             fItem.friendGender = [[friendInfo objectForKey:@"gender"] stringValue];
-            fItem.friendName = [friendInfo objectForKey:@"nickname"];
+            fItem.friendName = [friendInfo objectForKey:@"username"];
+            fItem.friendRealName = [friendInfo objectForKey:@"nickname"];
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[friendInfo objectForKey:@"picture"]];
             imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
@@ -232,8 +234,11 @@
         _xmppRosterDataStorage = [[XMPPRosterCoreDataStorage alloc]init];
     }
     [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
-    xmppReconnect=[[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    if (xmppReconnect == nil) {
+        xmppReconnect = [[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    }
     [xmppReconnect activate:self.xmppStream];
+    [xmppReconnect addDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster = [[XMPPRoster alloc] initWithRosterStorage:_xmppRosterDataStorage];
     [xmppRoster removeDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster.autoFetchRoster = YES;
@@ -245,6 +250,17 @@
     [xmppRoster acceptPresenceSubscriptionRequestFrom:jid andAddToRoster:YES];
     [[FriendDBManager ShareInstance]deleteFriendObjTablename:StrangerTBName andinterobj:addJID];
     [self getMyQueryRoster];
+}
+
+- (void)xmppReconnect:(XMPPReconnect *)sender didDetectAccidentalDisconnect:(SCNetworkReachabilityFlags)connectionFlags
+{
+    NSLog(@"didDetectAccidentalDisconnect:%u",connectionFlags);
+}
+
+- (BOOL)xmppReconnect:(XMPPReconnect *)sender shouldAttemptAutoReconnect:(SCNetworkReachabilityFlags)reachabilityFlags
+{
+    NSLog(@"shouldAttemptAutoReconnect:%u",reachabilityFlags);
+    return YES;
 }
 
 #pragma 发送状态失败
@@ -314,7 +330,7 @@
     [TextMessage addChild:messTime];
     
     [self.xmppStream sendElement:TextMessage];//发送在线信息
-    
+//    NSLog(@"text====%@",TextMessage);
     
 //    [self sendapns:allContents ToPerson:friendUserJid];
     if (allContents.chatType == 0) {
@@ -563,8 +579,11 @@
         _xmppRosterDataStorage = [[XMPPRosterCoreDataStorage alloc]init];
     }
     [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
-    xmppReconnect=[[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    if (xmppReconnect == nil) {
+        xmppReconnect = [[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    }
     [xmppReconnect activate:self.xmppStream];
+    [xmppReconnect addDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster = [[XMPPRoster alloc] initWithRosterStorage:_xmppRosterDataStorage];
     [xmppRoster removeDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster.autoFetchRoster = YES;
@@ -586,7 +605,8 @@
         int res=[[source objectForKey:@"res"] intValue];
         if (res == 0) {
             FriendDBItem *fdItem = [[FriendDBItem alloc]init];
-            fdItem.friendName = [source objectForKey:@"nickname"];
+            fdItem.friendName = [source objectForKey:@"username"];
+            fdItem.friendRealName = [source objectForKey:@"nickname"];
             fdItem.friendGender = [source objectForKey:@"gender"];
             fdItem.friendAge = [source objectForKey:@"age"];
             fdItem.friendDescribe = @"test";
@@ -624,8 +644,11 @@
         _xmppRosterDataStorage = [[XMPPRosterCoreDataStorage alloc]init];
     }
     [self.xmppStream addDelegate:self delegateQueue:dispatch_get_main_queue()];
-    xmppReconnect=[[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    if (xmppReconnect == nil) {
+        xmppReconnect=[[XMPPReconnect alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    }
     [xmppReconnect activate:self.xmppStream];
+    [xmppReconnect addDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster = [[XMPPRoster alloc] initWithRosterStorage:_xmppRosterDataStorage];
     [xmppRoster removeDelegate:self delegateQueue:dispatch_get_main_queue()];
     xmppRoster.autoFetchRoster = YES;
@@ -666,10 +689,12 @@
                     int res=[[source objectForKey:@"res"] intValue];
                     if (res == 0) {
                         FriendDBItem *fdItem = [[FriendDBItem alloc]init];
-                        fdItem.friendName = [source objectForKey:@"nickname"];
+                        fdItem.friendName = [source objectForKey:@"username"];
+                        fdItem.friendRealName = [source objectForKey:@"nickname"];
                         fdItem.friendGender = [source objectForKey:@"gender"];
                         fdItem.friendAge = [source objectForKey:@"age"];
-                        fdItem.friendDescribe = @"test";
+                        fdItem.friendDescribe = [source objectForKey:@"introduction"];
+                        fdItem.friendSimilarity = [source objectForKey:@"similarity"];
                         NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
                         NSString *documentsDirectory = [paths objectAtIndex:0];
                         fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,name];

@@ -21,4 +21,6 @@
 //此处的数字代表选择的选项，0代表失败，1代表识别中，2代表识别成功
 @property (nonatomic) NSInteger SegIndex;
 
+@property (nonatomic,strong) UIViewController *caseRootVC;//
+
 @end

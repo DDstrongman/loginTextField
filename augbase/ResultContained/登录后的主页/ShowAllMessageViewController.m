@@ -16,6 +16,9 @@
 
 #import "NSDate+Utils.h"
 
+#import <CoreLocation/CoreLocation.h>
+#import <MapKit/MapKit.h>
+
 @interface ShowAllMessageViewController ()
 
 {
@@ -33,6 +36,10 @@
     UIView *navigationBar;
     
     DBItem *lastMessItem;//最后一次传来的消息类
+    
+    CLLocationManager *locationManager;//获取坐标
+    
+//    BOOL headBool;
 }
 
 @end
@@ -44,6 +51,8 @@
     [self setupView];
     [self setupData];
     [self setupConnect];
+    
+    [self setLocation];//获取地理位置
 }
 
 #pragma xmpp收到信息后触法的delegate,receieveMess为发送者的jid
@@ -190,6 +199,60 @@
     [_messageTableview reloadData];
 }
 
+-(void)setLocation{
+    locationManager = [[CLLocationManager alloc]init];
+    locationManager.delegate = self;
+    if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userSystemVersion"] floatValue]<8.0) {
+        
+    }else{
+        [locationManager requestAlwaysAuthorization];
+    }
+    locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    locationManager.distanceFilter = 1000.f;
+    // 开始时时定位
+    [locationManager startUpdatingLocation];
+}
+
+// 错误信息
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    NSLog(@"error");
+}
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
+    switch (status) {
+        case kCLAuthorizationStatusNotDetermined:
+            if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+                [locationManager requestWhenInUseAuthorization];
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+// 6.0 以上调用这个函数
+-(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    CLLocation *newLocation = locations[0];
+    CLLocationCoordinate2D oldCoordinate = newLocation.coordinate;
+    NSLog(@"旧的经度：%f,旧的纬度：%f",oldCoordinate.longitude,oldCoordinate.latitude);
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:[NSNumber numberWithFloat:oldCoordinate.latitude] forKey:@"latitude"];
+    [dic setObject:[NSNumber numberWithFloat:oldCoordinate.longitude] forKey:@"longitude"];
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"res====%d",res);
+        if (res == 0) {
+            NSLog(@"上传位置成功");
+            [locationManager stopUpdatingLocation];
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
+}
+
 #pragma searcheViewController的delegate
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController{
     //谓词检测
@@ -209,11 +272,11 @@
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-//    if (searchResults.count == 0) {
-//        return 1;
-//    }else{
+    if (searchResults.count == 0) {
+        return 1;
+    }else{
         return 2;
-//    }
+    }
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
@@ -244,9 +307,9 @@
         cell.iconImageView.backgroundColor = titleColorArray[indexPath.row];
         cell.titleText.text = titleDataArray[indexPath.row];
         if (indexPath.row == 0) {
-            cell.descriptionText.text = NSLocalizedString(@"群聊助手", @"");
+            cell.descriptionText.text = NSLocalizedString(@"找到属于自己的战友圈子", @"");
         }else{
-            cell.descriptionText.text = NSLocalizedString(@"咨询信息", @"");
+            cell.descriptionText.text = NSLocalizedString(@"实时同步战友微信订阅号", @"");
         }
     }else{
         FMResultSet *lastMessResult = [[DBManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
@@ -335,15 +398,16 @@
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath{
     // 删除的操作
     if (editingStyle == UITableViewCellEditingStyleDelete) {
-        [_messageTableview beginUpdates];
+//        [_messageTableview beginUpdates];
         NSArray *indexPaths = @[indexPath]; // 构建 索引处的行数 的数组
         // 删除 索引的方法 后面是动画样式
-        [_messageTableview deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
+//        [_messageTableview deleteRowsAtIndexPaths:indexPaths withRowAnimation:(UITableViewRowAnimationLeft)];
         [dataArray removeObjectAtIndex:indexPath.row];
 #warning 此处加入删除消息的数据库操作
         [[DBManager ShareInstance] creatDatabase:DBName];
         [[DBManager ShareInstance] deleteTable:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]]];
-        [_messageTableview  endUpdates];
+//        [_messageTableview  endUpdates];
+        [_messageTableview reloadData];
     }
     
     // 添加的操作
@@ -361,11 +425,25 @@
 
 #pragma 添加头和尾
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    headerView.backgroundColor = grayBackgroundLightColor;
-    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-    headerView.layer.borderWidth = 0.5;
-    return headerView;
+    if (searchResults.count == 0) {
+        UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+        footerView.backgroundColor = grayBackgroundLightColor;
+        [footerView makeInsetShadowWithRadius:0.5 Color:lightGrayBackColor Directions:[NSArray arrayWithObjects:@"top", nil]];
+        return footerView;
+    }else{
+        if (section == 0) {
+            UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+            footerView.backgroundColor = grayBackgroundLightColor;
+            footerView.layer.borderColor = lightGrayBackColor.CGColor;
+            footerView.layer.borderWidth = 0.5;
+            return footerView;
+        }else{
+            UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+            footerView.backgroundColor = grayBackgroundLightColor;
+            [footerView makeInsetShadowWithRadius:0.5 Color:lightGrayBackColor Directions:[NSArray arrayWithObjects:@"top", nil]];
+            return footerView;
+        }
+    }
 }
 
 #pragma 滑动scrollview取消输入
@@ -384,10 +462,19 @@
 }
 
 #pragma searchviewcontroller的delegate
-// 搜索界面将要出现
 - (void)willPresentSearchController:(UISearchController *)searchController{
     NSLog(@"将要  开始  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
+}
+
+- (void)didPresentSearchController:(UISearchController *)searchController
+{
+    for (UIButton *sb in [[searchViewController.searchBar subviews][0] subviews]) {
+        if ([sb isKindOfClass:[UIButton class]]) {
+            [sb setTitleColor:themeColor forState:UIControlStateNormal];
+            [sb setTitleColor:themeColor forState:UIControlStateHighlighted];
+        }
+    }
 }
 
 // 搜索界面将要消失
@@ -417,13 +504,13 @@
     _messageTableview.backgroundColor = grayBackgroundLightColor;
     _messageTableview.tableFooterView = [[UIView alloc]init];
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索联系人姓名", @"");
     [[SetupView ShareInstance]setupSearchbar:searchViewController];
 }
 
 -(void)setupData{
 #warning 此处加入收到信息的dataarra
-    titleDataArray = [@[NSLocalizedString(@"群助手", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
+    titleDataArray = [@[NSLocalizedString(@"群聊", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
     titleImageNameArray = [@[@"groups",@"news"]mutableCopy];
     titleColorArray = [@[themeColor,yellowTitleColor,themeColor]mutableCopy];
     chatCellJID = [NSMutableArray array];
@@ -451,7 +538,7 @@
                 }
             }
             else{
-                
+//                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
             }
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"WEB端登录失败：%@",error);
@@ -491,15 +578,15 @@
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>=12 && [lastDate hour]<=18){
         period = @"下午";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>18 && [lastDate hour]<=23){
         period = @"晚上";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else{
         period = @"凌晨";
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }
-    return [NSString stringWithFormat:@"%@ %@ %@:%02d",dateStr,period,hour,(int)[lastDate minute]];
+    return [NSString stringWithFormat:@"%@ %@:%02d",dateStr,hour,(int)[lastDate minute]];
 }
 
 @end

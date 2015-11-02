@@ -1,11 +1,3 @@
-//
-//  UUMessage.m
-//  UUChatDemoForTextVoicePicture
-//
-//  Created by shake on 14-8-26.
-//  Copyright (c) 2014年 uyiuyao. All rights reserved.
-//
-
 #import "UUMessage.h"
 #import "NSDate+Utils.h"
 
@@ -72,15 +64,15 @@
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>=12 && [lastDate hour]<=18){
         period = @"下午";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>18 && [lastDate hour]<=23){
         period = @"晚上";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else{
         period = @"凌晨";
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }
-    return [NSString stringWithFormat:@"%@ %@ %@:%02d",dateStr,period,hour,(int)[lastDate minute]];
+    return [NSString stringWithFormat:@"%@ %@:%02d",dateStr,hour,(int)[lastDate minute]];
 }
 
 - (void)minuteOffSetStart:(NSString *)start end:(NSString *)end

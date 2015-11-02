@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
+@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
 
 @property (nonatomic,strong) IBOutlet UITableView *similarFriendTable;

@@ -9,7 +9,7 @@
 #import "UUInputFunctionView.h"
 #import "Mp3Recorder.h"
 #import "UUProgressHUD.h"
-@interface UUInputFunctionView ()<UITextViewDelegate,Mp3RecorderDelegate>
+@interface UUInputFunctionView ()<UITextViewDelegate,Mp3RecorderDelegate,UITextFieldDelegate>
 {
     BOOL isbeginVoiceRecord;
     Mp3Recorder *MP3;
@@ -25,7 +25,7 @@
 - (id)initWithSuperVC:(UIViewController *)superVC
 {
     self.superVC = superVC;
-    CGRect frame = CGRectMake(0, Main_Screen_Height-40-66, Main_Screen_Width, 40);
+    CGRect frame = CGRectMake(0, ViewHeight-45-66+3, Main_Screen_Width, 45);
     
     self = [super initWithFrame:frame];
     if (self) {
@@ -33,17 +33,17 @@
         self.backgroundColor = [UIColor whiteColor];
         //发送消息
         self.btnSendMessage = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.btnSendMessage.frame = CGRectMake(Main_Screen_Width-40, 5, 30, 30);
+        self.btnSendMessage.frame = CGRectMake(Main_Screen_Width-40, frame.size.height/2-30/2, 30, 30);
         self.isAbleToSendTextMessage = NO;
         [self.btnSendMessage setTitle:@"" forState:UIControlStateNormal];
         [self.btnSendMessage setBackgroundImage:[UIImage imageNamed:@"Chat_take_picture"] forState:UIControlStateNormal];
-        self.btnSendMessage.titleLabel.font = [UIFont systemFontOfSize:12];
+        self.btnSendMessage.titleLabel.font = [UIFont systemFontOfSize:15];
         [self.btnSendMessage addTarget:self action:@selector(sendMessage:) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:self.btnSendMessage];
         
         //改变状态（语音、文字）
         self.btnChangeVoiceState = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.btnChangeVoiceState.frame = CGRectMake(5, 5, 30, 30);
+        self.btnChangeVoiceState.frame = CGRectMake(5, frame.size.height/2-30/2, 30, 30);
         isbeginVoiceRecord = NO;
         [self.btnChangeVoiceState setBackgroundImage:[UIImage imageNamed:@"chat_voice_record"] forState:UIControlStateNormal];
         self.btnChangeVoiceState.titleLabel.font = [UIFont systemFontOfSize:12];
@@ -52,13 +52,13 @@
 
         //语音录入键
         self.btnVoiceRecord = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.btnVoiceRecord.frame = CGRectMake(70, 5, Main_Screen_Width-70*2, 30);
+        self.btnVoiceRecord.frame = CGRectMake(45,(frame.size.height-35)/2+1, Main_Screen_Width-45*2, 35);
         self.btnVoiceRecord.hidden = YES;
         [self.btnVoiceRecord setBackgroundImage:[UIImage imageNamed:@"chat_message_back"] forState:UIControlStateNormal];
         [self.btnVoiceRecord setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
         [self.btnVoiceRecord setTitleColor:[[UIColor lightGrayColor] colorWithAlphaComponent:0.5] forState:UIControlStateHighlighted];
-        [self.btnVoiceRecord setTitle:@"Hold to Talk" forState:UIControlStateNormal];
-        [self.btnVoiceRecord setTitle:@"Release to Send" forState:UIControlStateHighlighted];
+        [self.btnVoiceRecord setTitle:NSLocalizedString(@"  按   住   说   话  ", @"") forState:UIControlStateNormal];
+        [self.btnVoiceRecord setTitle:NSLocalizedString(@"  松   开   发   送  ", @"") forState:UIControlStateHighlighted];
         [self.btnVoiceRecord addTarget:self action:@selector(beginRecordVoice:) forControlEvents:UIControlEventTouchDown];
         [self.btnVoiceRecord addTarget:self action:@selector(endRecordVoice:) forControlEvents:UIControlEventTouchUpInside];
         [self.btnVoiceRecord addTarget:self action:@selector(cancelRecordVoice:) forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel];
@@ -67,17 +67,20 @@
         [self addSubview:self.btnVoiceRecord];
         
         //输入框
-        self.TextViewInput = [[UITextView alloc]initWithFrame:CGRectMake(45, 5, Main_Screen_Width-2*45, 30)];
+        self.TextViewInput = [[UITextView alloc]initWithFrame:CGRectMake(45, (frame.size.height-35)/2, Main_Screen_Width-2*45, 35)];
         self.TextViewInput.layer.cornerRadius = 4;
         self.TextViewInput.layer.masksToBounds = YES;
         self.TextViewInput.delegate = self;
         self.TextViewInput.layer.borderWidth = 1;
+        self.TextViewInput.font = [UIFont systemFontOfSize:15.0];
         self.TextViewInput.layer.borderColor = [[[UIColor lightGrayColor] colorWithAlphaComponent:0.4] CGColor];
+        
+        self.TextViewInput.returnKeyType = UIReturnKeySend;
         [self addSubview:self.TextViewInput];
         
         //输入框的提示语
-        placeHold = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, 200, 30)];
-        placeHold.text = @"Input the contents here";
+        placeHold = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, 200, 35)];
+        placeHold.text = NSLocalizedString(@"在这里输入", @"");
         placeHold.textColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.8];
         [self.TextViewInput addSubview:placeHold];
         
@@ -116,17 +119,17 @@
         [playTimer invalidate];
         playTimer = nil;
     }
-    [UUProgressHUD dismissWithError:@"Cancel"];
+    [UUProgressHUD dismissWithError:NSLocalizedString(@"撤回", @"")];
 }
 
 - (void)RemindDragExit:(UIButton *)button
 {
-    [UUProgressHUD changeSubTitle:@"Release to cancel"];
+    [UUProgressHUD changeSubTitle:NSLocalizedString(@"松开撤回", @"")];
 }
 
 - (void)RemindDragEnter:(UIButton *)button
 {
-    [UUProgressHUD changeSubTitle:@"Slide up to cancel"];
+    [UUProgressHUD changeSubTitle:NSLocalizedString(@"拉起撤回", @"")];
 }
 
 
@@ -144,7 +147,7 @@
 - (void)endConvertWithData:(NSData *)voiceData
 {
     [self.delegate UUInputFunctionView:self sendVoice:voiceData time:playTime+1];
-    [UUProgressHUD dismissWithSuccess:@"Success"];
+    [UUProgressHUD dismissWithSuccess:NSLocalizedString(@"成功", @"")];
    
     //缓冲消失时间 (最好有block回调消失完成)
     self.btnVoiceRecord.enabled = NO;
@@ -155,7 +158,7 @@
 
 - (void)failRecord
 {
-    [UUProgressHUD dismissWithSuccess:@"Too short"];
+    [UUProgressHUD dismissWithSuccess:NSLocalizedString(@"时间太短", @"")];
     
     //缓冲消失时间 (最好有block回调消失完成)
     self.btnVoiceRecord.enabled = NO;
@@ -188,7 +191,7 @@
     }
     else{
         [self.TextViewInput resignFirstResponder];
-        UIActionSheet *actionSheet= [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Camera",@"Images",nil];
+        UIActionSheet *actionSheet= [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"相机", @""),NSLocalizedString(@"照片库", @""),nil];
         [actionSheet showInView:self.window];
     }
 }
@@ -201,16 +204,27 @@
     placeHold.hidden = self.TextViewInput.text.length > 0;
 }
 
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
+{
+    if ([@"\n" isEqualToString:text] == YES)
+    {
+        NSString *resultStr = [self.TextViewInput.text stringByReplacingOccurrencesOfString:@"   " withString:@""];
+        [self.delegate UUInputFunctionView:self sendMessage:resultStr];
+        return NO;
+    }
+    return YES;
+}
+
 - (void)textViewDidChange:(UITextView *)textView
 {
-    [self changeSendBtnWithPhoto:textView.text.length>0?NO:YES];
+//    [self changeSendBtnWithPhoto:textView.text.length>0?NO:YES];
     placeHold.hidden = textView.text.length>0;
 }
 
 - (void)changeSendBtnWithPhoto:(BOOL)isPhoto
 {
     self.isAbleToSendTextMessage = !isPhoto;
-    [self.btnSendMessage setTitle:isPhoto?@"":@"send" forState:UIControlStateNormal];
+    [self.btnSendMessage setTitle:isPhoto?@"":NSLocalizedString(@"发送", @"") forState:UIControlStateNormal];
     self.btnSendMessage.frame = RECT_CHANGE_width(self.btnSendMessage, isPhoto?30:35);
     UIImage *image = [UIImage imageNamed:isPhoto?@"Chat_take_picture":@"chat_send_message"];
     [self.btnSendMessage setBackgroundImage:image forState:UIControlStateNormal];
@@ -220,7 +234,6 @@
 {
     placeHold.hidden = self.TextViewInput.text.length > 0;
 }
-
 
 #pragma mark - Add Picture
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -236,12 +249,12 @@
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
         UIImagePickerController *picker = [[UIImagePickerController alloc] init];
         picker.delegate = self;
-        picker.allowsEditing = YES;
+        picker.allowsEditing = NO;
         picker.sourceType = UIImagePickerControllerSourceTypeCamera;
         [self.superVC presentViewController:picker animated:YES completion:^{}];
     }else{
         //如果没有提示用户
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Tip" message:@"Your device don't have camera" delegate:nil cancelButtonTitle:@"Sure" otherButtonTitles:nil];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"提示", @"") message:NSLocalizedString(@"您的设备没有照相机", @"") delegate:nil cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil];
         [alert show];
     }
 }

@@ -31,7 +31,11 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.title = NSLocalizedString(@"资讯详情", @"");
+    if (_isClassOrNot) {
+        self.title = NSLocalizedString(@"百科", @"");
+    }else{
+        self.title = NSLocalizedString(@"资讯详情", @"");
+    }
 }
 
 @end

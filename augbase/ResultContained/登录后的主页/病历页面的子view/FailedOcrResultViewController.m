@@ -38,6 +38,7 @@
     _failCategoryText.text = [NSString stringWithFormat:@"无法识别原因:%@",failedCategory];
     _failDetailText.text = [NSString stringWithFormat:@"建议:%@",failedDetail];
     [_cameraAgainButton addTarget:self action:@selector(cameraAgain:) forControlEvents:UIControlEventTouchUpInside];
+    [_cameraAgainButton viewWithRadis:10.0];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -46,11 +47,42 @@
 
 #pragma 此处要添加右侧删除按钮响应函数
 -(void)deleteReport{
-    NSLog(@"此处要添加右侧删除按钮响应函数");
+    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"删除失败化验单不可恢复，是否确定要删除？", @"") Title:NSLocalizedString(@"删除失败化验单", @"") ViewController:self];
 }
 
 -(void)cameraAgain:(UIButton *)sender{
     [self.navigationController popToRootViewControllerAnimated:YES];
+    _cameraNewReportDele = _caseRootVC;
+    [_cameraNewReportDele cameraNewReport:YES];
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    NSString *urlDelete = [NSString stringWithFormat:@"%@ltr/delete?uid=%@&token=%@&ltrid=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[_detailDic objectForKey:@"id"]];
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:urlDelete Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res = [[response objectForKey:@"res"] intValue];
+        if (res == 0) {
+            NSLog(@"删除成功");
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    if (buttonIndex == 0) {
+        [self.navigationController popViewControllerAnimated:YES];
+        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+        NSString *urlDelete = [NSString stringWithFormat:@"%@ltr/delete?uid=%@&token=%@&ltrid=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[_detailDic objectForKey:@"id"]];
+        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:urlDelete Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res = [[response objectForKey:@"res"] intValue];
+            if (res == 0) {
+                NSLog(@"删除成功");
+                [_deleteFailedReportDele deleteReport:YES];
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
+    }
 }
 
 @end

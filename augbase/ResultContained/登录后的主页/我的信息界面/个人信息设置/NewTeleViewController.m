@@ -48,6 +48,7 @@
             [_editTeleResultDele editTeleResult:YES];
         }else{
             [_editTeleResultDele editTeleResult:NO];
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         [_editTeleResultDele editTeleResult:NO];
@@ -55,7 +56,7 @@
 }
 
 -(void)confirmIsTele:(UITextField *)sender{
-    if ([self isValidateMobile:newTele.contentTextField.text]&&sender.text.length>5) {
+    if ([self isValidateMobile:newTele.contentTextField.text]&&![sender.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userTele"]]) {
         getPicButton.backgroundColor = themeColor;
         getPicButton.userInteractionEnabled = YES;
     }else{
@@ -65,7 +66,7 @@
 }
 
 -(void)confirmAllMess:(UITextField *)sender{
-    if ([self isValidateMobile:sender.text]) {
+    if ([self isValidateMobile:newTele.contentTextField.text]&&sender.text.length>5) {
         finishButton.backgroundColor = themeColor;
         finishButton.userInteractionEnabled = YES;
     }else{
@@ -87,7 +88,7 @@
     [newTele.contentTextField addTarget:self action:@selector(confirmIsTele:) forControlEvents:UIControlEventEditingChanged];
     
     confirmNumber = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 50+50+5, ViewWidth-120, 50)];
-    confirmNumber.contentTextField.placeholder = NSLocalizedString(@"验证码", @"");
+    confirmNumber.contentTextField.placeholder = NSLocalizedString(@"手机验证码", @"");
     getPicButton = [[UIButton alloc]initWithFrame:CGRectMake(0,0,30, 30)];
     getPicButton.userInteractionEnabled = NO;
     [getPicButton addTarget:self action:@selector(getConfirmNumber:) forControlEvents:UIControlEventTouchUpInside];
@@ -223,13 +224,8 @@
         NSLog(@"res===%d",res);
         if (res == 0) {
             
-        }else if(res == 17){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"该手机号已注册", @"") Title:NSLocalizedString(@"手机号已注册", @"") ViewController:self];
-        }else if (res == 29){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"验证码输入错误", @"") Title:NSLocalizedString(@"验证码错误", @"") ViewController:self];
-        }
-        else{
-            
+        }else{
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");

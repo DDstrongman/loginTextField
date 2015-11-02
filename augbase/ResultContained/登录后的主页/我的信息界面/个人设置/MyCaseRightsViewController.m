@@ -18,6 +18,7 @@
     UILabel *bottomTitleLabel;//底部标题label
     NSIndexPath *selectIndex;
     NSString *selectString;//
+    UIPickerView *pickRight;//
 }
 
 @end
@@ -45,12 +46,16 @@
 
 -(void)confirmBottomView:(UIButton *)sender{
     UITableViewCell *cell = [_myCaseRightTable cellForRowAtIndexPath:selectIndex];
+    if (selectString == nil) {
+        selectString = NSLocalizedString(@"所有人可见", @"");
+    }
     cell.detailTextLabel.text = selectString;
     [self popSpringAnimationHidden:bottomView];
 }
 
 #pragma 底部view出现和隐藏
 -(void)popSpringAnimationOut:(UIView *)targetView{
+    [pickRight selectRow:0 inComponent:0 animated:YES];
     POPSpringAnimation *anim = [POPSpringAnimation animation];
     anim.property = [POPAnimatableProperty propertyWithName:kPOPViewFrame];
     anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,ViewHeight-targetView.bounds.size.height-22,targetView.bounds.size.width,targetView.bounds.size.height)];
@@ -113,7 +118,11 @@
     [bottomView addSubview:cancelButton];
     bottomTitleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 200, 30)];
     bottomTitleLabel.center = CGPointMake(bottomView.center.x,23);
-    bottomTitleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        bottomTitleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        bottomTitleLabel.font = [UIFont systemFontOfSize:17.0];
+    }
     bottomTitleLabel.textAlignment = NSTextAlignmentCenter;
     bottomTitleLabel.text = @"";
     [bottomView addSubview:bottomTitleLabel];
@@ -124,7 +133,7 @@
     [confirmButton addTarget:self action:@selector(confirmBottomView:) forControlEvents:UIControlEventTouchUpInside];
     [bottomView addSubview:confirmButton];
     
-    UIPickerView *pickRight = [[UIPickerView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 300-44)];
+    pickRight = [[UIPickerView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 300-44)];
     pickRight.delegate = self;
     pickRight.dataSource = self;
     pickRight.layer.borderColor = lightGrayBackColor.CGColor;

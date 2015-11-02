@@ -40,28 +40,12 @@
     age = [components year];
 }
 
--(void)setupView{
-    self.title = NSLocalizedString(@"更改年龄", @"");
-    self.view.backgroundColor = grayBackColor;
-    UILabel *remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(20, 10, ViewWidth-40, 20)];
-    remindLabel.text = NSLocalizedString(@"请输入您的生日", @"");
-    [self.view addSubview:remindLabel];
-    agePicker = [[UIDatePicker alloc]initWithFrame:CGRectMake(0, 30, ViewWidth, 300)];
-    agePicker.datePickerMode = UIDatePickerModeDate;
-    [agePicker addTarget:self action:@selector(selectBirthday:) forControlEvents:UIControlEventValueChanged];
-    [self.view addSubview:agePicker];
-}
-
--(void)setupData{
-    
-}
-
--(void)viewWillDisappear:(BOOL)animated{
+-(void)editAge:(UIButton *)sender{
     NSString *ageNumber = [NSString stringWithFormat:@"%ld",age];
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    [dic setObject:ageNumber forKey:@"introduction"];
+    [dic setObject:ageNumber forKey:@"age"];
     [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
@@ -73,6 +57,30 @@
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)setupView{
+    self.title = NSLocalizedString(@"您的出生年月", @"");
+    self.view.backgroundColor = [UIColor whiteColor];
+    agePicker = [[UIDatePicker alloc]initWithFrame:CGRectMake(0, 30, ViewWidth, 300)];
+    agePicker.datePickerMode = UIDatePickerModeDate;
+    [agePicker addTarget:self action:@selector(selectBirthday:) forControlEvents:UIControlEventValueChanged];
+    [self.view addSubview:agePicker];
+    
+    UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
+    confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [confirmButton setTitle:NSLocalizedString(@"保存", @"") forState:UIControlStateNormal];
+    [confirmButton addTarget:self action:@selector(editAge:) forControlEvents:UIControlEventTouchUpInside];
+    [[SetupView ShareInstance]setupNavigationRightButton:self RightButton:confirmButton];
+}
+
+-(void)setupData{
+    
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    
 }
 
 @end

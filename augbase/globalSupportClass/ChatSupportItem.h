@@ -20,6 +20,7 @@
 @property (nonatomic,strong)NSData *mydata;//数据文件
 @property (nonatomic,strong)NSString *mydataname;//数据文件
 @property (nonatomic,strong)NSString *messContent;//消息内容
+
 -(void)encodeWithCoder:(NSCoder *)aCoder;
 -(id)initWithCoder:(NSCoder *)aDecoder;
 

@@ -9,14 +9,16 @@
 #import "NearByFriendViewController.h"
 
 #import "ContactPersonDetailViewController.h"
+#import "SendAddMessViewController.h"
 
-@interface NearByFriendViewController ()
+#import <CoreLocation/CoreLocation.h>
+#import <MapKit/MapKit.h>
+
+@interface NearByFriendViewController ()<CLLocationManagerDelegate>
 
 {
     NSMutableArray *dataArray;//搜索的数据元数组
-    NSMutableArray *searchResults;//搜索结果的数组
-    UISearchBar *mySearchBar;//ui，仅仅是个ui
-    UISearchController *searchViewController;//显示搜索结果的tableview，系统自带，但是需要实现
+    CLLocationManager *locationManager;
 }
 
 @end
@@ -27,45 +29,84 @@
     [super viewDidLoad];
     _nearbyFriendTable.delegate = self;
     _nearbyFriendTable.dataSource = self;
-    searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
-    searchViewController.active = NO;
-    searchViewController.dimsBackgroundDuringPresentation = NO;
-    searchViewController.hidesNavigationBarDuringPresentation = NO;
-    [searchViewController.searchBar sizeToFit];
-    //设置显示搜索结果的控制器
-    searchViewController.searchResultsUpdater = self; //协议(UISearchResultsUpdating)
-    //将搜索控制器的搜索条设置为页眉视图
-    _nearbyFriendTable.tableHeaderView = searchViewController.searchBar;
-    
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索列表", @"");
-    dataArray = [@[@"上海大三阳战友群",@"上海大三阳战友群",@"上海大三阳战友群"]mutableCopy];
-    if (!searchResults) {
-        searchResults = dataArray;
-    }
-
+    _nearbyFriendTable.backgroundColor = grayBackgroundLightColor;
+    dataArray = [NSMutableArray array];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"附近好友", @"");
+    [self setupData];
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
 }
 
-#pragma searcheViewController的delegate
-- (void)updateSearchResultsForSearchController:(UISearchController *)searchController
-{
-    //谓词检测
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:
-                              @"self contains [cd] %@", searchController.searchBar.text];
-    if ([searchController.searchBar.text isEqualToString:@""]){
-        searchResults = dataArray;
-        [_nearbyFriendTable reloadData];
+-(void)setupData{
+    
+    locationManager = [[CLLocationManager alloc]init];
+    locationManager.delegate = self;
+    if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userSystemVersion"] floatValue]<8.0) {
+        
     }else{
-        //将所有和搜索有关的内容存储到arr数组
-        searchResults = [NSMutableArray arrayWithArray:
-                         [dataArray filteredArrayUsingPredicate:predicate]];
-        //重新加载数据
-        [_nearbyFriendTable reloadData];
+        [locationManager requestAlwaysAuthorization];
     }
+    locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    locationManager.distanceFilter = 1000.f;
+    // 开始时时定位
+    [locationManager startUpdatingLocation];
+}
+
+// 错误信息
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    NSLog(@"error");
+}
+
+- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
+    switch (status) {
+        case kCLAuthorizationStatusNotDetermined:
+            if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+                [locationManager requestWhenInUseAuthorization];
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+// 6.0 以上调用这个函数
+-(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+    CLLocation *newLocation = locations[0];
+    CLLocationCoordinate2D oldCoordinate = newLocation.coordinate;
+    NSLog(@"旧的经度：%f,旧的纬度：%f",oldCoordinate.longitude,oldCoordinate.latitude);
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:[NSNumber numberWithFloat:oldCoordinate.latitude] forKey:@"latitude"];
+    [dic setObject:[NSNumber numberWithFloat:oldCoordinate.longitude] forKey:@"longitude"];
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        NSLog(@"res====%d",res);
+        if (res == 0) {
+            NSLog(@"上传成功");
+            NSString *nearUrl = [NSString stringWithFormat:@"%@v2/user/nearbyUser?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+            NSLog(@"nearurl====%@",nearUrl);
+            [[HttpManager ShareInstance]AFNetGETSupport:nearUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *nearSource = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                int res=[[nearSource objectForKey:@"res"] intValue];
+                if (res == 0) {
+                    dataArray = [nearSource objectForKey:@"users"];
+                    [_nearbyFriendTable reloadData];
+                    [[SetupView ShareInstance]hideHUD];
+                }else{
+                    [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                }
+            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                
+            }];
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
 }
 
 #pragma mark - Table view data source
@@ -74,7 +115,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return searchResults.count;
+    return dataArray.count;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -85,12 +126,29 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell;
     cell = [tableView dequeueReusableCellWithIdentifier:@"nearbyfriendcell" forIndexPath:indexPath];
-//    cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-    //    cell.selectionStyle = UITableViewCellSelectionStyleNone;
-    ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
-    [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
-    ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"相似好友", @"");
-    [((UIButton *)[cell.contentView viewWithTag:7]) addTarget:self action:@selector(addFriend:) forControlEvents:UIControlEventTouchUpInside];
+    if (dataArray.count > 0) {
+        NSString *sex;
+        [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@%@",PersonImageUrl,[dataArray[indexPath.row] objectForKey:@"avatar"]]] placeholderImage:[UIImage imageNamed:@"icon.jpg"]];
+        [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
+        [[cell.contentView viewWithTag:7] viewWithRadis:1.0];
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = [dataArray[indexPath.row] objectForKey:@"name"];
+        if ([[dataArray[indexPath.row] objectForKey:@"gerder"] intValue] == 1) {
+            sex = NSLocalizedString(@"女", @"");
+        }else{
+            sex = NSLocalizedString(@"男", @"");
+        }
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@/%@",sex,[[dataArray[indexPath.row] objectForKey:@"age"] stringValue]];
+        [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:[[dataArray[indexPath.row] objectForKey:@"distance"] stringValue] forState:UIControlStateNormal];
+        if ([[dataArray[indexPath.row] objectForKey:@"introduction"] isEqualToString:@""]) {
+            
+            ((UILabel *)[cell.contentView viewWithTag:5]).text = NSLocalizedString(@"TA还在休息呢，暂无签名", @"");
+        }else{
+            ((UILabel *)[cell.contentView viewWithTag:5]).text = [dataArray[indexPath.row] objectForKey:@"introduction"];
+        }
+        ((UILabel *)[cell.contentView viewWithTag:6]).text = [[[dataArray[indexPath.row] objectForKey:@"similarity"] stringValue] stringByAppendingString:@"%"];
+        [((UIButton *)[cell.contentView viewWithTag:7]) addTarget:self action:@selector(addFriend:) forControlEvents:UIControlEventTouchUpInside];
+        cell.tag = indexPath.row;
+    }
     return cell;
 }
 
@@ -98,34 +156,28 @@
 -(void)addFriend:(UIButton *)sender{
     NSLog(@"加上加为好友的响应函数，网络通讯");
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-//    cpdv.friendJID = [memberDataArray[indexPath.row-1] objectForKey:@"jid"];
-    [self.navigationController pushViewController:cpdv animated:YES];
-}
-
--(void)addFriendYes{
-    NSLog(@"加上同意加为好友的响应函数，网络通讯");
-    //    boolAddArray[0] = YES;
-    //    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    //    AddFriendConfirmViewController *afcv = [main instantiateViewControllerWithIdentifier:@"addfriendconfirmdetail"];
-    //    [self.navigationController pushViewController:afcv animated:YES];
+    SendAddMessViewController *smc = [main instantiateViewControllerWithIdentifier:@"sendaddmessage"];
+    smc.addFriendJID = [dataArray[sender.superview.superview.tag] objectForKey:@"jid"];
+    [self.navigationController pushViewController:smc animated:YES];
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
+    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+    cpdv.isJIDOrYizhenID = YES;
+    cpdv.friendJID = [dataArray[indexPath.row] objectForKey:@"jid"];
+    [self.navigationController pushViewController:cpdv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     return nil;
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [locationManager stopUpdatingLocation];
 }
 
 @end

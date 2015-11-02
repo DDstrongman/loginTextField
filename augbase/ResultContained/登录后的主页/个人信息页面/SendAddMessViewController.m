@@ -65,7 +65,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 4;
+    return 2;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -95,25 +95,25 @@
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         }
             break;
-        case 2:
-        {
-            cell.textLabel.text = NSLocalizedString(@"是否向对方显示你的用药与病历", @"");
-        }
-            break;
-        case 3:
-        {
-            if (showOrNotBool) {
-                cell.textLabel.text = NSLocalizedString(@"显示用药与病历信息", @"");
-            }else{
-                cell.textLabel.text = NSLocalizedString(@"隐藏用药与病历信息", @"");
-            }
-            cell.textLabel.tag = 1;
-            UISwitch *showOrNot = [[UISwitch alloc]init];
-            [showOrNot setOn:showOrNotBool];
-            [showOrNot addTarget:self action:@selector(changeShowBool:) forControlEvents:UIControlEventValueChanged];
-            cell.accessoryView = showOrNot;
-        }
-            break;
+//        case 2:
+//        {
+//            cell.textLabel.text = NSLocalizedString(@"是否向对方显示你的用药与病历", @"");
+//        }
+//            break;
+//        case 3:
+//        {
+//            if (showOrNotBool) {
+//                cell.textLabel.text = NSLocalizedString(@"显示用药与病历信息", @"");
+//            }else{
+//                cell.textLabel.text = NSLocalizedString(@"隐藏用药与病历信息", @"");
+//            }
+//            cell.textLabel.tag = 1;
+//            UISwitch *showOrNot = [[UISwitch alloc]init];
+//            [showOrNot setOn:showOrNotBool];
+//            [showOrNot addTarget:self action:@selector(changeShowBool:) forControlEvents:UIControlEventValueChanged];
+//            cell.accessoryView = showOrNot;
+//        }
+//            break;
         default:
             break;
     }

@@ -19,7 +19,14 @@
 #import "PhotoTweaksViewController.h"
 #import "ConfirmPictureResultViewController.h"
 
-@interface CaseViewController ()<PhotoTweaksViewControllerDelegate>
+#import "ShowWebviewViewController.h"
+
+#import "KRLCollectionViewGridLayout.h"
+#import "OcrResultGroupViewController.h"
+
+#import "OcrTextResultViewController.h"
+
+@interface CaseViewController ()<PhotoTweaksViewControllerDelegate,OpenCameraDele,CameraNewReportDele>
 
 {
     KRLCollectionViewGridLayout *lineLayout;
@@ -29,6 +36,7 @@
     NSString *failedCount;//失败的数目
     NSInteger doneCount;//完成的数目
     NSString *doingCount;//进行中的数目
+    NSString *lastDate;//最后一张化验单日期
     NSArray *diseaseArray;//疾病数组
     NSArray *medicArray;//用药数组
 }
@@ -45,10 +53,10 @@
     //改变layout属性：
     lineLayout.sectionInset = UIEdgeInsetsMake(0, 0, 0,0);
     lineLayout.numberOfItemsPerLine = 1;
-    lineLayout.interitemSpacing = 0.2;
-    lineLayout.lineSpacing = 0.2;
+    lineLayout.interitemSpacing = 0;
+    lineLayout.lineSpacing = 0;
     lineLayout.aspectRatio = 1.0/0.15;//长宽比例
-    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 39);
+    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 19);
     
     _settingCollection.collectionViewLayout = lineLayout;
     _settingCollection.alwaysBounceVertical = YES;
@@ -110,20 +118,6 @@
     [self.navigationController pushViewController:otrv animated:YES];
 }
 
-#pragma 因为加入了tabbarcontroller，改变系统的navigationbar出现问题，所以自己写一个navigationbar
--(void)initNavigationBar{
-    UIView *navigationBar = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 66)];
-    navigationBar.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"nav"]];
-    //title
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 22, 80, 30)];
-    titleLabel.center = CGPointMake(ViewWidth/2, 22+22);
-    titleLabel.text = NSLocalizedString(@"病历", @"");
-    titleLabel.textColor = [UIColor whiteColor];
-    titleLabel.textAlignment = NSTextAlignmentCenter;
-    [navigationBar addSubview:titleLabel];
-    [self.view addSubview:navigationBar];
-}
-
 #pragma collectionview的delegate
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
     return 1;
@@ -143,7 +137,7 @@
     ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
     ((UILabel *)[cell.contentView viewWithTag:3]).textColor = grayLabelColor;
     if (indexPath.row == 0) {
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = doingCount;
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = lastDate;
     }else if (indexPath.row == 1) {
         NSString *diseaseTemp;
         if (diseaseArray.count<3) {
@@ -155,7 +149,7 @@
                 }
             }
         }else{
-            diseaseTemp = [NSString stringWithFormat:@"%@,%@",[diseaseArray[0] objectForKey:@"name"],[diseaseArray[1] objectForKey:@"name"]];
+            diseaseTemp = [NSString stringWithFormat:@"%@,%@...",[diseaseArray[0] objectForKey:@"name"],[diseaseArray[1] objectForKey:@"name"]];
         }
         ((UILabel *)[cell.contentView viewWithTag:3]).text = diseaseTemp;
     }else if (indexPath.row == 2) {
@@ -169,18 +163,18 @@
                 }
             }
         }else{
-            medicTemp = [NSString stringWithFormat:@"%@,%@",[medicArray[0] objectForKey:@"medicineBrandname"],[medicArray[1] objectForKey:@"medicineBrandname"]];
+            medicTemp = [NSString stringWithFormat:@"%@,%@...",[medicArray[0] objectForKey:@"medicineBrandname"],[medicArray[1] objectForKey:@"medicineBrandname"]];
         }
         ((UILabel *)[cell.contentView viewWithTag:3]).text = medicTemp;
     }else if (indexPath.row == 3) {
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = messCount;
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@%@",NSLocalizedString(@"未读消息:", @""),messCount];
     }else if (indexPath.row == 4) {
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }else if (indexPath.row == 5) {
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }
-    cell.layer.borderWidth = 0.25;
-    cell.layer.borderColor = lightGrayBackColor.CGColor;
+    cell.layer.borderWidth = 0.5;
+    cell.layer.borderColor = [UIColor colorWithRed:240.0/255.0 green:240.0/255.0 blue:240.0/255.0 alpha:1.0].CGColor;
 
     return cell;
 }
@@ -190,6 +184,7 @@
     if (indexPath.row == 0) {
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         OcrResultGroupViewController *orgv = [main instantiateViewControllerWithIdentifier:@"ocrgroupresult"];
+        orgv.caseRootVC = self;
         [self.navigationController pushViewController:orgv animated:YES];
     }else if (indexPath.row == 1){
         ConfirmDiseaseRootViewController *cdrv = [[ConfirmDiseaseRootViewController alloc]init];
@@ -204,19 +199,24 @@
         UserDiseaseTraitViewController *udtv = [[UserDiseaseTraitViewController alloc]init];
         [self.navigationController pushViewController:udtv animated:YES];
     }else if (indexPath.row == 5){
-        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        YizhenClassroomViewController *ycv = [main instantiateViewControllerWithIdentifier:@"Yizhenclassroom"];
-        [self.navigationController pushViewController:ycv animated:YES];
+//        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//        YizhenClassroomViewController *ycv = [main instantiateViewControllerWithIdentifier:@"Yizhenclassroom"];
+//        [self.navigationController pushViewController:ycv animated:YES];
+        ShowWebviewViewController *swv = [[ShowWebviewViewController alloc]init];
+        NSString *url = @"http://www.yizhenapp.com/dashengguilai/dist/kl.html";
+        swv.url = url;
+        swv.isClassOrNot = YES;
+        [self.navigationController pushViewController:swv animated:YES];
     }
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }
 
 -(void)setupData{
-    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"小易课堂", @"")]mutableCopy];
-    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class"]mutableCopy];
+    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"百科", @"")]mutableCopy];
+    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class1"]mutableCopy];
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/overview?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
-    NSLog(@"");
+    NSLog(@"病历显示url====%@",url);
     [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
@@ -227,6 +227,7 @@
             failedCount = [[source objectForKey:@"unviewedFailCount"] stringValue];
             medicArray = [source objectForKey:@"medicineInfoList"];
             diseaseArray = [source objectForKey:@"diseaseDetailList"];
+            lastDate = [source objectForKey:@"latestDoneLtrDate"];
             if (doneCount == 0) {
                 
             }else{
@@ -237,6 +238,7 @@
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];
+    [_settingCollection reloadData];
 }
 
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
@@ -262,16 +264,13 @@
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-            // time-consuming task
-            
             UIImage * image = [info objectForKey:UIImagePickerControllerOriginalImage];
-//            [picker dismissViewControllerAnimated:YES completion:^{}];
+            [picker dismissViewControllerAnimated:YES completion:^{}];
             PhotoTweaksViewController *photoTweaksViewController = [[PhotoTweaksViewController alloc] initWithImage:image];
             photoTweaksViewController.delegate = self;
             photoTweaksViewController.autoSaveToLibray = YES;
             photoTweaksViewController.tag = 3;
-//            [self.navigationController pushViewController:photoTweaksViewController animated:YES];
-            [picker presentViewController:photoTweaksViewController animated:YES completion:nil];
+            [self.navigationController pushViewController:photoTweaksViewController animated:YES];
         });
     });
 }
@@ -280,12 +279,32 @@
 -(void)photoTweaksViewControllerDone:(UIViewController *)controller ModifyPicture:(UIImage *)image{
     ConfirmPictureResultViewController *cprv = [[ConfirmPictureResultViewController alloc]init];
     cprv.resultImage = image;
-//    [controller.navigationController pushViewController:cprv animated:YES];
-    [controller presentViewController:cprv animated:YES completion:nil];
+    cprv.openCameraDele = self;
+    [controller.navigationController pushViewController:cprv animated:YES];
+}
+
+-(void)openCamera:(BOOL)openBool{
+    if (openBool) {
+        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+        [sheet showInView:self.view];
+    }
 }
 
 -(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker{
     [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"blue"] forBarPosition:UIBarPositionTopAttached barMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+}
+
+#pragma 重新拍摄的delegate
+-(void)cameraNewReport:(BOOL)result{
+    if (result) {
+        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+        [sheet showInView:self.view];
+    }
 }
 
 @end

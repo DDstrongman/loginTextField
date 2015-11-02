@@ -19,7 +19,8 @@
     _groupTable.delegate = self;
     _groupTable.dataSource = self;
     _groupTable.separatorStyle = UITableViewCellSeparatorStyleNone;
-    _groupTable.backgroundColor = grayBackColor;
+    _groupTable.tableFooterView = [[UIView alloc]init];
+    _groupTable.backgroundColor = grayBackgroundLightColor;
 }
 
 -(void)viewWillAppear:(BOOL)animated{
@@ -32,7 +33,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 4;
+    return 3;
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -66,7 +67,7 @@
         ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"群号: %@",_groupJID];
     }else if(indexPath.row == 1){
         cell = [tableView dequeueReusableCellWithIdentifier:@"groupmembercell" forIndexPath:indexPath];
-        ((UILabel *)[cell.contentView viewWithTag:10]).text = NSLocalizedString(@"群成员", @"");
+        ((UILabel *)[cell.contentView viewWithTag:10]).text = NSLocalizedString(@"最近活跃群成员", @"");
         [[cell.contentView viewWithTag:1] imageWithRound:NO];
         [[cell.contentView viewWithTag:2] imageWithRound:NO];
         [[cell.contentView viewWithTag:3] imageWithRound:NO];
@@ -111,10 +112,17 @@
         ((UILabel *)[cell.contentView viewWithTag:2]).text = _groupNote;
     }else{
         cell = [tableView dequeueReusableCellWithIdentifier:@"quitgroupcell" forIndexPath:indexPath];
+        [[cell.contentView viewWithTag:1] viewWithRadis:10.0];
+        ((UIButton *)[cell.contentView viewWithTag:1]).layer.borderColor = [UIColor orangeColor].CGColor;
+        ((UIButton *)[cell.contentView viewWithTag:1]).layer.borderWidth = 0.5;
+        [((UIButton *)[cell.contentView viewWithTag:1]) viewWithRadis:10.0];
+        [((UIButton *)[cell.contentView viewWithTag:1]) setTitleColor:[UIColor orangeColor] forState:UIControlStateNormal];
         [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(quitGroup:) forControlEvents:UIControlEventTouchUpInside];
     }
-    cell.layer.borderWidth = 0.5;
-    cell.layer.borderColor = grayBackColor.CGColor;
+#warning 设置分割线
+    tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    tableView.separatorColor = lightGrayBackColor;
+    tableView.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
     return cell;
 }
 
@@ -127,18 +135,6 @@
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
-
-#pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
-//-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-//    return nil;
-//}
 
 -(void)quitGroup:(UIButton *)sender{
     [[XMPPSupportClass ShareInstance] leaveChatRoom:_groupJID];

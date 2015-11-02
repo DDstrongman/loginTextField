@@ -14,4 +14,6 @@
 
 @property (nonatomic,strong) NSString *url;//传入的页面url
 
+@property (nonatomic) BOOL isClassOrNot;//是科普还是百科
+
 @end

@@ -36,12 +36,17 @@
 #import "RootGuideViewController.h"
 #import "LoginViewController.h"
 #import "sys/sysctl.h"
+
+#import "MineSettingInfoViewController.h"
 //#import "ShowAllMessageViewController.h"
+
+#import "OcrResultGroupViewController.h"
 
 @interface AppDelegate ()
 
 {
     BOOL NotFirstTimeLogin;//no为初次登录，yes则不是
+    RZTransitionsNavigationController* rootNavController;
 }
 
 @end
@@ -50,7 +55,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     [WXApi registerApp:weixinID];
-    
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
     // Override point for customization after application launch.    
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
@@ -59,7 +64,6 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     BOOL showGuide = [[defaults objectForKey:@"ShowGuide"] boolValue];//是否进入引导页
     NotFirstTimeLogin = [[defaults objectForKey:@"NotFirstTime"] boolValue];//no为初次登录，yes则不是
-    RZTransitionsNavigationController* rootNavController;
     
     [[UINavigationBar appearance] setBackIndicatorImage:[UIImage imageNamed:@"back"]];
     [[UINavigationBar appearance] setBackIndicatorTransitionMaskImage:[UIImage imageNamed:@"back"]];
@@ -86,7 +90,6 @@
                 
             }];
         }else{
-            
             rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
             [[DBManager ShareInstance] creatDatabase:DBName];
             [[DBManager ShareInstance] closeDB];
@@ -138,10 +141,10 @@
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     [[XMPPSupportClass ShareInstance] disconnect];
-    UILocalNotification *localNotification = [[UILocalNotification alloc] init];
+//    UILocalNotification *localNotification = [[UILocalNotification alloc] init];
 //    localNotification.alertAction = @"Ok";
 //    localNotification.alertBody = [NSString stringWithFormat:@"From: %@\n%@",@"新消息:",@"123"];//弹窗信息
-    localNotification.applicationIconBadgeNumber = 2;//边角图标
+//    localNotification.applicationIconBadgeNumber = 2;//边角图标
 //    [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
 }
 
@@ -162,15 +165,71 @@
     [defaults setObject:@NO forKey:@"FriendList"];
 }
 
-- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url
-{
+- (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url{
     return  [WXApi handleOpenURL:url delegate:self];
 }
 
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
-{
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation{
     BOOL isSuc = [WXApi handleOpenURL:url delegate:self];
     return  isSuc;
+}
+
+-(void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler{
+    [WXApi registerApp:weixinID];
+    
+    // Override point for customization after application launch.
+    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
+    UIViewController *showMessViewController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL showGuide = [[defaults objectForKey:@"ShowGuide"] boolValue];//是否进入引导页
+    NotFirstTimeLogin = [[defaults objectForKey:@"NotFirstTime"] boolValue];//no为初次登录，yes则不是
+    if (!showGuide&&!NotFirstTimeLogin) {
+        RootGuideViewController *rgv = [[RootGuideViewController alloc]init];
+        rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:rgv];
+    }else{
+        if (NotFirstTimeLogin) {
+            //已经登录过了
+            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:showMessViewController];
+            
+            NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
+            NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
+            [recordDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+            [recordDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+            [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                int res=[[source objectForKey:@"res"] intValue];
+                if (res == 0) {
+                    NSLog(@"记录成功");
+                }
+            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                
+            }];
+            if ([shortcutItem.type isEqualToString:@"查看大表"]) {
+                OcrTextResultViewController *otrv = [story instantiateViewControllerWithIdentifier:@"ocrtextresult"];
+                otrv.isMine = YES;
+                [rootNavController pushViewController:otrv animated:YES];
+            }else if([shortcutItem.type isEqualToString:@"设置信息权限"]){
+                MineSettingInfoViewController *msiv = [[MineSettingInfoViewController alloc]init];
+                [rootNavController pushViewController:msiv animated:YES];
+            }else{
+                UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+                OcrResultGroupViewController *orgv = [main instantiateViewControllerWithIdentifier:@"ocrgroupresult"];
+                orgv.caseRootVC = rootNavController;
+                [rootNavController pushViewController:orgv animated:YES];
+            }
+        }else{
+            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+            [[DBManager ShareInstance] creatDatabase:DBName];
+            [[DBManager ShareInstance] closeDB];
+        }
+    }
+    
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.window.rootViewController = rootNavController  ;
+    [self.window makeKeyAndVisible];
+    completionHandler(YES);
 }
 
 -(void) onReq:(BaseReq*)req{
@@ -223,7 +282,7 @@
      */
     if([resp isKindOfClass:[SendMessageToWXResp class]])
     {
-        NSString *strTitle = [NSString stringWithFormat:@"易诊分享结果"];
+        NSString *strTitle = [NSString stringWithFormat:@"战友分享结果"];
         SendAuthResp *aresp = (SendAuthResp *)resp;
         NSString *strMsg;
         if (aresp.errCode == 0) {

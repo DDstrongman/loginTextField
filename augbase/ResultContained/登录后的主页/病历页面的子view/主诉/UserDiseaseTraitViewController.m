@@ -44,8 +44,8 @@
     NSString *tempSecond;
     NSString *tempThird;
     
-    float height;//身高
-    float weight;//体重
+    int height;//身高
+    int weight;//体重
     
     NSInteger indexRowPicker;//选择的序号
 }
@@ -56,7 +56,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self setupView];}
+    [self setupView];
+}
 
 -(void)viewWillAppear:(BOOL)animated{
     [self setupData];
@@ -124,7 +125,7 @@
         height = [titleChooseLabel.text floatValue];
         ((UITableViewCell *)[_diseaseTrait viewWithTag:886]).detailTextLabel.text = titleChooseLabel.text;
         NSString *heightID = [[[tempSymptomDic objectForKey:@"身高"] objectForKey:@"id"] stringValue];
-        NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%f",Baseurl,heightID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],height];
+        NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%d",Baseurl,heightID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],height];
         [[HttpManager ShareInstance] AFNetPUTSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res=[[source objectForKey:@"res"] intValue];
@@ -143,24 +144,26 @@
                 } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                     
                 }];
+                [_diseaseTrait reloadData];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
-        chooseIndex = 3;
-        titleChooseLabel.text = NSLocalizedString(@"请选择体重", @"");
-        chooseArray = [@[@"0",@"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9"]mutableCopy];
-        [choosePicker reloadAllComponents];
+        [self popSpringAnimationHidden:bottomChooseView];
+//        chooseIndex = 3;
+//        titleChooseLabel.text = NSLocalizedString(@"请选择体重", @"");
+//        chooseArray = [@[@"0",@"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9"]mutableCopy];
+//        [choosePicker reloadAllComponents];
     }else if(chooseIndex == 3){
         weight = [titleChooseLabel.text floatValue];
         chooseIndex = 2;
         ((UITableViewCell *)[_diseaseTrait viewWithTag:887]).detailTextLabel.text = titleChooseLabel.text;
         if (height != 0 &&weight != 0) {
-            ((UITableViewCell *)[_diseaseTrait viewWithTag:888]).detailTextLabel.text = [NSString stringWithFormat:@"%f",weight/(height*height/10000)];
+            ((UITableViewCell *)[_diseaseTrait viewWithTag:888]).detailTextLabel.text = [NSString stringWithFormat:@"%d",weight/(height*height/10000)];
         }
         [self popSpringAnimationHidden:bottomChooseView];
         NSString *weightID = [[[tempSymptomDic objectForKey:@"体重"] objectForKey:@"id"] stringValue];
-        NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%f",Baseurl,weightID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],weight];
+        NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%d",Baseurl,weightID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],weight];
         [[HttpManager ShareInstance]AFNetPUTSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res=[[source objectForKey:@"res"] intValue];
@@ -179,12 +182,19 @@
                 } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                     
                 }];
+                [_diseaseTrait reloadData];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
         NSString *BMIID = [[[tempSymptomDic objectForKey:@"BMI"] objectForKey:@"id"] stringValue];
-        NSString *BMIurl = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%f",Baseurl,BMIID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],weight/(height*height/10000)];
+        float tempWeight = weight;
+        float tempHeight = height;
+        float BMI = tempWeight/(tempHeight*tempHeight/10000.00);
+        NSString *tempBMI = [NSString stringWithFormat:@"%.2f",BMI];
+        NSLog(@"bmi====%@",tempBMI);
+        [[NSUserDefaults standardUserDefaults] setObject:tempBMI forKey:@"userBMI"];
+        NSString *BMIurl = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%@",Baseurl,BMIID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],tempBMI];
         [[HttpManager ShareInstance]AFNetPUTSupport:BMIurl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res=[[source objectForKey:@"res"] intValue];
@@ -207,9 +217,10 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
+        [_diseaseTrait reloadData];
     }else if(chooseIndex == 5){
         ((UITableViewCell *)[_diseaseTrait viewWithTag:881]).detailTextLabel.text = titleChooseLabel.text;
-        NSString *familyDiseaseID = [[[tempSymptomDic objectForKey:@"有家族史"] objectForKey:@"id"] stringValue];\
+        NSString *familyDiseaseID = [[[tempSymptomDic objectForKey:@"有家族史"] objectForKey:@"id"] stringValue];
         NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%ld",Baseurl,familyDiseaseID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],indexRowPicker];
         [[HttpManager ShareInstance] AFNetPUTSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
@@ -233,10 +244,11 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
-        titleChooseLabel.text = NSLocalizedString(@"肝功能异常年限", @"");
-        chooseIndex = 6;
-        chooseArray = diseaseYearArray;
-        [choosePicker reloadAllComponents];
+//        titleChooseLabel.text = NSLocalizedString(@"肝功能异常年限", @"");
+//        chooseIndex = 6;
+//        chooseArray = diseaseYearArray;
+//        [choosePicker reloadAllComponents];
+        [self popSpringAnimationHidden:bottomChooseView];
         
     }else if (chooseIndex == 6){
         ((UITableViewCell *)[_diseaseTrait viewWithTag:882]).detailTextLabel.text = titleChooseLabel.text;
@@ -270,10 +282,12 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
-        titleChooseLabel.text = NSLocalizedString(@"目前医生给的治疗方案", @"");
-        chooseIndex = 7;
-        chooseArray = curePlanArray;
-        [choosePicker reloadAllComponents];
+//        titleChooseLabel.text = NSLocalizedString(@"目前医生给的治疗方案", @"");
+//        chooseIndex = 7;
+//        chooseArray = curePlanArray;
+//        [choosePicker reloadAllComponents];
+        
+        [self popSpringAnimationHidden:bottomChooseView];
         
     }else if (chooseIndex == 7){
         ((UITableViewCell *)[_diseaseTrait viewWithTag:883]).detailTextLabel.text = titleChooseLabel.text;
@@ -301,10 +315,12 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
-        titleChooseLabel.text = NSLocalizedString(@"我(或我太太)妊娠与哺乳状态", @"");
-        chooseIndex = 8;
-        chooseArray = stateArray;
-        [choosePicker reloadAllComponents];
+//        titleChooseLabel.text = NSLocalizedString(@"我(或我太太)妊娠与哺乳状态", @"");
+//        chooseIndex = 8;
+//        chooseArray = stateArray;
+//        [choosePicker reloadAllComponents];
+        
+        [self popSpringAnimationHidden:bottomChooseView];
     }else if (chooseIndex == 8){
         ((UITableViewCell *)[_diseaseTrait viewWithTag:884]).detailTextLabel.text = titleChooseLabel.text;
         NSString *stateID = [[[tempSymptomDic objectForKey:@"我(或我太太)妊娠与哺乳状态"] objectForKey:@"id"] stringValue];
@@ -331,7 +347,7 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
-        chooseIndex = 2;
+//        chooseIndex = 2;
         [self popSpringAnimationHidden:bottomChooseView];
     }
 }
@@ -392,25 +408,26 @@
     firstTitleArray = [@[NSLocalizedString(@"年龄", @""),NSLocalizedString(@"性别", @""),NSLocalizedString(@"身高(cm)", @""),NSLocalizedString(@"体重(kg)", @""),NSLocalizedString(@"BMI", @"")]mutableCopy];
     secondTitleArray = [@[NSLocalizedString(@"有家族史", @""),NSLocalizedString(@"肝功能异常年限", @""),NSLocalizedString(@"目前医生给的治疗方案", @""),NSLocalizedString(@"妊娠及哺乳状况", @"")]mutableCopy];
     familyDiseaseHistoryArray = [@[NSLocalizedString(@"家里没有人有乙肝", @""),NSLocalizedString(@"垂直传播（即父母）乙肝", @""),NSLocalizedString(@"水平传播（即兄弟姐妹）乙肝", @""),NSLocalizedString(@"只有父母、兄弟姐妹之外的亲戚有乙肝", @"")]mutableCopy];
-    diseaseYearArray = [@[NSLocalizedString(@"1周", @""),NSLocalizedString(@"2周", @""),NSLocalizedString(@"1 个月", @""),NSLocalizedString(@"2 个月", @""),NSLocalizedString(@"2 个月", @""),NSLocalizedString(@"3 个月", @""),NSLocalizedString(@"半年", @""),NSLocalizedString(@"9 个月", @""),NSLocalizedString(@"1 年", @""),NSLocalizedString(@"2 年", @""),NSLocalizedString(@"3 年", @""),NSLocalizedString(@"4 年", @""),NSLocalizedString(@"5 年", @""),NSLocalizedString(@"7 年", @""),NSLocalizedString(@"10 年", @""),NSLocalizedString(@"15 年", @""),NSLocalizedString(@"20 年", @""),NSLocalizedString(@"30 年", @""),NSLocalizedString(@"40 年", @"")]mutableCopy];
-    [diseaseYearDic setObject:diseaseYearArray[0] forKey:@"7"];
-    [diseaseYearDic setObject:diseaseYearArray[1] forKey:@"14"];
-    [diseaseYearDic setObject:diseaseYearArray[2] forKey:@"31"];
-    [diseaseYearDic setObject:diseaseYearArray[3] forKey:@"61"];
-    [diseaseYearDic setObject:diseaseYearArray[4] forKey:@"91"];
-    [diseaseYearDic setObject:diseaseYearArray[5] forKey:@"183"];
-    [diseaseYearDic setObject:diseaseYearArray[6] forKey:@"274"];
-    [diseaseYearDic setObject:diseaseYearArray[7] forKey:@"365"];
-    [diseaseYearDic setObject:diseaseYearArray[8] forKey:@"730"];
-    [diseaseYearDic setObject:diseaseYearArray[9] forKey:@"1095"];
-    [diseaseYearDic setObject:diseaseYearArray[10] forKey:@"1460"];
-    [diseaseYearDic setObject:diseaseYearArray[11] forKey:@"1825"];
-    [diseaseYearDic setObject:diseaseYearArray[12] forKey:@"2555"];
-    [diseaseYearDic setObject:diseaseYearArray[13] forKey:@"3650"];
-    [diseaseYearDic setObject:diseaseYearArray[14] forKey:@"5475"];
-    [diseaseYearDic setObject:diseaseYearArray[15] forKey:@"7300"];
-    [diseaseYearDic setObject:diseaseYearArray[16] forKey:@"10950"];
-    [diseaseYearDic setObject:diseaseYearArray[17] forKey:@"14600"];
+    diseaseYearArray = [@[NSLocalizedString(@"0周", @""),NSLocalizedString(@"1周", @""),NSLocalizedString(@"2周", @""),NSLocalizedString(@"1 个月", @""),NSLocalizedString(@"2 个月", @""),NSLocalizedString(@"3 个月", @""),NSLocalizedString(@"半年", @""),NSLocalizedString(@"9 个月", @""),NSLocalizedString(@"1 年", @""),NSLocalizedString(@"2 年", @""),NSLocalizedString(@"3 年", @""),NSLocalizedString(@"4 年", @""),NSLocalizedString(@"5 年", @""),NSLocalizedString(@"7 年", @""),NSLocalizedString(@"10 年", @""),NSLocalizedString(@"15 年", @""),NSLocalizedString(@"20 年", @""),NSLocalizedString(@"30 年", @""),NSLocalizedString(@"40 年", @"")]mutableCopy];
+    [diseaseYearDic setObject:diseaseYearArray[0] forKey:@"0"];
+    [diseaseYearDic setObject:diseaseYearArray[1] forKey:@"7"];
+    [diseaseYearDic setObject:diseaseYearArray[2] forKey:@"14"];
+    [diseaseYearDic setObject:diseaseYearArray[3] forKey:@"31"];
+    [diseaseYearDic setObject:diseaseYearArray[4] forKey:@"61"];
+    [diseaseYearDic setObject:diseaseYearArray[5] forKey:@"91"];
+    [diseaseYearDic setObject:diseaseYearArray[6] forKey:@"183"];
+    [diseaseYearDic setObject:diseaseYearArray[7] forKey:@"274"];
+    [diseaseYearDic setObject:diseaseYearArray[8] forKey:@"365"];
+    [diseaseYearDic setObject:diseaseYearArray[9] forKey:@"730"];
+    [diseaseYearDic setObject:diseaseYearArray[10] forKey:@"1095"];
+    [diseaseYearDic setObject:diseaseYearArray[11] forKey:@"1460"];
+    [diseaseYearDic setObject:diseaseYearArray[12] forKey:@"1825"];
+    [diseaseYearDic setObject:diseaseYearArray[13] forKey:@"2555"];
+    [diseaseYearDic setObject:diseaseYearArray[14] forKey:@"3650"];
+    [diseaseYearDic setObject:diseaseYearArray[15] forKey:@"5475"];
+    [diseaseYearDic setObject:diseaseYearArray[16] forKey:@"7300"];
+    [diseaseYearDic setObject:diseaseYearArray[17] forKey:@"10950"];
+    [diseaseYearDic setObject:diseaseYearArray[18] forKey:@"14600"];
     
     curePlanArray = [@[NSLocalizedString(@"无需治疗", @""),NSLocalizedString(@"抗病毒为主", @""),NSLocalizedString(@"抗纤维为主", @""),NSLocalizedString(@"保肝降酶为主", @""),NSLocalizedString(@"服用中药为主", @"")]mutableCopy];
     stateArray = [@[NSLocalizedString(@"暂无计划", @""),NSLocalizedString(@"正处备孕期", @""),NSLocalizedString(@"正处妊娠期（正怀孕）", @""),NSLocalizedString(@"正处哺乳期（宝宝刚出生不久）", @"")]mutableCopy];
@@ -491,7 +508,7 @@
     
     UIImageView *tailImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 8, 15)];
     tailImageView.image = [UIImage imageNamed:@"goin"];
-    
+    UIView *clearView = [[UIView alloc]init];
     if (indexPath.section == 0) {
         cell.textLabel.text = firstTitleArray[indexPath.row];
         NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
@@ -507,51 +524,84 @@
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         }else if(indexPath.row == 2){
             cell.tag = 886;
-            cell.accessoryView = tailImageView;
+            cell.accessoryView = clearView;
+            [cell addSubview:tailImageView];
+            [tailImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+                make.centerY.equalTo(cell);
+                make.right.equalTo(@-15);
+            }];
+            height = [[[tempSymptomDic objectForKey:@"身高"] objectForKey:@"value"] intValue];
             cell.detailTextLabel.text = [[tempSymptomDic objectForKey:@"身高"] objectForKey:@"value"];
         }else if(indexPath.row == 3){
             cell.tag = 887;
-            cell.accessoryView = tailImageView;
+            cell.accessoryView = clearView;
+            [cell addSubview:tailImageView];
+            [tailImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+                make.centerY.equalTo(cell);
+                make.right.equalTo(@-15);
+            }];
+            weight = [[[tempSymptomDic objectForKey:@"体重"] objectForKey:@"value"] intValue];
             cell.detailTextLabel.text = [[tempSymptomDic objectForKey:@"体重"] objectForKey:@"value"];
         }else if (indexPath.row == 4){
             cell.tag = 888;
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
-            cell.detailTextLabel.text = [[tempSymptomDic objectForKey:@"BMI"] objectForKey:@"value"];
+            if ([[NSUserDefaults standardUserDefaults]objectForKey:@"userBMI"]!=nil) {
+                cell.detailTextLabel.text = [[NSUserDefaults standardUserDefaults]objectForKey:@"userBMI"];
+            }
+//            cell.detailTextLabel.text = [[tempSymptomDic objectForKey:@"BMI"] objectForKey:@"value"];
         }
     }else if (indexPath.section == 1){
         cell.textLabel.text = secondTitleArray[indexPath.row];
         if (indexPath.row == 0) {
-            cell.accessoryView = tailImageView;
             cell.tag = 881;
             cell.detailTextLabel.text = familyDiseaseHistoryArray[[[[tempSymptomDic objectForKey:@"有家族史"] objectForKey:@"value"]intValue]];
         }else if (indexPath.row == 1) {
             cell.tag = 882;
-            cell.accessoryView = tailImageView;
             cell.detailTextLabel.text = [diseaseYearDic objectForKey:[[tempSymptomDic objectForKey:@"肝功能异常年限"] objectForKey:@"value"]];
         }else if (indexPath.row == 2){
             cell.tag = 883;
-            cell.accessoryView = tailImageView;
             if ([[[tempSymptomDic objectForKey:@"目前医生给的治疗方案"] objectForKey:@"value"] intValue]<curePlanArray.count) {
                 cell.detailTextLabel.text = curePlanArray[[[[tempSymptomDic objectForKey:@"目前医生给的治疗方案"] objectForKey:@"value"] intValue]];
             }
         }else if (indexPath.row == 3){
             cell.tag = 884;
-            cell.accessoryView = tailImageView;
             if ([[[tempSymptomDic objectForKey:@"我(或我太太)妊娠与哺乳状态"] objectForKey:@"value"] intValue]<stateArray.count) {
                 cell.detailTextLabel.text = stateArray[[[[tempSymptomDic objectForKey:@"我(或我太太)妊娠与哺乳状态"] objectForKey:@"value"] intValue]];
             }
         }
+        cell.accessoryView = clearView;
+        [cell addSubview:tailImageView];
+        [tailImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(cell);
+            make.right.equalTo(@-15);
+        }];
     }else if (indexPath.section == 2){
         cell.textLabel.text = thirdTitleArray[indexPath.row];
-        cell.accessoryView = tailImageView;
+        cell.accessoryView = clearView;
+        [cell addSubview:tailImageView];
+        [tailImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.equalTo(cell);
+            make.right.equalTo(@-15);
+        }];
         if (indexPath.row == 0){
             cell.tag = 771;
+            NSString *tempString = @"";
+            int CountNumber = 0;
             for (NSString *key in diseaseArray) {
                 if ([[[tempSymptomDic objectForKey:key] objectForKey:@"value"] intValue] == 1) {
-                    cell.detailTextLabel.text = [[[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"] stringByAppendingString:@"..."];
-                    break;
+                    if (CountNumber == 0) {
+                        tempString = [[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"];
+                        CountNumber++;
+                    }else if (CountNumber<3) {
+                        tempString = [NSString stringWithFormat:@"%@,%@",tempString,[[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"]];
+                        CountNumber++;
+                    }else{
+                        tempString = [tempString stringByAppendingString:@"..."];
+                        break;
+                    }
                 }
             }
+            cell.detailTextLabel.text = tempString;
         }else{
             cell.tag = 772;
             cell.detailTextLabel.text = [[tempSymptomDic objectForKey:@"病史描述"] objectForKey:@"value"];
@@ -625,13 +675,13 @@
     headerView.backgroundColor = [UIColor clearColor];
     headerView.layer.borderColor = lightGrayBackColor.CGColor;
     headerView.layer.borderWidth = 0.5;
-    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(15, 0, ViewWidth-15, 22)];
-    if (section != 0) {
-        titleLabel.text = titleLabelArray[section-1];
-    }
-    titleLabel.font = [UIFont systemFontOfSize:12.0];
-    titleLabel.textColor = grayLabelColor;
-    [headerView addSubview:titleLabel];
+//    UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(15, 0, ViewWidth-15, 22)];
+//    if (section != 0) {
+//        titleLabel.text = titleLabelArray[section-1];
+//    }
+//    titleLabel.font = [UIFont systemFontOfSize:12.0];
+//    titleLabel.textColor = grayLabelColor;
+//    [headerView addSubview:titleLabel];
     return headerView;
 }
 
@@ -682,6 +732,13 @@
 
 #pragma 底部view出现和隐藏
 -(void)popSpringAnimationOut:(UIView *)targetView ChooseOrInsert:(BOOL)chooseOrInsert{
+    if (chooseIndex == 2||chooseIndex == 3) {
+        [choosePicker selectRow:0 inComponent:0 animated:YES];
+        [choosePicker selectRow:0 inComponent:1 animated:YES];
+        [choosePicker selectRow:0 inComponent:2 animated:YES];
+    }else{
+        [choosePicker selectRow:0 inComponent:0 animated:YES];
+    }
     visualEffectView = [[UIView alloc] init];
     UITapGestureRecognizer *singleTapGestureRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(tapvisualEffectView:)];
     singleTapGestureRecognizer.numberOfTapsRequired = 1;

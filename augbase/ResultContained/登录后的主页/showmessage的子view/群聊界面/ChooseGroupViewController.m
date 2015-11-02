@@ -35,7 +35,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    self.title = NSLocalizedString(@"群助手", @"");
+    self.title = NSLocalizedString(@"群聊", @"");
     [XMPPSupportClass ShareInstance].receiveMessDelegate = self;
     [_groupTable reloadData];
 }
@@ -84,27 +84,40 @@
     if (cell == nil) {
         cell = [[MessTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
     }
-    cell.iconImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%d",@"persontitle",(indexPath.row+1)]];
+    cell.iconImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%ld",@"grouptitle",(long)(indexPath.row+1)]];
     cell.titleText.text = dataArray[indexPath.row];
     [[DBGroupManager ShareInstance] creatDatabase:GroupChatDBName];
     FMResultSet *lastMessResult = [[DBGroupManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,groupJidArray[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
     NSString *lastMess;
     NSString *lastTime;
     NSString *lastType;
+    int number = 0;
     while ([lastMessResult next]){
         lastMess = [lastMessResult stringForColumn:@"messContent"];
         lastTime = [lastMessResult stringForColumn:@"timeStamp"];
         lastType = [lastMessResult stringForColumn:@"messType"];
+        number++;
     }
     cell.titleText.text = searchResults[indexPath.row];
     if ([lastType isEqualToString:@"0"]) {
         cell.descriptionText.text = lastMess;
     }else if ([lastType isEqualToString:@"1"]){
         cell.descriptionText.text = NSLocalizedString(@"[图片]", @"");
-    }else{
+    }else if ([lastType isEqualToString:@"1"]){
         cell.descriptionText.text = NSLocalizedString(@"[语音]", @"");
     }
-    cell.timeText.text = [self changeTheDateString:lastTime];
+    else{
+        cell.descriptionText.text = @"";
+    }
+    if (number == 0) {
+        cell.timeText.text = @"";
+    }else{
+        cell.timeText.text = [self changeTheDateString:lastTime];
+    }
+#warning 设置分割线
+    tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    tableView.separatorColor = lightGrayBackColor;
+    tableView.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
     return cell;
 }
 
@@ -137,6 +150,16 @@
     [self doSearch:searchBar];
 }
 
+- (void)didPresentSearchController:(UISearchController *)searchController
+{
+    for (UIButton *sb in [[searchViewController.searchBar subviews][0] subviews]) {
+        if ([sb isKindOfClass:[UIButton class]]) {
+            [sb setTitleColor:themeColor forState:UIControlStateNormal];
+            [sb setTitleColor:themeColor forState:UIControlStateHighlighted];
+        }
+    }
+}
+
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar{
     [searchBar resignFirstResponder];
     [self doSearch:searchBar];
@@ -147,22 +170,6 @@
 }
 
 #pragma searchviewcontroller的delegate
-//// 搜索界面将要出现
-//- (void)willPresentSearchController:(UISearchController *)searchController{
-//    NSLog(@"将要  开始  搜索时触发的方法");
-//    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
-//}
-//
-//// 搜索界面将要消失
-//-(void)willDismissSearchController:(UISearchController *)searchController{
-//    NSLog(@"将要  取消  搜索时触发的方法");
-//    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-//}
-//
-//-(void)didDismissSearchController:(UISearchController *)searchController{
-//    
-//}
-
 -(void)viewWillDisappear:(BOOL)animated{
     [searchViewController setActive:NO];
     [self.view endEditing:YES];
@@ -205,10 +212,11 @@
         make.left.equalTo(@0);
         make.right.equalTo(@0);
     }];
+    
 }
 
 -(void)setupData{
-    dataArray = [@[NSLocalizedString(@"单身汪 亿友佳缘", @""),NSLocalizedString(@"妈妈帮", @""),NSLocalizedString(@"学生党", @""),NSLocalizedString(@"药价 报销", @""),NSLocalizedString(@"药物副作用交流群", @""),NSLocalizedString(@"乙肝战友看这里", @""),NSLocalizedString(@"丙肝战友看这里", @""),NSLocalizedString(@"脂肪肝胖纸看这里", @""),NSLocalizedString(@"App体验群", @"")]mutableCopy];
+    dataArray = [@[NSLocalizedString(@"单身汪 亿友佳缘", @""),NSLocalizedString(@"妈妈帮", @""),NSLocalizedString(@"学生党", @""),NSLocalizedString(@"药价 报销", @""),NSLocalizedString(@"药物副作用交流群", @""),NSLocalizedString(@"乙肝战友看这里", @""),NSLocalizedString(@"丙肝战友看这里", @""),NSLocalizedString(@"脂肪肝胖纸看这里", @""),NSLocalizedString(@"用户反馈群", @"")]mutableCopy];
     groupJidArray = [@[@"g999999",@"g999998",@"g999997",@"g999996",@"g999995",@"g999994",@"g999993",@"g999992",@"g999991"]mutableCopy];
     groupNoteArray = [@[@"在单身的世界里，你并不是一个人在独舞。要相信缘分！",@"妈妈们和准妈妈们有那么多话题要交流，都是为了娃，一起唠唠",@"学习任务这么繁重，世界上还有这么多要吐槽的事情，学生党速来",@"怎么用药报销划算呢，一起探讨当地行情",@"用药中发生药物副作用了，应该怎么办呢！换药？停药？减药？一起来分享",@"周围很多人都不懂乙肝，战友自己能懂的，到这来尽情诉说吧",@"国内丙肝真不多，找到战友好亲切",@"与脂肪肝战斗，事情可大可小，减肥？饮食？锻炼？快加入群内与大家一起消灭脂肪肝吧",@"用着这个app，爽不爽都来吐槽吧，小易会更好地为大家服务"]mutableCopy];
     if (!searchResults) {
@@ -252,15 +260,15 @@
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>=12 && [lastDate hour]<=18){
         period = @"下午";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else if ([lastDate hour]>18 && [lastDate hour]<=23){
         period = @"晚上";
-        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]-12];
+        hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }else{
         period = @"凌晨";
         hour = [NSString stringWithFormat:@"%02d",(int)[lastDate hour]];
     }
-    return [NSString stringWithFormat:@"%@ %@ %@:%02d",dateStr,period,hour,(int)[lastDate minute]];
+    return [NSString stringWithFormat:@"%@ %@:%02d",dateStr,hour,(int)[lastDate minute]];
 }
 
 @end

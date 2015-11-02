@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface NearByFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchControllerDelegate,UISearchResultsUpdating>
+@interface NearByFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
 
 @property (nonatomic,strong) IBOutlet UITableView *nearbyFriendTable;

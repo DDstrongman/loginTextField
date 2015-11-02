@@ -17,6 +17,8 @@
     NSMutableArray *historyDrugArray;//用药历史纪录的数组
     AddDrugHistoryViewController *advc;//传入delegate并加速之后跳转，省掉小部分内存损耗
     ModifyDrugHistoryViewController *mdhv;//同上
+    
+    BOOL isuse;//是否至今
 }
 
 @end
@@ -59,7 +61,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 50;
+    return 70;
 }
 
 
@@ -69,25 +71,60 @@
     if (cell == nil) {
         cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentify];
     }
-    cell.textLabel.text = [historyDrugArray[indexPath.row] objectForKey:@"medicinename"];
-    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@-%@",[historyDrugArray[indexPath.row] objectForKey:@"begindate"],[historyDrugArray[indexPath.row] objectForKey:@"stopdate"]];
-    cell.detailTextLabel.textColor = grayLabelColor;
-    cell.detailTextLabel.font = [UIFont systemFontOfSize:12.0];
+//    cell.textLabel.text = [historyDrugArray[indexPath.row] objectForKey:@"medicinename"];
+//    cell.textLabel.font = [UIFont systemFontOfSize:15.0];
+//    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@-%@",[historyDrugArray[indexPath.row] objectForKey:@"begindate"],[historyDrugArray[indexPath.row] objectForKey:@"stopdate"]];
+//    cell.detailTextLabel.textColor = grayLabelColor;
+//    cell.detailTextLabel.font = [UIFont systemFontOfSize:12.0];
+    
+    UILabel *titleLabel = [[UILabel alloc]init];
+    titleLabel.text = [historyDrugArray[indexPath.row] objectForKey:@"medicinename"];
+    titleLabel.font = [UIFont systemFontOfSize:15.0];
+    [cell addSubview:titleLabel];
+    UILabel *detailLabel = [[UILabel alloc]init];
+    if ([[historyDrugArray[indexPath.row] objectForKey:@"isuse"] boolValue]) {
+        detailLabel.text = [NSString stringWithFormat:@"%@-%@",[historyDrugArray[indexPath.row] objectForKey:@"begindate"],NSLocalizedString(@"至今", @"")];
+    }else{
+        detailLabel.text = [NSString stringWithFormat:@"%@-%@",[historyDrugArray[indexPath.row] objectForKey:@"begindate"],[historyDrugArray[indexPath.row] objectForKey:@"stopdate"]];
+    }
+    detailLabel.textColor = grayLabelColor;
+    detailLabel.font = [UIFont systemFontOfSize:12.0];
+    [cell addSubview:detailLabel];
+    
+    
+    
     UILabel *tailLabel = [[UILabel alloc]init];
     tailLabel.textAlignment = NSTextAlignmentRight;
     tailLabel.textColor = grayLabelColor;
+    tailLabel.font = [UIFont systemFontOfSize:15.0];
     if ([[historyDrugArray[indexPath.row] objectForKey:@"resistant"] intValue] == 0) {
         tailLabel.text = NSLocalizedString(@"不耐药", @"");
     }else{
         tailLabel.text = NSLocalizedString(@"耐药", @"");
     }
     [cell addSubview:tailLabel];
+    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(@16);
+        make.left.equalTo(@15);
+        make.right.mas_equalTo(tailLabel.mas_left).with.offset(-5);
+        make.height.equalTo(@19);
+    }];
+    [detailLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(titleLabel.mas_bottom).with.offset(5);
+        make.left.equalTo(@15);
+        make.right.mas_equalTo(tailLabel.mas_left).with.offset(-5);
+        make.height.equalTo(@15);
+    }];
     [tailLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.equalTo(cell);
-        make.right.equalTo(@-30);
+        make.right.equalTo(@-34);
     }];
     UIImageView *tailImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"goin"]];
-    cell.accessoryView = tailImageView;
+    [cell addSubview:tailImageView];
+    [tailImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(cell);
+        make.right.equalTo(@-15);
+    }];
     return cell;
 }
 

@@ -54,9 +54,15 @@
 -(void)setupView{
     self.title = NSLocalizedString(@"个性签名", @"");
     self.view.backgroundColor = grayBackgroundLightColor;
-    inputText = [[UITextView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 100)];
+    UIView *backView = [[UIView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 100)];
+    backView.backgroundColor = [UIColor whiteColor];
+    backView.layer.borderColor = lightGrayBackColor.CGColor;
+    backView.layer.borderWidth = 0.5;
+    [self.view addSubview:backView];
+    inputText = [[UITextView alloc]initWithFrame:CGRectMake(15, 0, ViewWidth-30, 100)];
+    inputText.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userNote"];
     inputText.font = [UIFont systemFontOfSize:14.0];
-    [self.view addSubview:inputText];
+    [backView addSubview:inputText];
     
     UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
     confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;

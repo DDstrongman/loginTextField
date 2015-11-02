@@ -8,11 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-#import "KRLCollectionViewGridLayout.h"
-#import "OcrResultGroupViewController.h"
-
-#import "OcrTextResultViewController.h"
-
 @interface CaseViewController : UIViewController<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UIActionSheetDelegate>
 
 //上方两个image的button和对应下方的button

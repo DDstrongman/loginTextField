@@ -99,7 +99,6 @@
         UIImageView *tailImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 8, 15)];
         tailImageView.image = [UIImage imageNamed:@"goin"];
         cell.accessoryView = tailImageView;
-
     }else if (indexPath.row == 2){
         cell = [tableView dequeueReusableCellWithIdentifier:@"describcell" forIndexPath:indexPath];
     }else{

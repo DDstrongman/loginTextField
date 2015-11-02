@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface MineSettingInfoViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIActionSheetDelegate,UIImagePickerControllerDelegate>
+@interface MineSettingInfoViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIActionSheetDelegate,UIImagePickerControllerDelegate,UIAlertViewDelegate>
 
 @property (nonatomic,strong) UITableView *settingTable;//设置个人信息
 

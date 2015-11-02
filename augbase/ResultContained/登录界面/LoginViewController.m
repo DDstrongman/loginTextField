@@ -15,7 +15,11 @@
 #import "ForgetPasswordRootViewController.h"
 #import "RegistNumberViewController.h"
 
+#import "MBProgressHUD.h"
+
 #import "WXApi.h"
+
+#import "FirstTimeUserInfoViewController.h"
 
 @interface LoginViewController ()
 
@@ -34,8 +38,12 @@
     NSDictionary *dic;
     NSString *access_token;
     NSString *openID;
+    NSString *unID;
     NSString *nickName;
     UIImage *headImage;
+    NSData *headImageData;
+    
+    MBProgressHUD *HUD;
 }
 
 @end
@@ -134,8 +142,17 @@
 
 -(void)getAccess_token
 {
-    //https://api.weixin.qq.com/sns/oauth2/access_token?appid=APPID&secret=SECRET&code=CODE&grant_type=authorization_code
+    HUD = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
     
+    //常用的设置
+    //小矩形的背景色
+    HUD.color = [UIColor colorWithRed:0/255.0 green:0/255.0 blue:0/255.0 alpha:0.7];//背景色
+    //显示的文字
+    HUD.labelText = NSLocalizedString(@"登录中...", @"");
+    //细节文字
+    //    HUD.detailsLabelText = @"Test detail";
+    //是否有庶罩
+    HUD.dimBackground = NO;
     NSString *url =[NSString stringWithFormat:@"https://api.weixin.qq.com/sns/oauth2/access_token?appid=%@&secret=%@&code=%@&grant_type=authorization_code",weixinID,weixinSecret,code];
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -157,6 +174,8 @@
                 
                 access_token = [dicTemp objectForKey:@"access_token"];
                 openID = [dicTemp objectForKey:@"openid"];
+                unID = [dicTemp objectForKey:@"unionid"];
+            
                 [self getUserInfo];
             }
         });
@@ -165,10 +184,7 @@
 
 -(void)getUserInfo
 {
-    // https://api.weixin.qq.com/sns/userinfo?access_token=ACCESS_TOKEN&openid=OPENID
-    
     NSString *url =[NSString stringWithFormat:@"https://api.weixin.qq.com/sns/userinfo?access_token=%@&openid=%@",access_token,openID];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSURL *zoneUrl = [NSURL URLWithString:url];
         NSString *zoneStr = [NSString stringWithContentsOfURL:zoneUrl encoding:NSUTF8StringEncoding error:nil];
@@ -193,19 +209,113 @@
                  */
                 
                 nickName = [dicTemp objectForKey:@"nickname"];
-                NSLog(@"nickName==%@",nickName);
                 headImage = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:[dicTemp objectForKey:@"headimgurl"]]]];
-                
+                headImageData = [NSData dataWithContentsOfURL:[NSURL URLWithString:[dicTemp objectForKey:@"headimgurl"]]];
+                [[NSUserDefaults standardUserDefaults]setObject:nickName forKey:@"userNickName"];
+                NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,access_token,unID,0];
+                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    NSLog(@"device activitation source=%@,res=====%d",source,res);
+                    if (res == 0) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        NSLog(@"device activitation source=%@",source);
+                        if (res==0) {
+                            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                            //请求完成
+                            [UserItem ShareInstance].userUID = [source objectForKey:@"uid"];
+                            [UserItem ShareInstance].userName = [source objectForKey:@"username"];
+                            [UserItem ShareInstance].userNickName = [source objectForKey:@"username"];
+                            [UserItem ShareInstance].userRealName = [source objectForKey:@"nickname"];
+                            [UserItem ShareInstance].userToken = [source objectForKey:@"token"];
+                            [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
+                            [UserItem ShareInstance].userTele = [source objectForKey:@"tel"];
+                            [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
+                            [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
+                            [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
+                            [defaults setObject:[UserItem ShareInstance].userRealName forKey:@"userRealName"];
+                            [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
+                            [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
+                            [defaults setObject:[UserItem ShareInstance].userTele forKey:@"userTele"];
+                            //jid获取用户信息
+                            NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+                            jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                            [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                [defaults setObject:[[userInfo objectForKey:@"age"] stringValue] forKey:@"userAge"];
+                                [defaults setObject:[[userInfo objectForKey:@"gender"] stringValue] forKey:@"userGender"];
+                                [defaults setObject:[userInfo objectForKey:@"introduction"] forKey:@"userNote"];
+                                [defaults setObject:[userInfo objectForKey:@"address"] forKey:@"userAddress"];
+                                [defaults setObject:[userInfo objectForKey:@"hasBindWechat"] forKey:@"userWeChat"];
+                                [defaults setObject:[userInfo objectForKey:@"yizhenId"] forKey:@"userYizhenID"];
+                                NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                                imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                                [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                    [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
+                                    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
+                                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
+                                        NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
+                                        NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
+                                        [createDic setObject:@0 forKey:@"clienttype"];
+                                        if ([defaults objectForKey:@"userDeviceID"]!= nil) {
+                                            [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                                        }
+                                        [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                                        [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                            NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                            if ([[createRes objectForKey:@"res"] intValue] == 0) {
+                                                NSLog(@"更新设备号成功");
+                                            }
+                                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                            
+                                        }];
+                                    }
+                                }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                    NSLog(@"获取图片信息失败");
+                                }];
+                            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                NSLog(@"获取jid信息失败");
+                            }];
+                        }
+                        else{
+                            
+                        }
+                    }else if(res == 2){
+                        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请重新授权", @"") Title:NSLocalizedString(@"授权出错", @"") ViewController:self];
+                    }else if (res == 45){
+                        [self registViewWeChat];
+                    }
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    
+                }];
             }
         });
         
     });
 }
 
-
-
 #pragma 登录的响应函数
 -(void)gotoMainView{
+    [self.view endEditing:YES];
+    HUD = [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    
+    //常用的设置
+    //小矩形的背景色
+    HUD.color = [UIColor colorWithRed:0/255.0 green:0/255.0 blue:0/255.0 alpha:0.7];//背景色
+    //显示的文字
+    HUD.labelText = NSLocalizedString(@"登录中...", @"");
+    //细节文字
+//    HUD.detailsLabelText = @"Test detail";
+    //是否有庶罩
+    HUD.dimBackground = NO;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:_userNameView.contentTextField.text forKey:@"userName"];
     [defaults setObject:_passWordView.contentTextField.text forKey:@"userPassword"];
@@ -223,23 +333,23 @@
         //NSLog(@"responseObject=%@",responseObject);
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
-        NSLog(@"device activitation source=%@",source);
+        NSLog(@"登陆的返回res====%d",res);
         if (res==0) {
             //请求完成
             [UserItem ShareInstance].userUID = [source objectForKey:@"uid"];
             [UserItem ShareInstance].userName = [source objectForKey:@"username"];
-            [UserItem ShareInstance].userNickName = [source objectForKey:@"nickname"];
+            [UserItem ShareInstance].userNickName = [source objectForKey:@"username"];
+            [UserItem ShareInstance].userRealName = [source objectForKey:@"nickname"];
             [UserItem ShareInstance].userToken = [source objectForKey:@"token"];
             [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
             [UserItem ShareInstance].userTele = [source objectForKey:@"tel"];
             [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
             [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
             [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
+            [defaults setObject:[UserItem ShareInstance].userRealName forKey:@"userRealName"];
             [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
             [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
             [defaults setObject:[UserItem ShareInstance].userTele forKey:@"userTele"];
-            [[XMPPSupportClass ShareInstance] connect:[NSString stringWithFormat:@"%@@%@",[UserItem ShareInstance].userJID,httpServer]];
-            //jid获取用户信息
             NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
             jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             NSLog(@"jidurl === %@",jidurl);
@@ -252,11 +362,14 @@
                 [defaults setObject:[[userInfo objectForKey:@"gender"] stringValue] forKey:@"userGender"];
                 [defaults setObject:[userInfo objectForKey:@"introduction"] forKey:@"userNote"];
                 [defaults setObject:[userInfo objectForKey:@"address"] forKey:@"userAddress"];
+                [defaults setObject:[userInfo objectForKey:@"hasBindWechat"] forKey:@"userWeChat"];
+                [defaults setObject:[userInfo objectForKey:@"yizhenId"] forKey:@"userYizhenID"];
                 NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
                 imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
                 AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
                 manager.responseSerializer = [AFHTTPResponseSerializer serializer];
                 manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [defaults setObject:imageurl forKey:@"userHttpImageUrl"];
                 [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
                     [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
                     [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
@@ -264,7 +377,9 @@
                         NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
                         NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
                         [createDic setObject:@0 forKey:@"clienttype"];
-                        [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                        if ([defaults objectForKey:@"userDeviceID"]!= nil) {
+                            [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                        }
                         [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
                         [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
                         [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -282,12 +397,13 @@
             }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 NSLog(@"获取jid信息失败");
             }];
-        }
-        else{
-            
+        }else{
+            [[SetupView ShareInstance]showAlertView:res Hud:HUD ViewController:self];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络", @"") Title:NSLocalizedString(@"网路出错", @"") ViewController:self];
+        [HUD hide:YES];
     }];
 }
 #pragma 忘记密码的响应函数
@@ -302,6 +418,7 @@
 -(void)ConnectXMPPResult:(BOOL)result{
     NSLog(@"xmpp登录结果");
     if (result) {
+        [HUD hide:YES];
         [[XMPPSupportClass ShareInstance] getMyQueryRoster];
         [[NSUserDefaults standardUserDefaults] setObject:@YES forKey:@"NotFirstTime"];
         
@@ -318,6 +435,21 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+//    UIApplication *application = [UIApplication sharedApplication];
+//    application.networkActivityIndicatorVisible = YES;
+//    UIActivityIndicatorView *testActivityIndicator = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+//    testActivityIndicator.center = CGPointMake(100.0f, 100.0f);//只能设置中心，不能设置大小
+//    testActivityIndicator.frame = CGRectMake(0, 0, 100, 100);//不建议这样设置，因为UIActivityIndicatorView是不能改变大小只能改变位置，这样设置得到的结果是控件的中心在（100，100）上，而不是和其他控件的frame一样左上角在（100， 100）长为100，宽为100.
+//    [self.view addSubview:testActivityIndicator];
+//    testActivityIndicator.color = [UIColor redColor]; // 改变圈圈的颜色为红色； iOS5引入
+//    [testActivityIndicator startAnimating]; // 开始旋转
+////    [testActivityIndicator stopAnimating]; // 结束旋转
+//    [testActivityIndicator setHidesWhenStopped:YES]; //当旋转结束时隐藏
+    if ([WXApi isWXAppInstalled]&& [WXApi isWXAppSupportApi]) {
+        _thirdLoginButton.hidden = NO;
+    }else{
+        _thirdLoginButton.hidden = YES;
+    }
     [[UIApplication sharedApplication] setStatusBarHidden:NO];
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
     self.navigationController.navigationBarHidden = NO;
@@ -328,8 +460,6 @@
     self.navigationController.navigationBar.tintColor = themeColor;
     [self.navigationController.navigationBar setBackgroundImage:[UIImage imageNamed:@"white"] forBarPosition:UIBarPositionTopAttached barMetrics:UIBarMetricsDefault];
     
-    
-    
     _userNameView.contentTextField.placeholder = NSLocalizedString(@"手机号／用户名", @"");
     _passWordView.contentTextField.placeholder = NSLocalizedString(@"密码", @"");
     _passWordView.contentTextField.secureTextEntry = YES;
@@ -337,7 +467,7 @@
     _passWordView.contentTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     showPasswordOrNot = YES;
     _loginButton.userInteractionEnabled = NO;
-    [_userNameView.contentTextField becomeFirstResponder];
+//    [_userNameView.contentTextField becomeFirstResponder];
     [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
 }
 
@@ -375,10 +505,21 @@
     }
 }
 
--(void)registView
-{
+-(void)registView{
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     RegistNumberViewController *rnv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
+    rnv.isBlindWeChat = NO;
+    rnv.unID = unID;
+    rnv.headImageData = headImageData;
+    [self.navigationController pushViewController:rnv animated:YES];
+}
+
+-(void)registViewWeChat{
+    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    RegistNumberViewController *rnv = [story instantiateViewControllerWithIdentifier:@"registnumber"];
+    rnv.isBlindWeChat = YES;
+    rnv.unID = unID;
+    rnv.headImageData = headImageData;
     [self.navigationController pushViewController:rnv animated:YES];
 }
 
@@ -399,6 +540,7 @@
 
 -(void)viewWillDisappear:(BOOL)animated{
     [[NSNotificationCenter defaultCenter]removeObserver:self];
+    [HUD hide:YES];
 }
 
 @end

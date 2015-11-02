@@ -58,6 +58,7 @@
             ((UILabel *)[cell.contentView viewWithTag:3]).text = [_strangerDic objectForKey:@"strangerPic"];
             ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ %@",[_strangerDic objectForKey:@"strangerGender"],[_strangerDic objectForKey:@"strangerAge"]] ;
             [((UIButton *)[cell.contentView viewWithTag:5]) setTitle:[_strangerDic objectForKey:@"strangerLocation"] forState:UIControlStateNormal];
+            [[cell.contentView viewWithTag:5] viewWithRadis:1.0];
         }
             break;
         case 1:{
@@ -88,21 +89,13 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-#pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
-}
-
 -(void)setupView{
     _confirmInfoTable.delegate = self;
     _confirmInfoTable.dataSource = self;
+    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+    headerView.backgroundColor = [UIColor clearColor];
+    _confirmInfoTable.tableHeaderView = headerView;
+    _confirmInfoTable.tableFooterView = [[UIView alloc]init];
 }
 
 -(void)setupData{

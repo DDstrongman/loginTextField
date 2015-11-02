@@ -25,4 +25,8 @@
 //下方的服务条款和隐私协议
 @property (nonatomic,strong) UIView *noticeView;
 
+@property (nonatomic) BOOL isBlindWeChat;
+@property (nonatomic,strong) NSString *unID;//微信授权id
+@property (nonatomic,strong) NSData *headImageData;//微信返回头像数据流
+
 @end

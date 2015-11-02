@@ -39,7 +39,7 @@
 }
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
@@ -47,17 +47,19 @@
         return 2;
     }else if (section == 1){
         return 1;
+    }else if(section == 2){
+        return 4;
     }else{
-        return 5;
+        return 1;
     }
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if (indexPath.section == 2 && indexPath.row == 4) {
-        return 80;
-    }else{
+//    if (indexPath.section == 3 && indexPath.row == 0) {
+//        return 80;
+//    }else{
         return 50;
-    }
+//    }
 }
 
 #pragma 此处的cell的具体信息均需要从后端获取
@@ -79,9 +81,21 @@
         cell.textLabel.text = firstTitle[indexPath.row];
         UISwitch *tailSwitch = [[UISwitch alloc]init];
         cell.accessoryView = tailSwitch;
+        tailSwitch.onTintColor = themeColor;
+        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
         if (indexPath.row == 0) {
+            if ([user objectForKey:@"userOpenVoice"] == nil) {
+                [tailSwitch setOn:YES];
+            }else{
+                [tailSwitch setOn:[[user objectForKey:@"userOpenVoice"] boolValue]];
+            }
             [tailSwitch addTarget:self action:@selector(voice:) forControlEvents:UIControlEventValueChanged];
         }else if(indexPath.row == 1){
+            if ([user objectForKey:@"userOpenShake"] == nil) {
+                [tailSwitch setOn:YES];
+            }else{
+                [tailSwitch setOn:[[user objectForKey:@"userOpenShake"] boolValue]];
+            }
             [tailSwitch addTarget:self action:@selector(shock:) forControlEvents:UIControlEventValueChanged];
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
@@ -89,25 +103,24 @@
         cell.textLabel.text = thirdTitle[indexPath.row];
         cell.accessoryView = tailImageView;
     }else if(indexPath.section == 2){
-        if (indexPath.row == 4) {
-            UIButton *loginOutButton = [[UIButton alloc]init];
-            [loginOutButton setTitle:NSLocalizedString(@"登出", @"") forState:UIControlStateNormal];
-            loginOutButton.layer.borderColor = [UIColor orangeColor].CGColor;
-            loginOutButton.layer.borderWidth = 0.5;
-            [loginOutButton viewWithRadis:10.0];
-            [loginOutButton setTitleColor:[UIColor orangeColor] forState:UIControlStateNormal];
-            [loginOutButton addTarget:self action:@selector(loginOut:) forControlEvents:UIControlEventTouchUpInside];
-            [cell addSubview:loginOutButton];
-            [loginOutButton mas_makeConstraints:^(MASConstraintMaker *make) {
-                make.top.equalTo(@13);
-                make.bottom.equalTo(@-12);
-                make.left.equalTo(@100);
-                make.right.equalTo(@-100);
-            }];
-        }else{
-            cell.textLabel.text = forthTitle[indexPath.row];
-            cell.accessoryView = tailImageView;
-        }
+        cell.textLabel.text = forthTitle[indexPath.row];
+        cell.accessoryView = tailImageView;
+    }else{
+        cell.layer.borderColor = lightGrayBackColor.CGColor;
+        cell.layer.borderWidth = 0.5;
+        UIButton *loginOutButton = [[UIButton alloc]init];
+        [loginOutButton setTitle:NSLocalizedString(@"登出", @"") forState:UIControlStateNormal];
+//        loginOutButton.layer.borderColor = [UIColor orangeColor].CGColor;
+//        loginOutButton.layer.borderWidth = 0.5;
+        [loginOutButton viewWithRadis:10.0];
+        [loginOutButton setTitleColor:[UIColor orangeColor] forState:UIControlStateNormal];
+        [loginOutButton addTarget:self action:@selector(loginOut) forControlEvents:UIControlEventTouchUpInside];
+        [cell addSubview:loginOutButton];
+        [loginOutButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.center.equalTo(cell);
+            make.height.equalTo(@45);
+            make.width.equalTo(@100);
+        }];
     }
     return cell;
 }
@@ -133,24 +146,25 @@
             AboutUsViewController *auv = [[AboutUsViewController alloc]init];
             [self.navigationController pushViewController:auv animated:YES];
         }
+    }else if(indexPath.section == 3&&indexPath.row == 0){
+        [self loginOut];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-//    headerView.layer.borderWidth = 0.5;
-//    return headerView;
-//}
-
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    headerView.backgroundColor = grayBackgroundLightColor;
-    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-    headerView.layer.borderWidth = 0.5;
-    return headerView;
+    if (section == 3) {
+        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+        headerView.backgroundColor = grayBackgroundLightColor;
+        return headerView;
+    }else{
+        UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
+        headerView.backgroundColor = grayBackgroundLightColor;
+        headerView.layer.borderColor = lightGrayBackColor.CGColor;
+        headerView.layer.borderWidth = 0.5;
+        return headerView;
+    }
 }
 
 
@@ -161,8 +175,11 @@
     _privateSettingTable.delegate = self;
     _privateSettingTable.showsVerticalScrollIndicator = NO;
     _privateSettingTable.sectionFooterHeight = 22;
+    _privateSettingTable.backgroundColor = grayBackgroundLightColor;
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    headerView.backgroundColor = grayBackColor;
+    headerView.backgroundColor = grayBackgroundLightColor;
+    headerView.layer.borderWidth = 0.5;
+    headerView.layer.borderColor = lightGrayBackColor.CGColor;
     _privateSettingTable.tableHeaderView = headerView;
     [self.view addSubview:_privateSettingTable];
     [_privateSettingTable mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -173,10 +190,10 @@
 -(void)setupData{
     firstTitle = [@[@"声音",@"震动"]mutableCopy];
     thirdTitle = [@[@"我的病历权限"]mutableCopy];
-    forthTitle = [@[@"隐私条款",@"意见反馈",@"喜欢易诊",@"关于我们",@"登出"]mutableCopy];
+    forthTitle = [@[@"隐私条款",@"意见反馈",@"喜欢战友",@"关于我们",@"登出"]mutableCopy];
 }
 
--(void)loginOut:(UIButton *)sender{
+-(void)loginOut{
     NSString *deleUrl = [NSString stringWithFormat:@"%@unm/remove?uid=%@&token=%@&clienttype=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],0];
     [[HttpManager ShareInstance]AFNetGETSupport:deleUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
@@ -187,20 +204,34 @@
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];
+    
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userUID"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userJID"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userName"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPassword"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userToken"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userNickName"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userRealName"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userImageUrl"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userHttpImageUrl"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userAge"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userGender"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userBMI"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NotFirstTime"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"FriendList"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userTele"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userSystemVersion"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userNote"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userHistoryNote"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChat"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"ShowGuide"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userEmail"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userYizhenID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPhone"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userShareDoctor"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenVoice"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenShake"];
     [[DBManager ShareInstance] closeDB];
     [[FriendDBManager ShareInstance] closeDB];
     [[XMPPSupportClass ShareInstance] disconnect];
@@ -214,12 +245,24 @@
 
 -(void)voice:(UISwitch *)sender{
     NSLog(@"开启声音与否");
-     BOOL isButtonOn = [sender isOn];//是则打开，否则关闭
+    BOOL isButtonOn = [sender isOn];//是则打开，否则关闭
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    if (isButtonOn) {
+        [user setObject:@"YES" forKey:@"userOpenVoice"];
+    }else{
+        [user setObject:@"NO" forKey:@"userOpenVoice"];
+    }
 }
 
 -(void)shock:(UISwitch *)sender{
     NSLog(@"开启震动与否");
     BOOL isButtonOn = [sender isOn];
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    if (isButtonOn) {
+        [user setObject:@"YES" forKey:@"userOpenShake"];
+    }else{
+        [user setObject:@"NO" forKey:@"userOpenShake"];
+    }
 }
 
 @end

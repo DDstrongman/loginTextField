@@ -34,6 +34,7 @@
 }
 
 -(void)setupView{
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
     self.navigationController.navigationBarHidden = YES;
     self.view.backgroundColor = [UIColor whiteColor];
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault animated:YES];
@@ -61,7 +62,7 @@
     NSNumber *height = [NSNumber numberWithFloat:(ViewWidth+60)];
     myPageControl = [[UIPageControl alloc]init];
     myPageControl.numberOfPages = 3;
-    myPageControl.currentPage = 1;
+    myPageControl.currentPage = 0;
     myPageControl.enabled = NO;
     myPageControl.pageIndicatorTintColor = lightGrayBackColor;
     myPageControl.currentPageIndicatorTintColor = grayLabelColor;
@@ -112,12 +113,6 @@
     }else{
         _guideScroller.frame = CGRectMake(0, 0, ViewWidth, ViewWidth+60);
     }
-    [_guideScroller mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(@0);
-        make.right.equalTo(@0);
-        make.bottom.mas_equalTo(myPageControl.mas_bottom).with.offset(-120);
-        make.height.equalTo(height);
-    }];
 }
 
 -(void)setupData{
@@ -135,6 +130,7 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
+    [[UIApplication sharedApplication] setStatusBarHidden:NO];
 }
 
 @end

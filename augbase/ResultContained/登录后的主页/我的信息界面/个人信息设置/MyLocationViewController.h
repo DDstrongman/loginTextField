@@ -6,6 +6,13 @@
 //  Copyright (c) 2015年 李胜书. All rights reserved.
 //
 
+@protocol ChangeOtherAddressDele <NSObject>
+
+@required
+-(void)changeOtherAddress:(BOOL)result;
+
+@end
+
 #import <UIKit/UIKit.h>
 
 @interface MyLocationViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
@@ -13,5 +20,7 @@
 @property (nonatomic,strong) UITableView *locationTable;
 
 @property (nonatomic,weak) UIViewController *popViewController;//提供跳转桥梁的vc
+
+@property (nonatomic,weak) id<ChangeOtherAddressDele>changeOtherAddressDele;
 
 @end

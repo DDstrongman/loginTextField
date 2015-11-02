@@ -7,8 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "MBProgressHUD.h"
 
 @interface SetupView : NSObject
+
+@property (nonatomic,strong) MBProgressHUD *HUD;
 
 +(SetupView *) ShareInstance;
 
@@ -22,5 +25,12 @@
 
 -(void)showAlertView:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller;
 
+-(void)showAlertView:(int)res Hud:(MBProgressHUD *)HUD ViewController:(UIViewController *)controller;
+
+-(void)showHUD:(UIViewController *)viewController Title:(NSString *)title;//
+
+-(void)hideHUD;//
+
 - (NSString*) doDevicePlatform;
+
 @end

@@ -35,14 +35,14 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return 80;
+    return 100;
 }
 
 #pragma 此处的cell的具体信息均需要从后端获取
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell;
     cell = [tableView dequeueReusableCellWithIdentifier:@"collectioncell" forIndexPath:indexPath];
-    [[cell.contentView viewWithTag:1] imageWithRound:NO];
+//    [[cell.contentView viewWithTag:1] imageWithRound:NO];
     for (NSDictionary *dic in collectionArray) {
         [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/author/%@",[dic objectForKey:@"authorimg"]]] placeholderImage:[UIImage imageNamed:@"test"]];
         ((UILabel *)[cell.contentView viewWithTag:2]).text = [dic objectForKey:@"q"];

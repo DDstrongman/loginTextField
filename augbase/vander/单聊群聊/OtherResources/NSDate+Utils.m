@@ -214,11 +214,11 @@
     NSString *str;
     NSInteger chaDay = [self daysBetweenCurrentDateAndDate];
     if (chaDay == 0) {
-        str = @"今天";
+        str = @"";
     }else if (chaDay == 1){
         str = @"昨天";
     }else if (chaDay == -1){
-        str = @"明天";
+        str = @"昨天";
     }else{
         str = [self stringYearMonthDay];
     }

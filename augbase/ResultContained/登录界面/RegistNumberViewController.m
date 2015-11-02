@@ -9,6 +9,8 @@
 #import "RegistNumberViewController.h"
 
 #import "FirstTimeUserInfoViewController.h"
+#import "AppDelegate.h"
+#import "ServiceAndPrivateWebViewController.h"
 
 @interface RegistNumberViewController ()
 
@@ -21,6 +23,7 @@
     
     UIView *getNumberView;//获取验证码的view
     UIView *visualEffectView;//底部模糊的view
+    UIButton *sendImageNumber;
 }
 
 @end
@@ -34,8 +37,9 @@
     _registViewTwo = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 129, ViewWidth-120+12, 50)];
     _registViewThree = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 184, ViewWidth-120+12, 50)];
     
-    _registViewOne.contentTextField.placeholder = NSLocalizedString(@"手机号码/邮箱账号", @"");
-    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码（6位）", @"");
+    _registViewOne.contentTextField.placeholder = NSLocalizedString(@"手机号码", @"");
+    _registViewOne.contentTextField.keyboardType = UIKeyboardTypeNumberPad;
+    _registViewTwo.contentTextField.placeholder = NSLocalizedString(@"验证码(6位)", @"");
     _registViewThree.contentTextField.placeholder = NSLocalizedString(@"密码(至少6位)", @"");
     
     twoRightButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
@@ -81,6 +85,7 @@
     UIButton *privateNoticeButton = [[UIButton alloc]init];
     [privateNoticeButton setTitle:NSLocalizedString(@"<隐私条款>", @"") forState:UIControlStateNormal];
     [privateNoticeButton setTitleColor:themeColor forState:UIControlStateNormal];
+    [privateNoticeButton addTarget:self action:@selector(showPrivate) forControlEvents:UIControlEventTouchUpInside];
     privateNoticeButton.titleLabel.font = [UIFont systemFontOfSize:11.0];
     UILabel  *noticeLabel = [[UILabel alloc]init];
     noticeLabel.text = NSLocalizedString(@"点击注册，表示您同意", @"");
@@ -115,12 +120,14 @@
         make.left.equalTo(_noticeView.mas_left).with.offset(0);
         make.right.equalTo(serviceNoticeButton.mas_left).with.offset(-3);
     }];
-    [serviceNoticeButton mas_makeConstraints:^(MASConstraintMaker *make) {        make.height.equalTo(@20);
+    [serviceNoticeButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.height.equalTo(@20);
         make.top.equalTo(_noticeView.mas_top).with.offset(0);
         make.left.equalTo(noticeLabel.mas_right).with.offset(3);
         make.right.equalTo(privateNoticeButton.mas_left).with.offset(-3);
     }];
-    [privateNoticeButton mas_makeConstraints:^(MASConstraintMaker *make) {        make.height.equalTo(@20);
+    [privateNoticeButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.height.equalTo(@20);
         make.top.equalTo(_noticeView.mas_top).with.offset(0);
         make.right.equalTo(_noticeView.mas_right).with.offset(0);
         make.left.equalTo(serviceNoticeButton.mas_right).with.offset(3);
@@ -158,8 +165,6 @@
     [_registViewOne.contentTextField addTarget:self action:@selector(ensurePhoneCount:) forControlEvents:UIControlEventEditingChanged];
     [_registViewOne.contentTextField becomeFirstResponder];
     _registViewThree.contentTextField.secureTextEntry = YES;
-    
-    NSLog(@"仍需要加入验证码的判断，网络通讯的方式");
     if (_registViewTwo.contentTextField.text.length == ensureMass&&_registViewThree.contentTextField.text.length>5) {
         _finishButton.userInteractionEnabled = YES;
         _finishButton.backgroundColor = themeColor;
@@ -191,6 +196,19 @@
 #pragma 显示服务条款等
 -(void)showService{
     NSLog(@"显示服务条款");
+    ServiceAndPrivateWebViewController *spv = [[ServiceAndPrivateWebViewController alloc]init];
+    spv.url = @"http://www.yizhenapp.com/privacy";
+    spv.WebTitle = NSLocalizedString(@"服务条款", @"");
+    [self.navigationController pushViewController:spv animated:YES];
+}
+
+#pragma 显示隐私条款等
+-(void)showPrivate{
+    NSLog(@"显示隐私条款");
+    ServiceAndPrivateWebViewController *spv = [[ServiceAndPrivateWebViewController alloc]init];
+    spv.url = @"http://www.yizhenapp.com/privacy";
+    spv.WebTitle = NSLocalizedString(@"隐私条款", @"");
+    [self.navigationController pushViewController:spv animated:YES];
 }
 
 #pragma 显示密码与否
@@ -225,12 +243,19 @@
         NSLog(@"res===%d",res);
         if (res == 0) {
             //请求完成
+            
             UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-            UIViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
-            [self.navigationController pushViewController:ftui animated:YES];
+            FirstTimeUserInfoViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+            ftui.isBlindWeChat = _isBlindWeChat;
+            ftui.unID = _unID;
+            ftui.headImageData = _headImageData;
+            AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
+            
+            appDelegate.window.rootViewController = ftui;
+//            [self.navigationController pushViewController:ftui animated:YES];
         }
         else{
-            
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
@@ -238,6 +263,7 @@
 }
 #pragma 显示底部图片验证码的view
 -(void)showImageView{
+    [self changeImageNumber];
     [self popSpringAnimationOut:getNumberView];
     [self.view endEditing:YES];
 }
@@ -286,7 +312,7 @@
     _inputNumberView.contentTextField.placeholder = NSLocalizedString(@"请输入图片中的验证码", @"");
     _inputNumberView.contentTextField.keyboardType = UIKeyboardTypeASCIICapable;
     _inputNumberView.contentTextField.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    UIButton *sendImageNumber = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 75, 30)];
+    sendImageNumber = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 75, 30)];
     [sendImageNumber addTarget:self action:@selector(changeConfirmNumber:) forControlEvents:UIControlEventTouchUpInside];
     sendImageNumber.backgroundColor = themeColor;
     NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
@@ -424,9 +450,20 @@
     return [phoneTest evaluateWithObject:mobile];
 }
 
--(void)loginView
-{
+-(void)loginView{
     [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)changeImageNumber{
+    NSString *strURL = [NSString stringWithFormat:@"%@jcaptcha",Baseurl];
+    NSURLRequest *re=[NSURLRequest requestWithURL:[NSURL URLWithString:strURL]];
+    NSOperationQueue *op=[[NSOperationQueue alloc] init];
+    [NSURLConnection sendAsynchronousRequest:re queue:op completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+        dispatch_async(dispatch_get_main_queue(),^{
+            UIImage *img=[UIImage imageWithData:data];
+            [sendImageNumber setBackgroundImage:img forState:UIControlStateNormal];
+        });
+    }];
 }
 
 -(void)changeConfirmNumber:(UIButton *)sender{
@@ -455,16 +492,16 @@
         if (res == 0) {
             //请求完成
             
-        }else if(res == 17){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"该手机号已注册", @"") Title:NSLocalizedString(@"手机号已注册", @"") ViewController:self];
-        }else if (res == 29){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"验证码输入错误", @"") Title:NSLocalizedString(@"验证码错误", @"") ViewController:self];
-        }
-        else{
-            
+        }else{
+            if (res == 2 && _inputNumberView.contentTextField.text.length == 0) {
+                [[SetupView ShareInstance]showAlertView:19 Hud:nil ViewController:self];
+            }else{
+                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+            }
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败");
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络", @"") Title:NSLocalizedString(@"网络出错", @"") ViewController:self];
     }];
 }
 

@@ -45,7 +45,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzFriendDB tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,friendJID TEXT,friendName TEXT,friendImageUrl TEXT,friendDescribe TEXT,friendAge TEXT,friendGender TEXT,friendOnlineOrNot TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,friendJID TEXT,friendName TEXT,friendRealName TEXT,friendImageUrl TEXT,friendDescribe TEXT,friendAge TEXT,friendGender TEXT,friendSimilarity TEXT,friendOnlineOrNot TEXT)",tname];
         BOOL success=[self.yzFriendDB executeUpdate:sql];
         return success;
     }
@@ -59,10 +59,12 @@
     [self isFriendTableExist:tableName];
     NSString *friendJid = obj.friendJID;
     NSString *firendName = obj.friendName;
+    NSString *firendRealName = obj.friendRealName;
     NSString *friendImageUrl = obj.friendImageUrl;
     NSString *friendDescribe = obj.friendDescribe;
     NSString *friendAge = obj.friendAge;
     NSString *friendGender = obj.friendGender;
+    NSString *friendSimilarity = obj.friendSimilarity;
     NSString *friendOnlineOrNot = obj.friendOnlineOrNot;
     FMResultSet *searchResult = [self SearchOneFriend:tableName FriendJID:friendJid];
     NSLog(@"searchResult === %@",searchResult);
@@ -72,7 +74,7 @@
     }
     if (tempNumber == 0) {
         //不存在重复
-        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (friendJID, friendName,friendImageUrl,friendDescribe,friendAge,friendGender,friendOnlineOrNot) VALUES ('%@','%@','%@','%@','%@','%@','%@')",tableName,friendJid,firendName,friendImageUrl,friendDescribe,friendAge,friendGender,friendOnlineOrNot];
+        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (friendJID, friendName,friendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendOnlineOrNot) VALUES ('%@','%@','%@','%@','%@','%@','%@','%@','%@')",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendOnlineOrNot];
         NSLog(@"insertsql===%@",insertsql);
         if ([self.yzFriendDB executeUpdate:insertsql]) {
             //插入成功
@@ -83,7 +85,7 @@
             return NO;
         }
     }else{
-        NSString *updatesql=[NSString stringWithFormat:@"UPDATE %@ set friendJID = '%@',friendName = '%@' ,friendImageUrl = '%@' ,friendDescribe = '%@' ,friendAge = '%@',friendGender = '%@' where friendJID = '%@'",tableName,friendJid,firendName,friendImageUrl,friendDescribe,friendAge,friendGender,friendJid];
+        NSString *updatesql=[NSString stringWithFormat:@"UPDATE %@ set friendJID = '%@',friendName = '%@' ,friendRealName = '%@',friendImageUrl = '%@' ,friendDescribe = '%@' ,friendAge = '%@',friendGender = '%@',friendSimilarity = '%@' where friendJID = '%@'",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendJid];
         
         if ([self.yzFriendDB executeUpdate:updatesql]) {
             return YES;

@@ -62,7 +62,7 @@
         NSString *timeStamp = [searchFMSet stringForColumn:@"timeStamp"];
         [dataDic setObject:FromMeOrNot forKey:@"from"];
         [dataDic setObject:timeStamp forKey:@"strTime"];
-        [dataDic setObject:personNickName forKey:@"strName"];
+        [dataDic setObject:@"" forKey:@"strName"];
         [dataDic setObject:messType forKey:@"type"];
         
         if ([messType isEqualToString:@"0"]) {
@@ -122,28 +122,6 @@
                 previousTime = dataDic[@"strTime"];
             }
             [self.dataSource addObject:messageFrame];
-//            [[HttpManager ShareInstance] AFNetGETSupport:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent] Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-//                [dataDic setObject:responseObject forKey:@"voice"];
-//                if ([FromMeOrNot isEqualToString:@"0"]) {
-//                    personImageUrl = personImageMyUrl;
-//                }else{
-//                    personImageUrl = personImageFriendUrl;
-//                }
-//                [dataDic setObject:personImageUrl forKey:@"strIcon"];
-//                
-//                [message setWithDict:dataDic];
-//                [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
-//                messageFrame.showTime = message.showDateLabel;
-//                [messageFrame setMessage:message];
-//                
-//                if (message.showDateLabel) {
-//                    previousTime = dataDic[@"strTime"];
-//                }
-//                [self.dataSource addObject:messageFrame];
-//                [_flushTableDelegate FlushTable:YES];
-//            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-//                NSLog(@"WEB端登录失败：%@",error);
-//            }];
         }
     }
 }

@@ -64,11 +64,30 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    MyLocationSectionViewController *msv = [[MyLocationSectionViewController alloc]init];
-    msv.popViewController = _popViewController;
-    msv.cityName = [cityArray[indexPath.row+1] objectForKey:@"name"];
-    msv.sectionArray = [cityArray[indexPath.row+1] objectForKey:@"sub"];
-    [self.navigationController pushViewController:msv animated:YES];
+    if ([[cityArray[indexPath.row+1] objectForKey:@"name"] isEqualToString:@"其他"]) {
+        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+        NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        [dic setValue:[cityArray[indexPath.row+1] objectForKey:@"name"] forKey:@"address"];
+        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            if (res == 0) {
+                NSLog(@"修改地址成功");
+                [[NSUserDefaults standardUserDefaults] setValue:[cityArray[indexPath.row+1] objectForKey:@"name"] forKey:@"userAddress"];
+                [_changeOtherAddressDele changeOtherAddress:YES];
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
+        [self.navigationController popViewControllerAnimated:YES];
+    }else{
+        MyLocationSectionViewController *msv = [[MyLocationSectionViewController alloc]init];
+        msv.popViewController = _popViewController;
+        msv.cityName = [cityArray[indexPath.row+1] objectForKey:@"name"];
+        msv.sectionArray = [cityArray[indexPath.row+1] objectForKey:@"sub"];
+        [self.navigationController pushViewController:msv animated:YES];
+    }
 }
 
 -(void)setupView{

@@ -20,6 +20,8 @@
 @property (nonatomic,strong)IBOutlet UIButton *editTimeButton;
 @property (nonatomic,strong)IBOutlet UIButton *editHospitalButton;
 
+@property (nonatomic,strong)IBOutlet UIView *bottomView;//底部选择view
+
 @property (nonatomic,strong) UIImageView *showImageView;
 @property (nonatomic,strong) UIScrollView *contentImageScroll;
 

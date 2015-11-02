@@ -34,6 +34,8 @@
     [super viewDidLoad];
     NSLog(@"通讯好友的jid====%@",_personJID);
     _messTime = 1;
+    self.view.backgroundColor = grayBackgroundLightColor;
+    _chatTableView.backgroundColor = grayBackgroundLightColor;
     [self initBar];
     [self addRefreshViews];
     [self loadBaseViewsAndData];
@@ -41,7 +43,6 @@
 }
 
 -(void)setNotReadToRead{
-#warning 此处应该加入选择的对象jid
     [[DBManager ShareInstance] creatDatabase:DBName];
     if([[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName,_personJID]]){
         [[DBManager ShareInstance] SetNotReadToRead:[NSString stringWithFormat:@"%@%@",YizhenTableName,_personJID]];
@@ -65,8 +66,6 @@
 }
 
 -(void)ReceiveMessArray:(NSString *)receiveJID ChatItem:chatItem{
-    NSLog(@"接收到通知");
-#warning 此处需要加入从数据库获取数据
     [self.chatModel.dataSource removeAllObjects];
     [self.chatModel addCellFromDB:_personJID MessNumber:10];
     [self.chatTableView reloadData];
@@ -98,8 +97,6 @@
     _head = [MJRefreshHeaderView header];
     _head.scrollView = self.chatTableView;
     _head.beginRefreshingBlock = ^(MJRefreshBaseView *refreshView) {
-        
-#warning 此处需要加入从数据库获取数据
         [weakSelf.chatModel addCellFromDB:weakSelf.personJID MessNumber:10+pageNum*weakSelf.messTime];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
         
@@ -118,8 +115,6 @@
 {
     self.chatModel = [[ChatModel alloc]init];
     self.chatModel.isGroupChat = NO;
-    //    [self.chatModel populateRandomDataSource:_MessTableArray];
-#warning 此处需要加入从数据库获取数据
     [self.chatModel addCellFromDB:_personJID MessNumber:10];
     
     IFView = [[UUInputFunctionView alloc]initWithSuperVC:self];
@@ -147,16 +142,16 @@
     
     //adjust ChatTableView's height
     if (notification.name == UIKeyboardWillShowNotification) {
-        self.bottomConstraint.constant = keyboardEndFrame.size.height+40;
+        self.bottomConstraint.constant = keyboardEndFrame.size.height+45;
     }else{
-        self.bottomConstraint.constant = 40;
+        self.bottomConstraint.constant = 45;
     }
     
     [self.view layoutIfNeeded];
     
     //adjust UUInputFunctionView's originPoint
     CGRect newFrame = IFView.frame;
-    newFrame.origin.y = keyboardEndFrame.origin.y - newFrame.size.height - 66;
+    newFrame.origin.y = keyboardEndFrame.origin.y - newFrame.size.height - 66+3;
     IFView.frame = newFrame;
     
     [UIView commitAnimations];
@@ -197,7 +192,6 @@
 #pragma 此处加入发送事件
 - (void)dealTheFunctionData:(NSDictionary *)dic
 {
-#warning 需要加入正常发送情况下的代码,text已经可以了，差音频和图片
     id messType = [dic objectForKey:@"type"];
     id messContent;
     int MessNumber;
@@ -246,11 +240,6 @@
     if ([[XMPPSupportClass ShareInstance] sendMess:chatDBItem toUserJID:_personJID FromUserJID:userJID]) {
         [self.chatModel addCellFromDB:_personJID MessNumber:10];
         [self.chatTableView reloadData];
-//        [self.chatTableView beginUpdates];
-//        NSMutableArray *path = [NSMutableArray array];
-//        [path addObject:[NSIndexPath indexPathForRow:self.chatModel.dataSource.count-1 inSection:0]];
-//        [self.chatTableView insertRowsAtIndexPaths:path withRowAnimation:(UITableViewRowAnimationRight)];
-//        [self.chatTableView endUpdates];
         [self tableViewScrollToBottom];
     }
 }
@@ -284,18 +273,16 @@
 
 #pragma mark - cellDelegate,此处添加点击头像的响应函数,并加入区分群聊和单聊
 - (void)headImageDidClick:(UUMessageCell *)cell userId:(NSString *)userId{
-    // headIamgeIcon is clicked
-    NSLog(@"此处添加点击头像的响应函数,并加入区分群聊和单聊");
-//    UIAlertView *alert = [[UIAlertView alloc]initWithTitle:cell.messageFrame.message.strName message:@"headImage clicked" delegate:nil cancelButtonTitle:@"sure" otherButtonTitles:nil];
-//    [alert show];
     if (!_privateOrNot) {
         UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [story instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.isJIDOrYizhenID = YES;
         cpdv.friendJID = _personJID;
         [self.navigationController pushViewController:cpdv animated:YES];
     }else{
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+        cpdv.isJIDOrYizhenID = YES;
         cpdv.friendJID = _personJID;
         [self.navigationController pushViewController:cpdv animated:YES];
     }

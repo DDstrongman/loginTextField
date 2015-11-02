@@ -89,20 +89,14 @@
     [dic setObject:sessionID forKey:@"sessionId"];
     [dic setObject:@YES forKey:@"isResetPwd"];
     
-    
     [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         NSLog(@"res===%d",res);
         if (res == 0) {
 #warning 加入倒计时，以后再说
-        }else if(res == 17){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"该手机号已注册", @"") Title:NSLocalizedString(@"手机号已注册", @"") ViewController:self];
-        }else if (res == 29){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"验证码输入错误", @"") Title:NSLocalizedString(@"验证码错误", @"") ViewController:self];
-        }
-        else{
-            
+        }else{
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
@@ -120,13 +114,8 @@
             fdv.phoneNumber = _phoneNumberView.contentTextField.text;
             fdv.confirmNumber = _confirmNumberView.contentTextField.text;
             [self.navigationController pushViewController:fdv animated:YES];
-        }else if(res == 17){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"该手机号已注册", @"") Title:NSLocalizedString(@"手机号已注册", @"") ViewController:self];
-        }else if (res == 29){
-            [[SetupView ShareInstance] showAlertView:NSLocalizedString(@"验证码输入错误", @"") Title:NSLocalizedString(@"验证码错误", @"") ViewController:self];
-        }
-        else{
-            
+        }else{
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         

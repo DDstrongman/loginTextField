@@ -165,7 +165,7 @@
     [self.yzGroupDB close];
 }
 
-#warning 易诊旧的数据库操作函数
+#warning 战友旧的数据库操作函数
 
 
 #pragma 检查数据库 是否被打开

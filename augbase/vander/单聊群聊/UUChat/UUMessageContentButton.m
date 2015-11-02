@@ -79,10 +79,20 @@
         self.backImageView.frame = CGRectMake(5, 5, 220, 220);
         self.voiceBackView.frame = CGRectMake(15, 10, 130, 35);
         self.second.textColor = [UIColor whiteColor];
+        self.voice.image = [UIImage imageNamed:@"chat_animation_white3"];
+        self.voice.animationImages = [NSArray arrayWithObjects:
+                                      [UIImage imageNamed:@"chat_animation_white1"],
+                                      [UIImage imageNamed:@"chat_animation_white2"],
+                                      [UIImage imageNamed:@"chat_animation_white3"],nil];
     }else{
         self.backImageView.frame = CGRectMake(15, 5, 220, 220);
         self.voiceBackView.frame = CGRectMake(25, 10, 130, 35);
         self.second.textColor = [UIColor grayColor];
+        self.voice.image = [UIImage imageNamed:@"chat_animation3"];
+        self.voice.animationImages = [NSArray arrayWithObjects:
+                                      [UIImage imageNamed:@"chat_animation1"],
+                                      [UIImage imageNamed:@"chat_animation2"],
+                                      [UIImage imageNamed:@"chat_animation3"],nil];
     }
 }
 //添加

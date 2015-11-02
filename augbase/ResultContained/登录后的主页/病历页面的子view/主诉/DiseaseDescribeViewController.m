@@ -23,22 +23,37 @@
 -(void)setupView{
     self.title = NSLocalizedString(@"病史描述", @"");
     self.view.backgroundColor = grayBackgroundLightColor;
-    UILabel *remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(5, 10, ViewWidth-10, 21)];
-    remindLabel.text = NSLocalizedString(@"请输入病史", @"");
-    remindLabel.font = [UIFont systemFontOfSize:12.0];
-    [self.view addSubview:remindLabel];
-    _inputText = [[UITextView alloc]initWithFrame:CGRectMake(10, 35, ViewWidth-10, 300)];
+//    UILabel *remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(5, 10, ViewWidth-10, 21)];
+//    remindLabel.text = NSLocalizedString(@"请输入病史", @"");
+//    remindLabel.font = [UIFont systemFontOfSize:12.0];
+//    [self.view addSubview:remindLabel];
+    UIView *inputView = [[UIView alloc]initWithFrame:CGRectMake(0, 35, ViewWidth, 300)];
+    inputView.backgroundColor = [UIColor whiteColor];
+    inputView.layer.borderColor = lightGrayBackColor.CGColor;
+    inputView.layer.borderWidth = 0.5;
+    [self.view addSubview:inputView];
+    _inputText = [[UITextView alloc]initWithFrame:CGRectMake(15,8, ViewWidth-30, 300-8*2)];
     _inputText.backgroundColor = [UIColor whiteColor];
     _inputText.font = [UIFont systemFontOfSize:15.0];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"userHistoryNote"] != nil) {
+        _inputText.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userHistoryNote"];
+    }
     [_inputText becomeFirstResponder];
-    [self.view addSubview:_inputText];
+    [inputView addSubview:_inputText];
+    
+    UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
+    confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [confirmButton setTitle:NSLocalizedString(@"保存", @"") forState:UIControlStateNormal];
+    [confirmButton addTarget:self action:@selector(saveNoteHistory:) forControlEvents:UIControlEventTouchUpInside];
+    [[SetupView ShareInstance] setupNavigationRightButton:self RightButton:confirmButton];
 }
 
 -(void)setupData{
     
 }
 
--(void)viewWillDisappear:(BOOL)animated{
+-(void)saveNoteHistory:(UIButton *)sender{
+    [self.navigationController popViewControllerAnimated:YES];
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *diseaseTextID = [[_infoDic objectForKey:@"病史描述"] objectForKey:@"id"];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%@",Baseurl,diseaseTextID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],_inputText.text];
@@ -47,10 +62,15 @@
         int res=[[source objectForKey:@"res"] intValue];
         if (res == 0) {
             NSLog(@"上传修改成功");
+            [user setObject:_inputText.text forKey:@"userHistoryNote"];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    
 }
 
 @end

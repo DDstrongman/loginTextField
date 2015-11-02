@@ -27,8 +27,8 @@
 #define  ViewWidth [[UIScreen mainScreen] bounds].size.width
 #define countAgainNumber 120.0 //手机注册验证码的倒计时时间
 #define ensureMass 6 //手机验证码的长度
-#define httpServer @"115.29.143.102"//主机ip
-#define YizhenTableName @"Yizhen_"//易诊的本地聊天记录数据库统一表头字符
+#define httpServer @"115.29.143.102"//主机ip    115.29.143.102 新： 139.196.21.200
+#define YizhenTableName @"Yizhen_"//战友的本地聊天记录数据库统一表头字符
 #define YizhenFriendName @"Friend_"
 #define httpPort 8080//主机port
 #define DBName @"YizhenDB"//本地存储数据库的名字，不可随意变动，否则将导致今后更新失败,但仍可以创建新的db,就这点上sqilte比coredata要好

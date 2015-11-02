@@ -454,13 +454,14 @@ typedef NS_ENUM(NSInteger, CropCornerType) {
         [self addSubview:_rightMask];
         [self updateMasks:NO];
         
-        _slider = [[UISlider alloc] initWithFrame:CGRectMake( 0,0, 200, 20)];
-        _slider.center = CGPointMake(ViewWidth/2, CGRectGetHeight(self.bounds) - 95);
+        _slider = [[UISlider alloc] initWithFrame:CGRectMake( 0,0,ViewWidth-40-40, 20)];
+        _slider.center = CGPointMake(ViewWidth/2-20, CGRectGetHeight(self.bounds) - 95);
         _slider.minimumValue = 0.0f;
         _slider.maximumValue = M_PI;
         [_slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventValueChanged];
         [_slider addTarget:self action:@selector(sliderTouchEnded:) forControlEvents:UIControlEventTouchUpInside];
         _slider.value = M_PI/2;
+        _slider.thumbTintColor = themeColor;
         _slider.tintColor = [UIColor whiteColor];
         [self addSubview:_slider];
         
@@ -469,21 +470,18 @@ typedef NS_ENUM(NSInteger, CropCornerType) {
         _resetBtn = [[UIButton alloc] initWithFrame:CGRectMake(0,0, 30, 30)];
         [_resetBtn setImage:[UIImage imageNamed:@"reset_white"] forState:UIControlStateNormal];
     
-        _resetBtn.center = CGPointMake(ViewWidth - 25, ViewHeight - 95);
+        _resetBtn.center = CGPointMake(ViewWidth - 35, ViewHeight - 95);
         _resetBtn.titleLabel.font = [UIFont systemFontOfSize:14];
-        [_resetBtn setTitleColor:[UIColor resetButtonColor] forState:UIControlStateNormal];
-        [_resetBtn setTitleColor:[UIColor resetButtonHighlightedColor] forState:UIControlStateHighlighted];
-        [_resetBtn setTitle:NSLocalizedStringFromTable(@"Reset", @"PhotoTweaks", nil) forState:UIControlStateNormal];
+        [_resetBtn setBackgroundImage:[UIImage imageNamed:@"xuanzhuan"] forState:UIControlStateNormal];
         [_resetBtn addTarget:self action:@selector(resetBtnTapped) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_resetBtn];
         
-        NSLog(@"cameraStyle====%ld",(long)Style);
-        
         NSArray *segmentArray = [NSArray arrayWithObjects:@"1:1",@"16:9",@"4:3",@"9:16",@"3:4",nil];
         rationSegment =[[UISegmentedControl alloc] initWithItems:segmentArray];
-        rationSegment.frame = CGRectMake(0, 0, 240,30);
+        rationSegment.frame = CGRectMake(0, 0,ViewWidth-40,30);
+        
         rationSegment.center=CGPointMake(CGRectGetWidth(self.bounds) / 2, CGRectGetHeight(self.bounds) - 55);
-        rationSegment.tintColor = [UIColor whiteColor];
+        rationSegment.tintColor = themeColor;
         
         if ([defs integerForKey:@"Ratio"]==11) {
             rationSegment.selectedSegmentIndex = 0; //昭和を選択
@@ -565,8 +563,8 @@ typedef NS_ENUM(NSInteger, CropCornerType) {
             [defs setInteger:916 forKey:@"Ratio"];
             [_cropView removeFromSuperview];
             _cropView = [[CropView alloc] initWithFrame:CGRectMake(self.scrollView.frame.origin.x, 10, ViewHeight*9/16, ViewHeight)];
-            //_cropView.center = self.scrollView.center;
-            _cropView.center = CGPointMake(self.scrollView.center.x,self.scrollView.center.y+10);
+            _cropView.center = self.scrollView.center;
+//            _cropView.center = CGPointMake(self.scrollView.center.x,self.scrollView.center.y+100);
             _cropView.delegate = self;
             [self addSubview:_cropView];
             [self cropEnded:_cropView];

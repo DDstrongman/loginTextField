@@ -28,6 +28,7 @@
     NSString *startTime;//开始时间
     NSString *endTime;//结束时间
     BOOL IsStart;//判断是开始时间还是结束时间，1为开始时间，0则是结束时间
+    BOOL IsUsed;//判断是否至今
 }
 
 @end
@@ -36,11 +37,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self setupView];
-    [self setupData];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    [self setupView];
+    [self setupData];
     UIButton *addDrugButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
     [addDrugButton setTitle:NSLocalizedString(@"保存", @"") forState:UIControlStateNormal];
     addDrugButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
@@ -80,18 +81,19 @@
         drugInputText.borderStyle = UITextBorderStyleNone;
         drugInputText.returnKeyType = UIReturnKeyDone;
         drugInputText.text = [_drugDic objectForKey:@"medicinename"];
+        drugInputText.font = [UIFont systemFontOfSize:15.0];
         [drugInputText addTarget:self action:@selector(inputDrugName:) forControlEvents:UIControlEventEditingChanged];
         [cell addSubview:drugInputText];
         [drugInputText mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.equalTo(@10);
+            make.left.equalTo(@15);
             make.right.equalTo(@-10);
             make.centerY.equalTo(cell);
         }];
     }else if(indexPath.row == 1){
-        UIImageView *timeImageView = [[UIImageView alloc]initWithFrame:CGRectMake(10, 15, 20, 20)];
+        UIImageView *timeImageView = [[UIImageView alloc]initWithFrame:CGRectMake(10+5, 15, 20, 20)];
         timeImageView.image = [UIImage imageNamed:@"history_time"];
         [cell addSubview:timeImageView];
-        startTimeButton = [[UIButton alloc]initWithFrame:CGRectMake(32, 10, 80, 30)];
+        startTimeButton = [[UIButton alloc]initWithFrame:CGRectMake(32+5+6, 10, 80, 30)];
         startTimeButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
         [startTimeButton setTitle:[_drugDic objectForKey:@"begindate"] forState:UIControlStateNormal];
         [startTimeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
@@ -104,11 +106,15 @@
         [cell addSubview:label];
         endTimeButton = [[UIButton alloc]initWithFrame:CGRectMake(label.frame.origin.x+label.frame.size.width+3, 10, 80, 30)];
         endTimeButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-        [endTimeButton setTitle:[_drugDic objectForKey:@"stopdate"] forState:UIControlStateNormal];
+        if (IsUsed) {
+            [endTimeButton setTitle:NSLocalizedString(@"至今", @"") forState:UIControlStateNormal];
+        }else{
+            [endTimeButton setTitle:[_drugDic objectForKey:@"stopdate"] forState:UIControlStateNormal];
+        }
         [endTimeButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         [endTimeButton addTarget:self action:@selector(endEditDrugTime:) forControlEvents:UIControlEventTouchUpInside];
         endTimeButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
-        UILabel *resistantLabel = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-70-50, 10, 50, 30)];
+        UILabel *resistantLabel = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-70-50-10+5, 10, 50, 30)];
         resistantLabel.text = NSLocalizedString(@"耐药", @"");
         resistantLabel.textColor = grayLabelColor;
         resistantLabel.textAlignment = NSTextAlignmentRight;
@@ -138,6 +144,7 @@
 -(void)setupView{
     self.view.backgroundColor = [UIColor whiteColor];
     self.title = NSLocalizedString(@"修改用药", @"");
+    IsUsed = [[_drugDic objectForKey:@"isuse"] boolValue];
     _resetDrugTable = [[UITableView alloc]init];
     _resetDrugTable.delegate = self;
     _resetDrugTable.dataSource = self;
@@ -185,7 +192,13 @@
     NSDate *nowDate = [NSDate date];
     datePicker.maximumDate = nowDate;
     [bottomView addSubview:datePicker];
-    titleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        titleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        titleLabel.font = [UIFont systemFontOfSize:17.0];
+    }
+//    titleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+
     titleLabel.text = NSLocalizedString(@"开始时间", @"");
 }
 
@@ -199,7 +212,7 @@
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         NSString *yzuid = [defaults objectForKey:@"userUID"];
         NSString *yztoken = [defaults objectForKey:@"userToken"];
-        NSDictionary *dic = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:yzuid,yztoken,drugInputText.text,[startTimeButton titleForState:UIControlStateNormal],[endTimeButton titleForState:UIControlStateNormal],[NSNumber numberWithBool:resistSwitch.on],@"1",mid,[_drugDic objectForKey:@"mhid"],nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"medicinename",@"begindate",@"stopdate",@"resistant",@"isuse",@"mid",@"mhid",nil]];
+        NSDictionary *dic = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:yzuid,yztoken,drugInputText.text,[startTimeButton titleForState:UIControlStateNormal],[endTimeButton titleForState:UIControlStateNormal],[NSNumber numberWithBool:resistSwitch.on],[NSString stringWithFormat:@"%d",IsUsed],mid,[_drugDic objectForKey:@"mhid"],nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"medicinename",@"begindate",@"stopdate",@"resistant",@"isuse",@"mid",@"mhid",nil]];
         [[HttpManager ShareInstance] AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             int res=[[source objectForKey:@"res"] intValue];
@@ -358,18 +371,19 @@
         startTime = tempDateString;
         [startTimeButton setTitle:startTime forState:UIControlStateNormal];
         startTimeButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
-        [UIView animateWithDuration:1.0 animations:^{
+        [UIView animateWithDuration:0.5 animations:^{
             startTimeButton.frame = CGRectMake(32, 10, 80, 30) ;
             label.frame = CGRectMake(startTimeButton.frame.origin.x+startTimeButton.bounds.size.width, 10, label.frame.size.width, 30);
             endTimeButton.frame = CGRectMake(label.frame.origin.x+label.frame.size.width+3, 10, endTimeButton.frame.size.width, 30);
         }];
         tillNowButton.hidden = NO;
         IsStart = NO;
+        titleLabel.text = NSLocalizedString(@"结束时间", @"");
     }else{
         endTime = tempDateString;
         [endTimeButton setTitle:endTime forState:UIControlStateNormal];
         endTimeButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
-        [UIView animateWithDuration:1.0 animations:^{
+        [UIView animateWithDuration:0.5 animations:^{
             endTimeButton.frame = CGRectMake(label.frame.origin.x+label.frame.size.width+3, 10, 80, 30);
         }];
         [self popSpringAnimationHidden:bottomView];
@@ -382,11 +396,12 @@
     [dateFormatter setDateFormat:@"yyyy-MM-dd"];
     NSString *tempDateString = [dateFormatter stringFromDate:date];
     endTime = tempDateString;
-    [endTimeButton setTitle:endTime forState:UIControlStateNormal];
+    [endTimeButton setTitle:NSLocalizedString(@"至今", @"") forState:UIControlStateNormal];
     endTimeButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
-    [UIView animateWithDuration:1.0 animations:^{
+    [UIView animateWithDuration:0.5 animations:^{
         endTimeButton.frame = CGRectMake(label.frame.origin.x+label.frame.size.width+3, 10, 80, 30);
     }];
+    IsUsed = YES;
     [self popSpringAnimationHidden:bottomView];
 }
 
@@ -413,8 +428,7 @@
 
 
 #pragma mark-时时更新数据
-- (void)textFieldDidChange:(UITextField *)note
-{
+- (void)textFieldDidChange:(UITextField *)note{
     
 }
 

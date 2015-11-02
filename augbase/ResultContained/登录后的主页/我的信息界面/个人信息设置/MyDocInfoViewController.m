@@ -12,6 +12,7 @@
 
 {
     NSMutableArray *titleArray;//标题数组
+    UITextField *inputName;//输入医生端真名
 }
 
 @end
@@ -47,7 +48,7 @@
     cell.textLabel.text = titleArray[indexPath.row];
     if (indexPath.row == 0) {
         UIImageView *tailImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"goin"]];
-        UITextField *inputName = [[UITextField alloc]initWithFrame:CGRectMake(ViewWidth-100-40, 10, 100, 30)];
+        inputName = [[UITextField alloc]initWithFrame:CGRectMake(ViewWidth-100-40, 10, 100, 30)];
         inputName.placeholder = NSLocalizedString(@"请输入姓名", @"");
         inputName.textAlignment = NSTextAlignmentRight;
         [cell addSubview:inputName];
@@ -65,21 +66,33 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-#pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-//    headerView.layer.borderWidth = 0.5;
-//    return headerView;
-//}
-
-//-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-//    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-//    headerView.backgroundColor = grayBackgroundLightColor;
-//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-//    headerView.layer.borderWidth = 0.5;
-//    return headerView;
-//}
+-(void)editRealName:(UIButton *)sender{
+    if (inputName.text.length >0) {
+        NSString *url = [NSString stringWithFormat:@"%@/user/updatenickname",Baseurl];
+        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+        url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&nickname=%@",url,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],inputName.text];
+        [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *resource = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res = [[resource objectForKey:@"res"] intValue];
+            if (res == 0) {
+                [user setObject:inputName.text forKey:@"userRealName"];
+                [_changeRealNameDele changeRealName:YES];
+            }else{
+                [_changeRealNameDele changeRealName:NO];
+                UIAlertView *showNotice = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"网络错误", @"") message:NSLocalizedString(@"网络错误", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                [showNotice show];
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            [_changeRealNameDele changeRealName:NO];
+            UIAlertView *showNotice = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"网络错误", @"") message:NSLocalizedString(@"网络错误", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+            [showNotice show];
+        }];
+        [self.navigationController popViewControllerAnimated:YES];
+    }else{
+        UIAlertView *showNotice = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"请输入医生端姓名", @"") message:NSLocalizedString(@"新姓名不能为空", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+        [showNotice show];
+    }
+}
 
 -(void)setupView{
     self.title = NSLocalizedString(@"医生端信息", @"");
@@ -96,6 +109,11 @@
     [_setDocInfoTable mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.top.bottom.equalTo(@0);
     }];
+    UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
+    confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+    [confirmButton setTitle:NSLocalizedString(@"保存", @"") forState:UIControlStateNormal];
+    [confirmButton addTarget:self action:@selector(editRealName:) forControlEvents:UIControlEventTouchUpInside];
+    [[SetupView ShareInstance]setupNavigationRightButton:self RightButton:confirmButton];
 }
 
 -(void)setupData{
@@ -103,7 +121,7 @@
 }
 
 -(void)viewWillDisappear:(BOOL)animated{
-    
+    [[SetupView ShareInstance]setupNavigationRightButton:self RightButton:nil];
 }
 
 #pragma 滑动scrollview取消输入

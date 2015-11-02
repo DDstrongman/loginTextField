@@ -79,10 +79,10 @@ static NSString *cellIndentifyDisease = @"DiseaseCell";
     lineLayout=[[KRLCollectionViewGridLayout alloc] init];
     
     //改变layout属性：
-    lineLayout.sectionInset = UIEdgeInsetsMake(10,10,0,10);
+    lineLayout.sectionInset = UIEdgeInsetsMake(15,10,0,10);
     lineLayout.numberOfItemsPerLine = 2;
-    lineLayout.interitemSpacing = 8;
-    lineLayout.lineSpacing = 4;
+    lineLayout.interitemSpacing = 10;
+    lineLayout.lineSpacing = 10;
     lineLayout.aspectRatio = 1.0/0.3;//长宽比例
     
     _currentDiseaseCollection = [[UICollectionView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, ViewHeight) collectionViewLayout:lineLayout];

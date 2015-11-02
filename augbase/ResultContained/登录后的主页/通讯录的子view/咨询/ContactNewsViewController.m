@@ -23,7 +23,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-//    _newsTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, ViewHeight)];
     _newsTable.dataSource = self;
     _newsTable.delegate = self;
 
@@ -94,8 +93,7 @@
     ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"icon.jpg"];
     [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
-    ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"小月喜欢打飞机", @"");
-    //    [((UIButton *)[cell.contentView viewWithTag:7]) addTarget:self action:@selector(addFriend:) forControlEvents:UIControlEventTouchUpInside];
+    ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"", @"");
     UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 80, 30)];
     [confirmButton addTarget:self action:@selector(followSomeOne:) forControlEvents:UIControlEventTouchUpInside];
     if (!_followOrNot) {
@@ -126,13 +124,6 @@
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     return nil;
 }
@@ -148,8 +139,6 @@
 -(void)willDismissSearchController:(UISearchController *)searchController{
     NSLog(@"将要  取消  搜索时触发的方法");
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:YES];
-    //    navigationBar.hidden = NO;
-    //    [[UIApplication sharedApplication]setStatusBarHidden:NO];
 }
 
 -(void)didDismissSearchController:(UISearchController *)searchController{

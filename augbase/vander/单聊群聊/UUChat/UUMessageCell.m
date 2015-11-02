@@ -184,11 +184,11 @@
     
     if (message.from == UUMessageFromMe) {
         self.btnContent.isMyMessage = YES;
-        [self.btnContent setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [self.btnContent setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         self.btnContent.contentEdgeInsets = UIEdgeInsetsMake(ChatContentTop, ChatContentRight, ChatContentBottom, ChatContentLeft);
     }else{
         self.btnContent.isMyMessage = NO;
-        [self.btnContent setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
+        [self.btnContent setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
         self.btnContent.contentEdgeInsets = UIEdgeInsetsMake(ChatContentTop, ChatContentLeft, ChatContentBottom, ChatContentRight);
     }
     
@@ -221,7 +221,7 @@
         case UUMessageTypeVoice:
         {
             self.btnContent.voiceBackView.hidden = NO;
-            self.btnContent.second.text = [NSString stringWithFormat:@"%@'s Voice",message.strVoiceTime];
+            self.btnContent.second.text = [NSString stringWithFormat:@"%@秒",message.strVoiceTime];
             songData = message.voice;
 //            voiceURL = [NSString stringWithFormat:@"%@%@",RESOURCE_URL_HOST,message.strVoice];
         }

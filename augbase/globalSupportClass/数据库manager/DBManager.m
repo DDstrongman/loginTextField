@@ -71,7 +71,8 @@
 #pragma mark-插入聊天列表 或者更新------------------------|*|*|*|*|*|
 -(BOOL)addChatobjTablename:(NSString *)tableName andchatobj:(DBItem *)obj{
     BOOL isexit = [self isChatTableExist:tableName];
-    NSString *personJID = obj.personJID;
+    NSString *personJID = obj.toPersonJID;
+    NSLog(@"personJId====%@,tableName====%@",personJID,tableName);
     NSString *personNickName = obj.personNickName;
     NSString *personImageUrl = obj.personImageUrl;
     NSInteger chatType = obj.chatType;
@@ -194,7 +195,7 @@
     [self.yzdcdb close];
 }
 
-#warning 易诊旧的数据库操作函数
+#warning 战友旧的数据库操作函数
 
 
 #warning 此处的创建基本废弃，创建用isExist函数来判断是否存在，不存在自动创建

@@ -30,6 +30,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     if (_ResultOrING) {
+        _bottomView.hidden = NO;
         if (_detailDic != nil) {
             if ([[_detailDic objectForKey:@"testtime"] isKindOfClass:[NSNull class]]) {
                 _timeLabel.text = @"";
@@ -48,6 +49,7 @@
         _hospitalLabel.hidden = YES;
         _editTimeButton.userInteractionEnabled = NO;
         _editHospitalButton.userInteractionEnabled = NO;
+        _bottomView.hidden = YES;
     }
     [_rightButton addTarget:self action:@selector(deleteResult) forControlEvents:UIControlEventTouchUpInside];
     [_leftButton addTarget:self action:@selector(back:) forControlEvents:UIControlEventTouchUpInside];
@@ -111,7 +113,12 @@
     [confirmButton addTarget:self action:@selector(confirmTime:) forControlEvents:UIControlEventTouchUpInside];
     titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 100, 35)];
     titleLabel.center = CGPointMake(ViewWidth/2, 22);
-    titleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        titleLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        titleLabel.font = [UIFont systemFontOfSize:17.0];
+    }
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.text = _timeLabel.text;
     UIButton *cancelButton = [[UIButton alloc]initWithFrame:CGRectMake(ViewWidth-5-60, 5, 60, 35)];
@@ -134,7 +141,11 @@
     titleHLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 150, 44)];
     titleHLabel.numberOfLines = 2;
     titleHLabel.center = CGPointMake(ViewWidth/2, 22);
-    titleHLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
+        titleHLabel.font = [UIFont systemFontOfSize:17.0 weight:2.0];
+    }else{
+        titleHLabel.font = [UIFont systemFontOfSize:17.0];
+    }
     titleHLabel.textAlignment = NSTextAlignmentCenter;
     titleHLabel.text = _hospitalLabel.text;
     UIButton *cancelHButton = [[UIButton alloc]initWithFrame:CGRectMake(ViewWidth-5-60, 5, 60, 35)];
@@ -169,6 +180,7 @@
 
 -(void)confirmTime:(UIButton *)sender{
     _timeLabel.text = titleLabel.text;
+    NSLog(@"修改时间url====%@",[NSString stringWithFormat:@"%@ltr/edit?uid=%@&token=%@&ltrid=%@&testtime=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],[_detailDic objectForKey:@"id"],titleLabel.text]);
     [[HttpManager ShareInstance]AFNetPOSTNobodySupport:[NSString stringWithFormat:@"%@ltr/edit?uid=%@&token=%@&ltrid=%@&testtime=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],[_detailDic objectForKey:@"id"],titleLabel.text] Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res = [[response objectForKey:@"res"] intValue];
@@ -311,7 +323,7 @@
             if ([[alertView  textFieldAtIndex:0].text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userPassword"]]) {
                 UIAlertView *deleteConfirmAlert;
                 if (_ResultOrING) {
-                    deleteConfirmAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"删除会被扣除积分", @"") message:NSLocalizedString(@"积分可以～～～～～", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:NSLocalizedString(@"取消", @""), nil];
+                    deleteConfirmAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"删除化验单", @"") message:NSLocalizedString(@"删除这张化验单后，此化验单对应的信息将在客户端和医生端同时删除，是否确定删除？", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:NSLocalizedString(@"取消", @""), nil];
                 }else{
                     deleteConfirmAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"放弃识别会被扣除积分", @"") message:NSLocalizedString(@"积分可以～～～～～", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"放弃", @"") otherButtonTitles:NSLocalizedString(@"取消", @""), nil];
                 }
@@ -340,6 +352,7 @@
             } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                 
             }];
+            [self.navigationController popViewControllerAnimated:YES];
         }else{
             NSLog(@"取消");
         }

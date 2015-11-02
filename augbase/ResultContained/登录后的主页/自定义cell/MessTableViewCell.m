@@ -44,10 +44,10 @@
         [self addSubview:self.titleText];
         
         
-        self.timeText = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-130, self.bounds.size.height/2-20/2, 120, 20)];
+        self.timeText = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth-130-5, self.bounds.size.height/2-20/2, 120, 20)];
         self.timeText.textAlignment = NSTextAlignmentRight;
         self.timeText.numberOfLines=1;
-        self.timeText.font = [UIFont  systemFontOfSize:15.0];
+        self.timeText.font = [UIFont  systemFontOfSize:13.0];
         self.timeText.textColor = grayLabelColor;
         self.timeText.backgroundColor=[UIColor clearColor];
         [self addSubview:self.timeText];

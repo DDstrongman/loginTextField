@@ -61,22 +61,22 @@
             edgeImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"Chat_record_circle"]];
         
         self.subTitleLabel.center = CGPointMake([[UIScreen mainScreen] bounds].size.width/2,[[UIScreen mainScreen] bounds].size.height/2 + 30);
-        self.subTitleLabel.text = @"Slide up to cancel";
+        self.subTitleLabel.text = NSLocalizedString(@"上滑撤回", @"");
         self.subTitleLabel.textAlignment = NSTextAlignmentCenter;
         self.subTitleLabel.font = [UIFont boldSystemFontOfSize:14];
         self.subTitleLabel.textColor = [UIColor whiteColor];
         
         self.titleLabel.center = CGPointMake([[UIScreen mainScreen] bounds].size.width/2,[[UIScreen mainScreen] bounds].size.height/2 - 30);
-        self.titleLabel.text = @"Time Limit";
+        self.titleLabel.text = NSLocalizedString(@"时间限制", @"");
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
         self.titleLabel.font = [UIFont boldSystemFontOfSize:18];
         self.titleLabel.textColor = [UIColor whiteColor];
         
         centerLabel.center = CGPointMake([[UIScreen mainScreen] bounds].size.width/2,[[UIScreen mainScreen] bounds].size.height/2);
-        centerLabel.text = @"60";
+        centerLabel.text = @"60s";
         centerLabel.textAlignment = NSTextAlignmentCenter;
         centerLabel.font = [UIFont systemFontOfSize:30];
-        centerLabel.textColor = [UIColor yellowColor];
+        centerLabel.textColor = themeColor;
 
         
         edgeImageView.frame = CGRectMake(0, 0, 154, 154);
@@ -119,7 +119,8 @@
     }else{
         centerLabel.textColor = [UIColor yellowColor];
     }
-    centerLabel.text = [NSString stringWithFormat:@"%.1f",second-0.1];
+    centerLabel.text = [NSString stringWithFormat:@"%.1fs",second-0.1];
+    centerLabel.textColor = themeColor;
     [UIView commitAnimations];
 }
 

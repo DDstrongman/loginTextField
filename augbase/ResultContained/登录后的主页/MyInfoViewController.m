@@ -30,8 +30,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    self.tabBarController.title = NSLocalizedString(@"我", @"");
-//    [self initNavigationBar];
+    self.tabBarController.title = NSLocalizedString(@"我的", @"");
     
     UIImage* imageNormal = [UIImage imageNamed:@"mine_off"];
     UIImage* imageSelected = [UIImage imageNamed:@"mine_on"];
@@ -50,14 +49,12 @@
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    // Return the number of sections.
     return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    // Return the number of rows in the section.
     if (section == 0) {
-        return 2;
+        return 1;
     }else if (section == 1){
         return 1;
     }else{
@@ -82,7 +79,6 @@
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"myinfo" forIndexPath:indexPath];
         [[cell.contentView viewWithTag:1] imageWithRound:NO];
         ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:[[NSUserDefaults standardUserDefaults] objectForKey:@"userImageUrl"]];
-//        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:myImageName];
         if ([((NSString *)[[NSUserDefaults standardUserDefaults] objectForKey:@"userNickName"]) isEqualToString:@""]) {
             ((UILabel *)[cell.contentView viewWithTag:2]).text = defaultUserName;
         }else{
@@ -90,9 +86,10 @@
         }
         
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"] != nil) {
-            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"易诊号:", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"]];
+            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"战友号:", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]];
         }
-        [cell.contentView viewWithTag:3].hidden = YES;
+        cell.layer.borderColor = lightGrayBackColor.CGColor;
+        cell.layer.borderWidth = 0.5;
         return cell;
     }else if (indexPath.section == 0 &&indexPath.row == 1){
         static NSString *myCellIdentifier = @"myCell";
@@ -102,36 +99,34 @@
         }
         cell.textLabel.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userNote"];
         cell.textLabel.textColor = grayLabelColor;
+        cell.layer.borderColor = lightGrayBackColor.CGColor;
+        cell.layer.borderWidth = 0.5;
         return cell;
     }else{
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageandlabelcell" forIndexPath:indexPath];
         if (indexPath.section == 1) {
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"collect"];
-//            [[cell.contentView viewWithTag:1] imageWithRound:NO];
             ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"我的收藏", @"");
-            ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"23", @"");
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"", @"");
         }else{
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"set_up"];
             ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"设置", @"");
         }
+        cell.layer.borderColor = lightGrayBackColor.CGColor;
+        cell.layer.borderWidth = 0.5;
         return cell;
     }
 }
 
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = [UIColor clearColor];
+//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
+//    headerView.layer.borderWidth = 0.5;
     return headerView;
 }
 
-//-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-//    return nil;
-//}
-
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
-    //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 0&&indexPath.row == 0) {
         MineSettingInfoViewController *msiv = [[MineSettingInfoViewController alloc]init];

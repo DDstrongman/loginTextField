@@ -8,6 +8,8 @@
 
 #import "OrderTextListViewController.h"
 
+#import "SetupView.h"
+
 @interface OrderTextListViewController ()
 
 {

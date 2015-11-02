@@ -12,7 +12,7 @@
 
 + (UIColor *)cancelButtonColor
 {
-    return [UIColor whiteColor];//[UIColor colorWithRed:0.09 green:0.49 blue:1 alpha:1];
+    return themeColor;//[UIColor colorWithRed:0.09 green:0.49 blue:1 alpha:1];
 }
 
 + (UIColor *)cancelButtonHighlightedColor
@@ -22,7 +22,7 @@
 
 + (UIColor *)saveButtonColor
 {
-    return [UIColor colorWithRed:0.09 green:0.49 blue:1 alpha:1];//[UIColor colorWithRed:1 green:0.8 blue:0 alpha:1];
+    return themeColor;//[UIColor colorWithRed:1 green:0.8 blue:0 alpha:1];
 }
 
 + (UIColor *)saveButtonHighlightedColor
@@ -32,7 +32,7 @@
 
 + (UIColor *)resetButtonColor
 {
-    return [UIColor whiteColor];//[UIColor colorWithRed:0.09 green:0.49 blue:1 alpha:1];
+    return themeColor;//[UIColor colorWithRed:0.09 green:0.49 blue:1 alpha:1];
 }
 
 + (UIColor *)resetButtonHighlightedColor
@@ -47,7 +47,7 @@
 
 + (UIColor *)cropLineColor
 {
-    return [UIColor colorWithWhite:1.0 alpha:1.0];
+    return themeColor;
 }
 
 + (UIColor *)gridLineColor

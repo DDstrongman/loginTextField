@@ -20,6 +20,9 @@
     NSMutableArray *strangerGenderArray;
     NSMutableArray *strangerDescribeArray;
     NSMutableArray *strangerJIDArray;
+    
+    UIImageView *backGroudImageView;
+    UILabel *remindLabel;
 }
 
 @end
@@ -29,6 +32,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupView];
+}
+
+-(void)viewWillAppear:(BOOL)animated{
     [self setupData];
 }
 
@@ -40,6 +46,17 @@
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = [UIColor clearColor];
     _addFriendNotictTable.tableHeaderView = headerView;
+    _addFriendNotictTable.tableFooterView = [[UIView alloc]init];
+    backGroudImageView = [[UIImageView alloc]initWithFrame:CGRectMake(ViewWidth/2-60,(ViewHeight)/2-30-44-22-44-44, 120, 120)];
+    backGroudImageView.image = [UIImage imageNamed:@"no_doc"];
+    [_addFriendNotictTable addSubview:backGroudImageView];
+    remindLabel = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth/2-90,(ViewHeight)/2-30+120+10-44-22-44-44, 180, 50)];
+    remindLabel.font = [UIFont systemFontOfSize:15.0];
+    remindLabel.textColor = [UIColor colorWithRed:120.0/255.0 green:120.0/255.0 blue:120.0/255.0 alpha:1.0];
+    remindLabel.numberOfLines = 2;
+    remindLabel.text = NSLocalizedString(@"没有需要验证的好友", @"");
+    remindLabel.textAlignment = NSTextAlignmentCenter;
+    [_addFriendNotictTable addSubview:remindLabel];
 }
 
 -(void)setupData{
@@ -70,6 +87,13 @@
             [dataOfSimilarArray addObject:strangerNote];
         }
     }
+    if (userArray.count == 0) {
+        backGroudImageView.hidden = NO;
+        remindLabel.hidden = NO;
+    }else{
+        backGroudImageView.hidden = YES;
+        remindLabel.hidden = YES;
+    }
 }
 
 #pragma mark - Table view data source
@@ -99,6 +123,7 @@
     UIButton *addFriendButton = [[UIButton alloc]initWithFrame:CGRectMake(45,10, 50, 30)];
     [addFriendButton addTarget:self action:@selector(addFriendYes:) forControlEvents:UIControlEventTouchUpInside];
     addFriendButton.tag = indexPath.row;
+    addFriendButton.titleLabel.font = [UIFont systemFontOfSize:13.0];
     addFriendButton.backgroundColor = themeColor;
     [addFriendButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
     addFriendButton.userInteractionEnabled = YES;
@@ -136,18 +161,6 @@
     afcv.strangerDic = strangerDic;
     [self.navigationController pushViewController:afcv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
 }
 
 @end

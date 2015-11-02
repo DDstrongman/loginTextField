@@ -27,10 +27,11 @@
 -(void)setupView{
     self.title = NSLocalizedString(@"意见反馈", @"");
     self.view.backgroundColor = grayBackgroundLightColor;
-    UILabel *firstLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 44)];
+    UILabel *firstLabel = [[UILabel alloc]initWithFrame:CGRectMake(15, 0, ViewWidth-15, 44)];
     firstLabel.backgroundColor = grayBackgroundLightColor;
     firstLabel.font = [UIFont systemFontOfSize:14.0];
     firstLabel.text = NSLocalizedString(@"您的意见对我们非常的重要", @"");
+    firstLabel.textColor = grayLabelColor;
     UILabel *secondLabel = [[UILabel alloc]initWithFrame:CGRectMake(ViewWidth/2-150/2, 144+20, 150, 40)];
     secondLabel.textAlignment = NSTextAlignmentCenter;
     secondLabel.numberOfLines = 2;
@@ -43,13 +44,18 @@
     thirdLable.text = YizhenEmail;
     thirdLable.textAlignment = NSTextAlignmentCenter;
     thirdLable.font = [UIFont systemFontOfSize:12.0];
-    UITextView *inputText = [[UITextView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 100)];
+    UIView *inputView = [[UIView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 100)];
+    inputView.backgroundColor = [UIColor whiteColor];
+    inputView.layer.borderColor = lightGrayBackColor.CGColor;
+    inputView.layer.borderWidth = 0.5;
+    UITextView *inputText = [[UITextView alloc]initWithFrame:CGRectMake(15, 0, ViewWidth-30, 100)];
     inputText.font = [UIFont systemFontOfSize:14.0];
     
     [self.view addSubview:firstLabel];
     [self.view addSubview:secondLabel];
     [self.view addSubview:thirdLable];
-    [self.view addSubview:inputText];
+    [self.view addSubview:inputView];
+    [inputView addSubview:inputText];
     
     UIButton *confirmButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
     confirmButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;

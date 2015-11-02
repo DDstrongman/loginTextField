@@ -34,6 +34,8 @@
     [super viewDidLoad];
     NSLog(@"群组的jid====%@",_groupJID);
     _groupMessTime = 1;
+    self.view.backgroundColor = grayBackgroundLightColor;
+    _chatTableView.backgroundColor = grayBackgroundLightColor;
     [self addRefreshViews];
     [self loadBaseViewsAndData];
     [self setNotReadToRead];
@@ -86,6 +88,7 @@
 {
     [super viewWillDisappear:animated];
     [[NSNotificationCenter defaultCenter]removeObserver:self];
+    [self.view endEditing:YES];
 }
 
 #pragma 群聊查看群信息,防止多次点击
@@ -116,14 +119,14 @@
     _head = [MJRefreshHeaderView header];
     _head.scrollView = self.chatTableView;
     _head.beginRefreshingBlock = ^(MJRefreshBaseView *refreshView) {
-        
-#warning 此处需要加入从数据库获取数据
         [weakSelf.chatModel addCellFromDB:weakSelf.groupJID MessNumber:10+pageNum*weakSelf.groupMessTime];
         NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             [weakSelf.chatTableView reloadData];
-            [weakSelf.chatTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
+            if (weakSelf.chatModel.dataSource.count > 0) {
+                [weakSelf.chatTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
+            }
             weakSelf.groupMessTime++;
         });
         [weakSelf.head endRefreshing];
@@ -134,7 +137,6 @@
 {
     self.chatModel = [[GroupChatModel alloc]init];
     _chatModel.flushTableDelegate = self;
-#warning 此处需要加入从数据库获取数据
     [self.chatModel addCellFromDB:_groupJID MessNumber:10];
     
     IFView = [[UUInputFunctionView alloc]initWithSuperVC:self];
@@ -162,16 +164,16 @@
     
     //adjust ChatTableView's height
     if (notification.name == UIKeyboardWillShowNotification) {
-        self.bottomConstraint.constant = keyboardEndFrame.size.height+40;
+        self.bottomConstraint.constant = keyboardEndFrame.size.height+45;
     }else{
-        self.bottomConstraint.constant = 40;
+        self.bottomConstraint.constant = 45;
     }
     
     [self.view layoutIfNeeded];
     
     //adjust UUInputFunctionView's originPoint
     CGRect newFrame = IFView.frame;
-    newFrame.origin.y = keyboardEndFrame.origin.y - newFrame.size.height - 66;
+    newFrame.origin.y = keyboardEndFrame.origin.y - newFrame.size.height - 66+3;
     IFView.frame = newFrame;
     
     [UIView commitAnimations];
@@ -292,10 +294,10 @@
 
 #pragma mark - cellDelegate,此处添加点击头像的响应函数,并加入区分群聊和单聊
 - (void)headImageDidClick:(UUMessageCell *)cell userId:(NSString *)userId{
-    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-//    cpdv.friendJID = [memberDataArray[indexPath.row-1] objectForKey:@"jid"];
-    [self.navigationController pushViewController:cpdv animated:YES];
+//    UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+////    cpdv.friendJID = [memberDataArray[indexPath.row-1] objectForKey:@"jid"];
+//    [self.navigationController pushViewController:cpdv animated:YES];
 }
 
 #pragma CELL点击事件

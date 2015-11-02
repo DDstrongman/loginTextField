@@ -7,15 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "ZHPickView.h"
 #import "ImageViewLabelTextFieldView.h"
 
-@interface FirstTimeUserInfoViewController : UIViewController<ZHPickViewDelegate>
+@interface FirstTimeUserInfoViewController : UIViewController<UIPickerViewDataSource,UIPickerViewDelegate>
 
-//@property (nonatomic,strong) IBOutlet UIButton *sexAndAgeButton;
 @property (nonatomic,strong) IBOutlet UILabel *titleLabel;
 
-@property (nonatomic,strong) ZHPickView *pickview;
 @property (nonatomic,strong) IBOutlet UIImageView *userImageView;
 @property (nonatomic,strong) UIImageView *cameraImageView;
 
@@ -24,9 +21,8 @@
 
 @property (nonatomic,strong) UIButton *finishRegistButton;
 
-@property (nonatomic,strong) NSString *userName;
-@property (nonatomic,strong) NSString *userPass;
-
-
+@property (nonatomic) BOOL isBlindWeChat;
+@property (nonatomic,strong) NSString *unID;//微信授权id
+@property (nonatomic,strong) NSData *headImageData;//微信返回头像数据流
 
 @end

@@ -9,6 +9,7 @@
 #import "SetupView.h"
 #import "sys/sysctl.h"
 
+
 @implementation SetupView
 
 +(SetupView *) ShareInstance{
@@ -23,8 +24,9 @@
 -(void)setupSearchbar:(UISearchController *)searchViewController{
     searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
     searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
-    searchViewController.searchBar.layer.borderWidth = 0.5;
-    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
+//    searchViewController.searchBar.layer.borderWidth = 0.5;
+//    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
+    [searchViewController.searchBar makeInsetShadowWithRadius:0.5 Color:lightGrayBackColor Directions:[NSArray arrayWithObjects:@"bottom", nil]];
     for (UIView *sb in [[searchViewController.searchBar subviews][0] subviews]) {
         if ([sb isKindOfClass:[UITextField class]]) {
             sb.layer.borderColor = themeColor.CGColor;
@@ -65,6 +67,164 @@
     [showAlert show];
 }
 
+-(void)showHUdAlertView:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller{
+    UIAlertView *showAlert = [[UIAlertView alloc]initWithTitle:title message:message delegate:controller cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+    [showAlert show];
+}
+
+
+-(void)showAlertView:(int)res Hud:(MBProgressHUD *)HUD ViewController:(UIViewController *)controller{
+    [_HUD hide:YES];
+    if (res == 1){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"您输入的数据出错，请检查您的输入数据", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 2){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 3){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 4){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户不存在，先花30秒注册下吧!", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 5){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"您的医生账户正在审核中…", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 6){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户名太抢手，换一个", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 7){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"该邮箱已被注册", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 8){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户名或密码不正确", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 9){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"超时", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 10){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 11){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 12){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 13){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 14){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 15){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"暂无数据", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 16){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"推送还在路上", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 17){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码出错", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 18){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"该手机号已被注册", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 19){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码不正确", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 20){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户验证失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 21){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"数据迁移失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 22){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户编号和预留邮箱不一致", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 23){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户编号和预留电话号码不一致", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 24){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"二维码不属于战友23  ？", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 25){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"二维码已用", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 26){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"TA已经是你的好友啦", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 27){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 28){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 29){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码已用完，请关注“战友”微信订阅号(绿色图标)索取新验证码", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 30){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码填错啦，再试一遍吧=)", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 31){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"生成Access Code失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 32){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"生成signature失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 33){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"get User失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 34){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"账户出错，请尽快联系“战友”微信订阅号(绿色图标)", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 35){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"获取消息失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 36){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"无法发送消息", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 37){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"获取指标信息失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 38){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"排序失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 39){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"搜索医生失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 40){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"邀请失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 41){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"获取疾病信息失败", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 42){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"未知错误", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 43){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"TA已经是你的好友啦", @"") ViewController:controller];
+        [HUD hide:YES];
+    }else if (res == 44){
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"资料未完善", @"") ViewController:controller];
+        [HUD hide:YES];
+    }
+}
+
+-(void)showHUD:(UIViewController *)viewController Title:(NSString *)title{
+    _HUD = [MBProgressHUD showHUDAddedTo:viewController.view animated:YES];
+    
+    //常用的设置
+    //小矩形的背景色
+    _HUD.color = [UIColor colorWithRed:0/255.0 green:0/255.0 blue:0/255.0 alpha:0.7];//背景色
+    //显示的文字
+    _HUD.labelText = title;
+    //是否有庶罩
+    _HUD.dimBackground = NO;
+}
+
+-(void)hideHUD{
+    [_HUD hide:YES];
+}
 
 - (NSString*) doDevicePlatform{
     size_t size;

@@ -14,6 +14,12 @@
 #import "PopoverView.h"
 #import "RootViewController.h"
 
+#import "StartShareViewController.h"
+
+#import "ShowWebviewViewController.h"
+
+#import "WebContactDoctorViewController.h"
+
 @interface MyDoctorRootViewController ()
 
 {
@@ -50,6 +56,7 @@
 -(void)setupData{
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/myDoctor/all?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+    NSLog(@"url===%@",url);
     [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res = [[source objectForKey:@"res"] intValue];
@@ -115,27 +122,30 @@
 
 #pragma 需要加入传必要的值过去
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
-    RootViewController *rvc = [[RootViewController alloc]init];
-    rvc.personJID = [doctorArray[indexPath.row] objectForKey:@"jid"];
-    [self.navigationController pushViewController:rvc animated:YES];
+    if (indexPath.row == 0&&[[[NSUserDefaults standardUserDefaults] objectForKey:@"userShareDoctor"] intValue] == 0) {
+        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        StartShareViewController *ssv = [main instantiateViewControllerWithIdentifier:@"startshareview"];
+        ssv.rootDoctorViewController = self;
+        ssv.doctorDic = doctorArray[indexPath.row];
+        [self.navigationController pushViewController:ssv animated:YES];
+    }else{
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *ImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/doctor/%@",[doctorArray[indexPath.row] objectForKey:@"img"]];
+        ImageUrl = [ImageUrl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSString *url = [NSString stringWithFormat:@"http://www.yizhenapp.com/dashengguilai/dist/QAWithDoctor.html?roleType=patient&uid=%@&token=%@&id=%@&docName=%@&nickname=%@&src=%@&avatar=%@",[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"],[[doctorArray[indexPath.row] objectForKey:@"id"] stringValue],[doctorArray[indexPath.row] objectForKey:@"name"],[defaults objectForKey:@"userNickName"],ImageUrl,[defaults objectForKey:@"userHttpImageUrl"]];
+        url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSLog(@"聊天url====%@",url);
+        WebContactDoctorViewController *wcd = [[WebContactDoctorViewController alloc]init];
+        wcd.url = url;
+        wcd.WebTitle = [doctorArray[indexPath.row] objectForKey:@"name"];
+        [self.navigationController pushViewController:wcd animated:YES];
+    }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 #pragma 添加头和尾
-//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
-//    return nil;
-////    UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-////    headerView.backgroundColor = [UIColor lightGrayColor];
-////    return headerView;
-//}
-
-//-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-//    return nil;
-//}
-
 #pragma 取消键盘输入操作
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
     [self.view endEditing:YES];

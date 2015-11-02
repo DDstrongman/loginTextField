@@ -24,6 +24,7 @@
     self.view.backgroundColor = grayBackgroundLightColor;
     self.title = NSLocalizedString(@"医生资料", @"");
     _webView = [[UIWebView alloc] init];
+    _url = [NSString stringWithFormat:@"%@&uid=%@&token=%@",_url,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
     _url = [_url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSURLRequest *request =[NSURLRequest requestWithURL:[NSURL URLWithString:_url]];
     [_webView loadRequest:request];
@@ -34,6 +35,7 @@
         make.left.equalTo(@0);
         make.right.equalTo(@0);
     }];
+    NSLog(@"url====%@",_url);
 }
 
 -(void)setupData{

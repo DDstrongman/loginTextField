@@ -14,7 +14,8 @@
     self=[super initWithFrame:frame];
     if (self) {
         self.imageView=[[UIImageView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.frame),  CGRectGetHeight(self.frame))];
-        self.imageView.contentMode=UIViewContentModeScaleAspectFit;
+        self.imageView.contentMode = UIViewContentModeScaleAspectFill;
+        self.imageView.clipsToBounds = YES;
         [self addSubview:self.imageView];
         
         self.descriptionText=[[UILabel alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.frame)/16*15, CGRectGetHeight(self.frame)/4)];
