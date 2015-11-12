@@ -28,7 +28,9 @@
     UIView *visualEffectView;//模糊的view
     NSString *tempFirst;
     NSString *tempSecond;
-    NSString *tempThird;
+    
+    NSInteger chooseSexOrAge;//0为sex，1为age
+    UIImageView *BackImage;
 }
 
 @end
@@ -37,27 +39,42 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    self.navigationItem.title = NSLocalizedString(@"个人信息", @"");
+    self.navigationItem.title = NSLocalizedString(@"完善个人信息", @"");
     [_userImageView setImage:[UIImage imageNamed:@"default_avatar4"]];
     [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
     
     _nameView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 250, ViewWidth-120+12, 50)];
     _nameView.contentTextField.placeholder = NSLocalizedString(@"昵称", @"");
     [_nameView.contentTextField addTarget:self action:@selector(enSureNameAndSexAndAge) forControlEvents:UIControlEventEditingChanged];
-    _sexAndAgeView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 300+5, ViewWidth-120+12, 50)];
-    _sexAndAgeView.contentTextField.placeholder = NSLocalizedString(@"性别／年龄", @"");
-//    [_sexAndAgeView.contentTextField addTarget:self action:@selector(selectSexAndAge) forControlEvents:UIControlEventEditingDidBegin];
-    UITapGestureRecognizer *singleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectSexAndAge)];
-     [singleTap setNumberOfTapsRequired:1];
-    [_sexAndAgeView addGestureRecognizer:singleTap];
+    
+    _sexView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 300+5, ViewWidth-120+12, 50)];
+    _sexView.contentTextField.placeholder = NSLocalizedString(@"性别", @"");
+    UITapGestureRecognizer *singleTapSex = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectSex)];
+     [singleTapSex setNumberOfTapsRequired:1];
+    [_sexView addGestureRecognizer:singleTapSex];
+    
+    _ageView = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 300+5+50, ViewWidth-120+12, 50)];
+    _ageView.contentTextField.placeholder = NSLocalizedString(@"年龄", @"");
+    UITapGestureRecognizer *singleTapAge = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectAge)];
+    [singleTapAge setNumberOfTapsRequired:1];
+    [_ageView addGestureRecognizer:singleTapAge];
     
     _userImageView.userInteractionEnabled = YES;
     UITapGestureRecognizer *singleTapImage = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectImageOrCamera)];
     [_userImageView addGestureRecognizer:singleTapImage];
     
+    BackImage = [[UIImageView alloc]init];
+    [BackImage imageWithRound:NO];
+    [self.view insertSubview:BackImage belowSubview:_userImageView];
+    [BackImage mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(_titleLabel.mas_bottom).with.offset(23);
+        make.width.height.equalTo(@90);
+        make.centerX.equalTo(self.view.mas_centerX);
+    }];
+    
     [self.view addSubview:_nameView];
-    [self.view addSubview:_sexAndAgeView];
+    [self.view addSubview:_sexView];
+    [self.view addSubview:_ageView];
     
     _finishRegistButton = [[UIButton alloc]init];
     [_finishRegistButton setTitle:NSLocalizedString(@"完成", @"") forState:UIControlStateNormal];
@@ -66,15 +83,15 @@
     [_finishRegistButton.layer setCornerRadius:10.0];
     [self.view addSubview:_finishRegistButton];
     
-    _cameraImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
-    _cameraImageView.center = CGPointMake(_userImageView.bounds.size.width-_cameraImageView.bounds.size.width/2,_userImageView.bounds.size.height-_cameraImageView.bounds.size.height/2);
-    _cameraImageView.image = [UIImage imageNamed:@"take"];
-    [_cameraImageView imageWithRound];
-    [_userImageView addSubview:_cameraImageView];
+//    _cameraImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 30, 30)];
+//    _cameraImageView.center = CGPointMake(_userImageView.bounds.size.width-_cameraImageView.bounds.size.width/2,_userImageView.bounds.size.height-_cameraImageView.bounds.size.height/2);
+//    _cameraImageView.image = [UIImage imageNamed:@"take"];
+//    [_cameraImageView imageWithRound];
+//    [_userImageView addSubview:_cameraImageView];
     
     [_finishRegistButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.height.equalTo(@50);
-        make.top.equalTo(_sexAndAgeView.mas_bottom).with.offset(20);
+        make.top.equalTo(_ageView.mas_bottom).with.offset(20);
         make.right.equalTo(@-60);
         make.left.equalTo(@60);
     }];
@@ -113,8 +130,8 @@
 -(void)setupdata{
     tempFirst = NSLocalizedString(@"男", @"");
     tempSecond = 0;
-    tempThird = @"+";
     titleImageOrNot = NO;
+    chooseSexOrAge = 0;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:@NO forKey:@"FriendList"];
     
@@ -127,7 +144,6 @@
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
     [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        //NSLog(@"responseObject=%@",responseObject);
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         if (res==0) {
@@ -153,18 +169,29 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    _sexAndAgeView.contentTextField.userInteractionEnabled = NO;
+    _sexView.contentTextField.userInteractionEnabled = NO;
+    _ageView.contentTextField.userInteractionEnabled = NO;
     _animatedOrNot = YES;
 }
 
 -(void)enSureNameAndSexAndAge{
-    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexAndAgeView.contentTextField.text.length>0) {
+    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexView.contentTextField.text.length>0&&_ageView.contentTextField.text.length>0) {
         _finishRegistButton.userInteractionEnabled = YES;
         _finishRegistButton.backgroundColor = themeColor;
     }
 }
 
--(void)selectSexAndAge{
+-(void)selectSex{
+    titleChooseLabel.text = NSLocalizedString(@"请选择性别", @"");
+    chooseSexOrAge = 0;
+    [choosePicker reloadAllComponents];
+    [self popSpringAnimationOut:bottomChooseView ChooseOrInsert:YES];
+}
+
+-(void)selectAge{
+    titleChooseLabel.text = NSLocalizedString(@"请选择年龄", @"");
+    chooseSexOrAge = 1;
+    [choosePicker reloadAllComponents];
     [self popSpringAnimationOut:bottomChooseView ChooseOrInsert:YES];
 }
 
@@ -175,20 +202,38 @@
 }
 
 -(void)finishRegist{
-    NSString *sexAndAge = _sexAndAgeView.contentTextField.text;
+    NSString *sex = _sexView.contentTextField.text;
+    NSString *age = _ageView.contentTextField.text;
     if (_nameView.contentTextField.text.length == 0) {
         [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请输入昵称", @"") Title:NSLocalizedString(@"昵称不能为空", @"") ViewController:self];
-    }else if (sexAndAge.length == 0){
-        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请选择年龄和性别", @"") Title:NSLocalizedString(@"年龄性别不能为空", @"") ViewController:self];
+    }else if (sex.length == 0){
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请选择性别", @"") Title:NSLocalizedString(@"性别不能为空", @"") ViewController:self];
+    }else if (age.length == 0){
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请选择年龄", @"") Title:NSLocalizedString(@"年龄不能为空", @"") ViewController:self];
     }else{
+        [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"登陆中", @"")];
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         [defaults setObject:_nameView.contentTextField.text forKey:@"userNickName"];
-        NSArray *array = [sexAndAge componentsSeparatedByString:@"／"];
-        [defaults setObject:array[0] forKey:@"userGender"];
-        [defaults setObject:array[1] forKey:@"userAge"];
-//        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
-        
-        
+        [defaults setObject:age forKey:@"userAge"];
+        NSString *ChangeUrl = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        [dic setObject:age forKey:@"age"];
+        if ([sex isEqualToString:NSLocalizedString(@"男", @"")]) {
+            [dic setObject:@"0" forKey:@"gender"];
+            [defaults setObject:@"0" forKey:@"userGender"];
+        }else{
+            [dic setObject:@"1" forKey:@"gender"];
+            [defaults setObject:@"1" forKey:@"userGender"];
+        }
+        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:ChangeUrl Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            if (res == 0) {
+                
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
         NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
         NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
         [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
@@ -269,8 +314,6 @@
                         
                     }];
                 };
-                UIImage *userImage = _userImageView.image;
-                [self updateimg:userImage];
             }
             else{
                 
@@ -279,27 +322,6 @@
             NSLog(@"WEB端登录失败");
         }];
     }
-}
-
--(void)updateimg:(UIImage *)headImg{
-    NSData *data = UIImageJPEGRepresentation(headImg, 0.2);
-    
-    NSUserDefaults *user=[NSUserDefaults standardUserDefaults];
-    NSString *yzuid = [user objectForKey:@"userUID"];
-    NSString *yztoken = [user objectForKey:@"userToken"];
-    NSString *url=[NSString stringWithFormat:@"%@user/updateimg?uid=%@&token=%@",Baseurl,yzuid,yztoken];
-    [[HttpManager ShareInstance]AFNetPOSTSupport:url Parameters:nil ConstructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-        [formData appendPartWithFileData:data name:@"image" fileName:@"tou" mimeType:@"png"];
-    } SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSData *data = UIImagePNGRepresentation(headImg);
-        [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:data];
-        [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
-        if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[[NSUserDefaults standardUserDefaults] valueForKey:@"userJID"],httpServer]]) {
-            
-        }
-    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
-    }];
 }
 
 #pragma xmpp登录结果的delegate
@@ -321,7 +343,7 @@
             UIAlertView *showNotice = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"网络错误", @"") message:NSLocalizedString(@"网络错误", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
             [showNotice show];
         }];
-        
+        [[SetupView ShareInstance]hideHUD];
         [[NSUserDefaults standardUserDefaults] setObject:_nameView.contentTextField.text forKey:@"userName"];
         UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
@@ -363,14 +385,15 @@
     UIImage *image = [info objectForKey:UIImagePickerControllerEditedImage];
     NSLog(@"image===%@",image);
     [self updateTitleimg:image];
-    _userImageView.image = image;
+    BackImage.image = image;
+    [BackImage imageWithRound:NO];
+    _userImageView.image = [UIImage imageNamed:@"default_avatar5"];
     titleImageOrNot = YES;
-    [_userImageView imagewithColor:grayBackgroundDarkColor CornerWidth:1.0];
+//    [_userImageView imagewithColor:grayBackgroundDarkColor CornerWidth:1.0];
 }
 
 -(void)updateTitleimg:(UIImage *)headImg{
     NSData *data = UIImageJPEGRepresentation(headImg, 0.2);
-    
     NSUserDefaults *user=[NSUserDefaults standardUserDefaults];
     NSString *yzuid = [user objectForKey:@"userUID"];
     NSString *yztoken = [user objectForKey:@"userToken"];
@@ -379,12 +402,12 @@
     [[HttpManager ShareInstance]AFNetPOSTSupport:url Parameters:nil ConstructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         [formData appendPartWithFileData:data name:@"image" fileName:@"tou" mimeType:@"png"];
     } SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSData *data = UIImagePNGRepresentation(headImg);
         [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:data];
+        [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];
-    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexAndAgeView.contentTextField.text.length>0) {
+    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexView.contentTextField.text.length>0&&_ageView.contentTextField.text.length>0) {
         _finishRegistButton.userInteractionEnabled = YES;
         _finishRegistButton.backgroundColor = themeColor;
     }
@@ -396,45 +419,40 @@
 
 #pragma pickerView Delegate
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView{
-    return 3;
+    return 1;
 }
 -(NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component{
-    if (component == 0) {
+    if (chooseSexOrAge == 0) {
         return 2;
-    }else if (component == 1){
-        return 20;
     }else{
-        return 1;
+        return 20;
     }
 }
 
 -(NSString*)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component{
-    if (component == 0) {
+    if (chooseSexOrAge == 0) {
         if (row == 0) {
             return NSLocalizedString(@"男", @"");
         }else{
             return NSLocalizedString(@"女", @"");
         }
-    }else if (component == 1){
-        return [NSString stringWithFormat:@"%ld",row*5];
     }else{
-        return @"+";
+        return [NSString stringWithFormat:@"%ld",row*5];
     }
 }
 
 -(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component{
-    if (component == 0) {
+    if (chooseSexOrAge == 0) {
         if (row == 0) {
             tempFirst = NSLocalizedString(@"男", @"");
         }else{
             tempFirst = NSLocalizedString(@"女", @"");
         }
-    }else if (component ==1){
-        tempSecond = [NSString stringWithFormat:@"%ld",row*5];
+        titleChooseLabel.text = tempFirst;
     }else{
-        tempThird = @"+";
+        tempSecond = [NSString stringWithFormat:@"%ld",row*5];
+        titleChooseLabel.text = tempSecond;
     }
-    titleChooseLabel.text = [NSString stringWithFormat:@"%@／%@%@",tempFirst,tempSecond,tempThird];
 }
 
 #pragma 取消键盘输入操作
@@ -454,7 +472,7 @@
     POPSpringAnimation *anim = [POPSpringAnimation animation];
     anim.property = [POPAnimatableProperty propertyWithName:kPOPViewFrame];
     if (chooseOrInsert) {
-        anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,ViewHeight-22-44-targetView.bounds.size.height,targetView.bounds.size.width,targetView.bounds.size.height)];
+        anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,ViewHeight-targetView.bounds.size.height,targetView.bounds.size.width,targetView.bounds.size.height)];
     }else{
         anim.toValue = [NSValue valueWithCGRect:CGRectMake(0,60,targetView.bounds.size.width,targetView.bounds.size.height)];
     }
@@ -500,8 +518,12 @@
 
 -(void)confirmChooseView:(UIButton *)sender{
     [self popSpringAnimationHidden:bottomChooseView];
-    _sexAndAgeView.contentTextField.text = titleChooseLabel.text;
-    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexAndAgeView.contentTextField.text.length>0) {
+    if (chooseSexOrAge == 0) {
+        _sexView.contentTextField.text = tempFirst;
+    }else{
+        _ageView.contentTextField.text = tempSecond;
+    }
+    if (titleImageOrNot&&_nameView.contentTextField.text.length>0&&_sexView.contentTextField.text.length>0&&_ageView.contentTextField.text.length>0) {
         _finishRegistButton.userInteractionEnabled = YES;
         _finishRegistButton.backgroundColor = themeColor;
     }

@@ -64,9 +64,9 @@
             }];
         }
         if ([[user objectForKey:@"userGender"] intValue] == 0) {
-            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@/%@",NSLocalizedString(@"男", @""),[user objectForKey:@"userAge"]];
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@ / %@",NSLocalizedString(@"男", @""),[user objectForKey:@"userAge"]];
         }else{
-            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@/%@",NSLocalizedString(@"女", @""),[user objectForKey:@"userAge"]];
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@ / %@",NSLocalizedString(@"女", @""),[user objectForKey:@"userAge"]];
         }
         [cell.contentView viewWithTag:7].hidden = YES;
         [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:[user objectForKey:@"userAddress"] forState:UIControlStateNormal];

@@ -63,16 +63,19 @@
     [dic setObject:_phoneNumber forKey:@"tel"];
     [dic setObject:_confirmNumber forKey:@"smscode"];
     [dic setObject:_registViewOne.contentTextField.text forKey:@"password"];
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"修改中...", @"")];
     [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         NSLog(@"res===%d",res);
         if (res == 0) {
             //请求完成
+            [[SetupView ShareInstance]hideHUD];
             [self.navigationController popToRootViewControllerAnimated:YES];
-        }
-        else{
-            
+        }else{
+            [[SetupView ShareInstance]hideHUD];
+            [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"请重新操作", @"") Title:NSLocalizedString(@"修改失败", @"") ViewController:self];
+
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         

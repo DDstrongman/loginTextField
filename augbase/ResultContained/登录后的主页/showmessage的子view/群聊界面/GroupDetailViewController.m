@@ -43,7 +43,7 @@
             break;
             
         case 1:
-            return 185;
+            return 50;
             break;
         
         case 2:
@@ -76,6 +76,14 @@
         [[cell.contentView viewWithTag:6] imageWithRound:NO];
         [[cell.contentView viewWithTag:7] imageWithRound:NO];
         [[cell.contentView viewWithTag:8] imageWithRound:NO];
+        [cell.contentView viewWithTag:1].hidden = YES;
+        [cell.contentView viewWithTag:2].hidden = YES;
+        [cell.contentView viewWithTag:3].hidden = YES;
+        [cell.contentView viewWithTag:4].hidden = YES;
+        [cell.contentView viewWithTag:5].hidden = YES;
+        [cell.contentView viewWithTag:6].hidden = YES;
+        [cell.contentView viewWithTag:7].hidden = YES;
+        [cell.contentView viewWithTag:8].hidden = YES;
         ((UIImageView *)[cell.contentView viewWithTag:1]).image =  [UIImage imageNamed:@"persontitle1"];
         ((UIImageView *)[cell.contentView viewWithTag:2]).image =  [UIImage imageNamed:@"persontitle2"];
         ((UIImageView *)[cell.contentView viewWithTag:3]).image =  [UIImage imageNamed:@"persontitle3"];

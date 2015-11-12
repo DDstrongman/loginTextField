@@ -19,6 +19,8 @@
     ModifyDrugHistoryViewController *mdhv;//同上
     
     BOOL isuse;//是否至今
+    UIImageView *backImageView;
+    UILabel *remindLabel;
 }
 
 @end
@@ -28,7 +30,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupView];
-    [self setupData];
 }
 
 -(void)AddDrugSucess:(BOOL)sucess{
@@ -44,6 +45,7 @@
 }
 
 -(void)viewWillAppear:(BOOL)animated{
+    [self setupData];
     UIButton *addDrugButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
     [addDrugButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
     addDrugButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
@@ -181,6 +183,25 @@
     advc.addDrugDelegate = self;
     mdhv = [[ModifyDrugHistoryViewController alloc]init];
     mdhv.modifyDrugSuccess = self;
+    
+    
+    backImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"no_medication_history"]];
+    backImageView.tag = 998;//删除用
+    [self.view addSubview:backImageView];
+    remindLabel = [[UILabel alloc]init];
+    remindLabel.tag = 999;
+    remindLabel.text = NSLocalizedString(@"暂无用药历史", @"");
+    remindLabel.font = [UIFont systemFontOfSize:14.0];
+    remindLabel.textColor = grayLabelColor;
+    [self.view addSubview:remindLabel];
+    [backImageView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.equalTo(self.view);
+        make.centerY.equalTo(self.view).with.offset(-40);
+    }];
+    [remindLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(backImageView.mas_bottom).with.offset(10);
+        make.centerX.equalTo(self.view);
+    }];
 }
 
 -(void)setupData{
@@ -203,29 +224,18 @@
             }
             if (historyDrugArray.count == 0) {
                 _drugHistroyTable.hidden = YES;
-                UIImageView *backImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"no_medication_history"]];
-                backImageView.tag = 998;//删除用
-                [self.view addSubview:backImageView];
-                UILabel *remindLabel = [[UILabel alloc]init];
-                remindLabel.tag = 999;
-                remindLabel.text = NSLocalizedString(@"暂无用药历史", @"");
-                remindLabel.font = [UIFont systemFontOfSize:14.0];
-                remindLabel.textColor = grayLabelColor;
-                [self.view addSubview:remindLabel];
-                [backImageView mas_makeConstraints:^(MASConstraintMaker *make) {
-                    make.centerX.equalTo(self.view);
-                    make.centerY.equalTo(self.view).with.offset(-40);
-                }];
-                [remindLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-                    make.top.mas_equalTo(backImageView.mas_bottom).with.offset(10);
-                    make.centerX.equalTo(self.view);
-                }];
+                backImageView.hidden = NO;
+                remindLabel.hidden = NO;
             }else{
                 _drugHistroyTable.hidden = NO;
-                [[self.view viewWithTag:998] removeFromSuperview];
-                [[self.view viewWithTag:999] removeFromSuperview];
+                backImageView.hidden = YES;
+                remindLabel.hidden = YES;
                 [_drugHistroyTable reloadData];
             }
+        }else if (res == 15){
+            _drugHistroyTable.hidden = YES;
+            backImageView.hidden = NO;
+            remindLabel.hidden = NO;
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         
@@ -253,6 +263,7 @@
         if (res==0) {
             //请求完成
             NSLog(@"删除完成");
+            [self setupData];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         

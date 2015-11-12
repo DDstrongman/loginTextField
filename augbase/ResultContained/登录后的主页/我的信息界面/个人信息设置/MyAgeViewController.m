@@ -65,6 +65,8 @@
     self.view.backgroundColor = [UIColor whiteColor];
     agePicker = [[UIDatePicker alloc]initWithFrame:CGRectMake(0, 30, ViewWidth, 300)];
     agePicker.datePickerMode = UIDatePickerModeDate;
+    NSDate *nowDate = [NSDate date];
+    agePicker.maximumDate = nowDate;
     [agePicker addTarget:self action:@selector(selectBirthday:) forControlEvents:UIControlEventValueChanged];
     [self.view addSubview:agePicker];
     

@@ -97,7 +97,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
         }
     }
     [cell.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin_thumb/%@",urlString]]
-                      placeholderImage:[UIImage imageNamed:@"test.png"]];
+                      placeholderImage:[UIImage imageNamed:@"yulantu_3"]];
     cell.backgroundColor = grayBackgroundLightColor;
     return cell;
 }
@@ -165,26 +165,6 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 }
 
 -(void)setupView{
-//    VOSegmentedControl *segctrl1 = [[VOSegmentedControl alloc] initWithSegments:@[@{@"text": NSLocalizedString(@"识别失败", @"")},
-//                                                                                  @{@"text": NSLocalizedString(@"识别中", @"")},
-//                                                                                  @{@"text": NSLocalizedString(@"识别成功", @"")}]];
-//    segctrl1.contentStyle = VOContentStyleTextAlone;
-//    segctrl1.indicatorStyle = VOSegCtrlIndicatorStyleBottomLine;
-//    segctrl1.textColor = [UIColor blackColor];
-//    segctrl1.backgroundColor = [UIColor colorWithRed:240.0/255 green:240.0/255 blue:240.0/255 alpha:1.0];
-//    segctrl1.allowNoSelection = NO;
-//    segctrl1.frame = CGRectMake(0,0,ViewWidth,44);
-//    segctrl1.selectedTextFont = [UIFont systemFontOfSize:17];
-//    segctrl1.selectedTextColor = themeColor;
-//    segctrl1.selectedBackgroundColor = [UIColor clearColor];
-//    segctrl1.indicatorThickness = 4;
-//    segctrl1.selectedIndicatorColor = themeColor;
-//    segctrl1.tag = 1;
-//    [self.view addSubview:segctrl1];
-//    [segctrl1 setIndexChangeBlock:^(NSInteger index) {
-//        
-//    }];
-//    [segctrl1 addTarget:self action:@selector(segmentCtrlValuechange:) forControlEvents:UIControlEventValueChanged];
     self.segmentedControl = [[HYSegmentedControl alloc] initWithOriginY:0 Titles:@[NSLocalizedString(@"识别失败", @""), NSLocalizedString(@"识别中", @""), NSLocalizedString(@"识别成功", @"")] delegate:self] ;
     [self.view addSubview:_segmentedControl];
 

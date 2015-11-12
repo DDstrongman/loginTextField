@@ -24,6 +24,7 @@
 @property (nonatomic) NSString *friendLocation;//患者位置
 @property (nonatomic) NSString *friendNote;//患者签名
 @property (nonatomic) BOOL isFriend;//是否是好友
+@property (nonatomic) BOOL isConfirm;//是否是验证好友
 @property (nonatomic) NSInteger similar;//患者相似度
 @property (nonatomic,strong) NSArray *friendMedicalArray;//用药数组
 @property (nonatomic,strong) NSArray *friendDiseaseArray;//患病数组

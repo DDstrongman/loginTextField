@@ -189,21 +189,36 @@
 }
 
 -(void)setupData{
-    titleArray = [@[NSLocalizedString(@"战友号／手机号", @""),NSLocalizedString(@"我的战友号:", @""),NSLocalizedString(@"相似好友", @""),NSLocalizedString(@"附近好友", @""),NSLocalizedString(@"邀请微信好友", @"")]mutableCopy];
+    titleArray = [@[NSLocalizedString(@"战友号／手机号", @""),NSLocalizedString(@"我的战友号: ", @""),NSLocalizedString(@"相似战友", @""),NSLocalizedString(@"附近战友", @""),NSLocalizedString(@"邀请微信好友", @"")]mutableCopy];
     imageArray = [@[@"search3",@"",@"similar",@"neighborhood",@"wechat2"]mutableCopy];
     
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField{
     [textField resignFirstResponder];
-    if ([textField.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"]]||[textField.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]]) {
+    if ([textField.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"]]||[textField.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]]||[textField.text isEqualToString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userTele"]]) {
         [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"不能搜索自己", @"") Title:NSLocalizedString(@"您搜索了自己", @"") ViewController:self];
     }else{
-        UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-        ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-        cpdv.friendJID = textField.text;
-//        cpdv.isJIDOrYizhenID = YES;//测试用
-        [self.navigationController pushViewController:cpdv animated:YES];
+        NSString *jidurl;
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        jidurl = [NSString stringWithFormat:@"%@v2/user/yizhen_id/%@?uid=%@&token=%@",Baseurl,textField.text,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+        jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+        [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            if ([[userInfo objectForKey:@"res"] intValue] == 0) {
+                UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+                ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+                cpdv.friendJID = textField.text;
+                [self.navigationController pushViewController:cpdv animated:YES];
+            }else{
+                [[SetupView ShareInstance]showAlertView:[[userInfo objectForKey:@"res"] intValue] Hud:nil ViewController:self];
+            }
+        }failure:^(AFHTTPRequestOperation * _Nonnull operation, NSError * _Nonnull error) {
+            
+        }];
     }
     return YES;
 }

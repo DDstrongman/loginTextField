@@ -7,6 +7,7 @@
 //
 
 #import "DBGroupManager.h"
+#import "WriteFileSupport.h"
 
 @implementation DBGroupManager
 
@@ -66,21 +67,50 @@
     NSInteger FromMeOrNot = obj.FromMeOrNot;
     NSString *timeStamp = obj.timeStamp;
     NSString *messContent = obj.messContent;
-    NSString *messTime = obj.messVoiceTime;
+    NSString *messTime = obj.messVoiceTime;//yyyy-MM-dd HH:mm:ss EEE
+    
     if (isexit) {
-        //存在表
-        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
-        if ([self.yzGroupDB executeUpdate:insertsql]) {
-            //插入成功
-            NSLog(@"插入成功");
-            return YES;
+        NSDate *fromDate = [self changeStringToDate:timeStamp];
+        [[DBGroupManager ShareInstance] creatDatabase:GroupChatDBName];
+        FMResultSet *lastMessResult = [[DBGroupManager ShareInstance]SearchMessWithNumber:tableName MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+        NSString *lastTime;
+        int number = 0;
+        while ([lastMessResult next]){
+            lastTime = [lastMessResult stringForColumn:@"timeStamp"];
+            number++;
         }
-        else{
-            return NO;
+        NSDate *endDate = [self changeStringToDate:lastTime];
+        
+        NSTimeInterval secondsInterval= [fromDate timeIntervalSinceDate:endDate];
+        NSLog(@"secondsInterval=  %lf",secondsInterval);
+        
+        if (number != 0&&secondsInterval>0) {
+            //存在表
+            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
+            if ([self.yzGroupDB executeUpdate:insertsql]) {
+                //插入成功
+                NSLog(@"插入成功");
+                return YES;
+            }
+            else{
+                return NO;
+            }
         }
     }
     return YES;
 }
+
+-(NSDate *)changeStringToDate:(NSString *)dateString{
+    NSDateFormatter *format=[[NSDateFormatter alloc] init];
+    [format setDateFormat:@"yyyy-MM-dd HH:mm:ss EEE"];
+    NSDate *fromdate=[format dateFromString:dateString];
+    NSTimeZone *fromzone = [NSTimeZone systemTimeZone];
+    NSInteger frominterval = [fromzone secondsFromGMTForDate: fromdate];
+    NSDate *fromDate = [fromdate  dateByAddingTimeInterval: frominterval];
+    NSLog(@"date=%@",fromDate);
+    return  fromDate;
+}
+
 #pragma mark-查询数据
 #warning 取材方式
 //while ([messWithNumber next]) {
@@ -149,7 +179,6 @@
     return YES;
 }
 
-
 #pragma 删除数据
 -(BOOL)deleteinterobjTablename:(NSString *)name andinterobj:(NSString  *)jid{
     BOOL isexit=[self dbtableisexist2:name];
@@ -164,9 +193,6 @@
 -(void)closeDB{
     [self.yzGroupDB close];
 }
-
-#warning 战友旧的数据库操作函数
-
 
 #pragma 检查数据库 是否被打开
 -(BOOL)isDBOpen{
@@ -192,7 +218,17 @@
 
 #pragma 删除db文件即可
 -(void)deleteDB{
-    
+    NSString *dir = [self dirDoc];
+    NSString *filePath = [NSString stringWithFormat:@"%@/%@%@",dir,GroupChatDBName,@".sqlite"];
+    [[WriteFileSupport ShareInstance]removePicture:filePath];
+}
+
+//获取documents路径
+-(NSString *)dirDoc
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    return documentsDirectory;
 }
 
 @end

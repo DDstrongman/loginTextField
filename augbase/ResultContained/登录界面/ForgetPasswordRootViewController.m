@@ -13,6 +13,9 @@
 @interface ForgetPasswordRootViewController ()
 
 {
+    NSTimer *delayTimer;
+    float countTime;
+    
     UIButton *confirmButton;//获取图片验证码的按钮
     UIView *visualEffectView;//阴影view
     UIView *confirmImageView;//底部显示图片验证码的view
@@ -95,6 +98,7 @@
         NSLog(@"res===%d",res);
         if (res == 0) {
 #warning 加入倒计时，以后再说
+            [self sendMessAgain];
         }else{
             [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
@@ -355,6 +359,31 @@
     
 }
 
+#pragma 再次发送验证码到手机
+-(void)sendMessAgain{
+    NSLog(@"需要再次调用发送验证码的函数");
+    //倒计时
+    countTime = countAgainNumber;
+    [confirmButton setImage:nil forState:UIControlStateNormal];
+    confirmButton.userInteractionEnabled = NO;
+    confirmButton.backgroundColor = grayBackColor;
+    delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
+}
+
+-(void)countNumber{
+    countTime--;
+    //    _countTimeLabel.text = [NSString stringWithFormat:@"%@%d",@"重发倒计时:",(int)countTime];
+    [confirmButton setTitle:[NSString stringWithFormat:@"%d",(int)countTime] forState:UIControlStateNormal];
+    if (countTime == 0) {
+        [delayTimer invalidate];
+        delayTimer = nil;
+        confirmButton.userInteractionEnabled = YES;
+        confirmButton.backgroundColor = themeColor;
+        [confirmButton setTitle:NSLocalizedString(@"", @"") forState:UIControlStateNormal];
+        [confirmButton setImage:[UIImage imageNamed:@"goin_w"] forState:UIControlStateNormal];
+    }
+}
+
 /*手机号码验证 MODIFIED BY HELENSONG*/
 -(BOOL) isValidateMobile:(NSString *)mobile
 {
@@ -367,6 +396,13 @@
 #pragma 取消输入操作
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event{
     [self.view endEditing:YES];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    if (delayTimer != nil) {
+        [delayTimer invalidate];
+        delayTimer = nil;
+    }
 }
 
 @end

@@ -63,9 +63,12 @@
         if (res == 0) {
             NSLog(@"上传修改成功");
             [user setObject:_inputText.text forKey:@"userHistoryNote"];
+            [_diseaseDescribeDele changeDescribe:YES];
+        }else{
+            [_diseaseDescribeDele changeDescribe:NO];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
+        [_diseaseDescribeDele changeDescribe:NO];
     }];
 }
 

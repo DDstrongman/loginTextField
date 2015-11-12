@@ -23,8 +23,6 @@
 
 {
     NSMutableArray *firstTitle;//第一大组数据，以下依次
-//    NSMutableArray *secondTitle;
-    NSMutableArray *thirdTitle;
     NSMutableArray *forthTitle;
 }
 
@@ -39,15 +37,13 @@
 }
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (section == 0) {
         return 2;
-    }else if (section == 1){
-        return 1;
-    }else if(section == 2){
+    }else if(section == 1){
         return 4;
     }else{
         return 1;
@@ -100,9 +96,6 @@
         }
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }else if(indexPath.section == 1){
-        cell.textLabel.text = thirdTitle[indexPath.row];
-        cell.accessoryView = tailImageView;
-    }else if(indexPath.section == 2){
         cell.textLabel.text = forthTitle[indexPath.row];
         cell.accessoryView = tailImageView;
     }else{
@@ -129,11 +122,6 @@
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 1) {
         if (indexPath.row == 0) {
-            MyCaseRightsViewController *mcv = [[MyCaseRightsViewController alloc]init];
-            [self.navigationController pushViewController:mcv animated:YES];
-        }
-    }else if (indexPath.section == 2) {
-        if (indexPath.row == 0) {
             PrivateRightNoteViewController *prv = [[PrivateRightNoteViewController alloc]init];
             [self.navigationController pushViewController:prv animated:YES];
         }else if (indexPath.row == 1) {
@@ -146,7 +134,7 @@
             AboutUsViewController *auv = [[AboutUsViewController alloc]init];
             [self.navigationController pushViewController:auv animated:YES];
         }
-    }else if(indexPath.section == 3&&indexPath.row == 0){
+    }else if(indexPath.section == 2&&indexPath.row == 0){
         [self loginOut];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -154,7 +142,7 @@
 
 #pragma 添加头和尾
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    if (section == 3) {
+    if (section == 2) {
         UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
         headerView.backgroundColor = grayBackgroundLightColor;
         return headerView;
@@ -188,9 +176,8 @@
 }
 
 -(void)setupData{
-    firstTitle = [@[@"声音",@"震动"]mutableCopy];
-    thirdTitle = [@[@"我的病历权限"]mutableCopy];
-    forthTitle = [@[@"隐私条款",@"意见反馈",@"喜欢战友",@"关于我们",@"登出"]mutableCopy];
+    firstTitle = [@[NSLocalizedString(@"声音", @""),NSLocalizedString(@"震动", @"")]mutableCopy];
+    forthTitle = [@[NSLocalizedString(@"隐私条款", @""),NSLocalizedString(@"意见反馈", @""),NSLocalizedString(@"给战友点赞", @""),NSLocalizedString(@"关于我们", @""),NSLocalizedString(@"登出", @"")]mutableCopy];
 }
 
 -(void)loginOut{
@@ -208,6 +195,7 @@
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userUID"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userJID"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userName"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userAddress"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPassword"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userToken"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userNickName"];
@@ -232,6 +220,7 @@
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userShareDoctor"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenVoice"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenShake"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenRemind"];
     [[DBManager ShareInstance] closeDB];
     [[FriendDBManager ShareInstance] closeDB];
     [[XMPPSupportClass ShareInstance] disconnect];

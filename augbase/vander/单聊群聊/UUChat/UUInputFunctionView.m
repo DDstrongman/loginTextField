@@ -9,7 +9,7 @@
 #import "UUInputFunctionView.h"
 #import "Mp3Recorder.h"
 #import "UUProgressHUD.h"
-@interface UUInputFunctionView ()<UITextViewDelegate,Mp3RecorderDelegate,UITextFieldDelegate>
+@interface UUInputFunctionView ()<UITextViewDelegate,Mp3RecorderDelegate,UITextFieldDelegate,UIImagePickerControllerDelegate>
 {
     BOOL isbeginVoiceRecord;
     Mp3Recorder *MP3;
@@ -33,7 +33,7 @@
         self.backgroundColor = [UIColor whiteColor];
         //发送消息
         self.btnSendMessage = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.btnSendMessage.frame = CGRectMake(Main_Screen_Width-40, frame.size.height/2-30/2, 30, 30);
+        self.btnSendMessage.frame = CGRectMake(Main_Screen_Width-40+3, frame.size.height/2-30/2, 30, 30);
         self.isAbleToSendTextMessage = NO;
         [self.btnSendMessage setTitle:@"" forState:UIControlStateNormal];
         [self.btnSendMessage setBackgroundImage:[UIImage imageNamed:@"Chat_take_picture"] forState:UIControlStateNormal];
@@ -43,7 +43,7 @@
         
         //改变状态（语音、文字）
         self.btnChangeVoiceState = [UIButton buttonWithType:UIButtonTypeCustom];
-        self.btnChangeVoiceState.frame = CGRectMake(5, frame.size.height/2-30/2, 30, 30);
+        self.btnChangeVoiceState.frame = CGRectMake(5+3, frame.size.height/2-30/2, 30, 30);
         isbeginVoiceRecord = NO;
         [self.btnChangeVoiceState setBackgroundImage:[UIImage imageNamed:@"chat_voice_record"] forState:UIControlStateNormal];
         self.btnChangeVoiceState.titleLabel.font = [UIFont systemFontOfSize:12];
@@ -53,10 +53,12 @@
         //语音录入键
         self.btnVoiceRecord = [UIButton buttonWithType:UIButtonTypeCustom];
         self.btnVoiceRecord.frame = CGRectMake(45,(frame.size.height-35)/2+1, Main_Screen_Width-45*2, 35);
+        self.btnVoiceRecord.layer.cornerRadius = 4;
         self.btnVoiceRecord.hidden = YES;
-        [self.btnVoiceRecord setBackgroundImage:[UIImage imageNamed:@"chat_message_back"] forState:UIControlStateNormal];
-        [self.btnVoiceRecord setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
-        [self.btnVoiceRecord setTitleColor:[[UIColor lightGrayColor] colorWithAlphaComponent:0.5] forState:UIControlStateHighlighted];
+//        [self.btnVoiceRecord setBackgroundImage:[UIImage imageNamed:@"chat_message_back"] forState:UIControlStateNormal];
+        [self.btnVoiceRecord setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        self.btnVoiceRecord.backgroundColor = themeColor;
+        [self.btnVoiceRecord setTitleColor:[[UIColor whiteColor] colorWithAlphaComponent:0.5] forState:UIControlStateHighlighted];
         [self.btnVoiceRecord setTitle:NSLocalizedString(@"  按   住   说   话  ", @"") forState:UIControlStateNormal];
         [self.btnVoiceRecord setTitle:NSLocalizedString(@"  松   开   发   送  ", @"") forState:UIControlStateHighlighted];
         [self.btnVoiceRecord addTarget:self action:@selector(beginRecordVoice:) forControlEvents:UIControlEventTouchDown];
@@ -79,8 +81,8 @@
         [self addSubview:self.TextViewInput];
         
         //输入框的提示语
-        placeHold = [[UILabel alloc]initWithFrame:CGRectMake(20, 0, 200, 35)];
-        placeHold.text = NSLocalizedString(@"在这里输入", @"");
+        placeHold = [[UILabel alloc]initWithFrame:CGRectMake(20-10-5, 0, 200, 35)];
+        placeHold.text = NSLocalizedString(@"讲一句鼓励的话吧", @"");
         placeHold.textColor = [[UIColor lightGrayColor] colorWithAlphaComponent:0.8];
         [self.TextViewInput addSubview:placeHold];
         
@@ -209,7 +211,9 @@
     if ([@"\n" isEqualToString:text] == YES)
     {
         NSString *resultStr = [self.TextViewInput.text stringByReplacingOccurrencesOfString:@"   " withString:@""];
-        [self.delegate UUInputFunctionView:self sendMessage:resultStr];
+        if (![resultStr isEqualToString:@""]) {
+            [self.delegate UUInputFunctionView:self sendMessage:resultStr];
+        }
         return NO;
     }
     return YES;
@@ -246,6 +250,7 @@
 }
 
 -(void)addCarema{
+    
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
         UIImagePickerController *picker = [[UIImagePickerController alloc] init];
         picker.delegate = self;
@@ -270,12 +275,15 @@
     }
 }
 
-
--(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info{
-    UIImage *editImage = [info objectForKey:UIImagePickerControllerEditedImage];
-    [self.superVC dismissViewControllerAnimated:YES completion:^{
-        [self.delegate UUInputFunctionView:self sendPicture:editImage];
-    }];
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            UIImage * image = [info objectForKey:UIImagePickerControllerOriginalImage];
+            [self.superVC dismissViewControllerAnimated:YES completion:^{
+                [self.delegate UUInputFunctionView:self sendPicture:image];
+            }];
+        });
+    });
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker{

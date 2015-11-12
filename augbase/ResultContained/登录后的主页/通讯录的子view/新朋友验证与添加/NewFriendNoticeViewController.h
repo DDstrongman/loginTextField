@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "AddFriendConfirmViewController.h"
 
 @interface NewFriendNoticeViewController : UIViewController<UITableViewDelegate,UITableViewDataSource>
 

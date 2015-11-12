@@ -8,6 +8,9 @@
 
 #import "NewPasswordViewController.h"
 
+#import "AppDelegate.h"
+#import "LoginViewController.h"
+
 @interface NewPasswordViewController ()
 
 {
@@ -91,7 +94,7 @@
         int res = [[source objectForKey:@"res"] intValue];
         if (res == 0) {
             [users setObject:_editPass.contentTextField.text forKey:@"userPassword"];
-            [self.navigationController popViewControllerAnimated:YES];
+            [self loginOut];
             NSLog(@"密码修改成功");
         }else{
             UIAlertView *showMess = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"修改失败", @"") message:NSLocalizedString(@"修改密码失败", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
@@ -143,6 +146,58 @@
 
 -(void)setupData{
     
+}
+
+-(void)loginOut{
+    NSString *deleUrl = [NSString stringWithFormat:@"%@unm/remove?uid=%@&token=%@&clienttype=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],0];
+    [[HttpManager ShareInstance]AFNetGETSupport:deleUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        if (res == 0) {
+            NSLog(@"删除成功");
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
+    
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userUID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userJID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userName"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userAddress"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPassword"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userToken"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userNickName"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userRealName"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userImageUrl"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userHttpImageUrl"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userAge"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userGender"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userBMI"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NotFirstTime"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"FriendList"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userTele"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userSystemVersion"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userNote"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userHistoryNote"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChat"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"ShowGuide"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userEmail"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userYizhenID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPhone"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userShareDoctor"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenVoice"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenShake"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenRemind"];
+    [[DBManager ShareInstance] closeDB];
+    [[FriendDBManager ShareInstance] closeDB];
+    [[XMPPSupportClass ShareInstance] disconnect];
+#warning 需要加入删除数据库的操作
+    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
+    AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
+    
+    appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
 }
 
 #pragma 滑动scrollview取消输入

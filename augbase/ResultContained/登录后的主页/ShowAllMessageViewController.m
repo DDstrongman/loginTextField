@@ -38,7 +38,7 @@
     DBItem *lastMessItem;//最后一次传来的消息类
     
     CLLocationManager *locationManager;//获取坐标
-    
+    UIImageView *remindImageView;
 //    BOOL headBool;
 }
 
@@ -59,9 +59,6 @@
 -(void)ReceiveMessArray:(NSString *)receiveMess ChatItem:chatItem{
     NSLog(@"xmpp收到消息");
     lastMessItem = chatItem;
-    
-    NSLog(@"接收到的信息====%@",lastMessItem.personImageUrl);
-    
     [[DBManager ShareInstance] creatDatabase:DBName];
     [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName, receiveMess]];
     tableJidName = [[DBManager ShareInstance] getAllTableName];
@@ -80,8 +77,6 @@
             }
         }
     }
-    [_messageTableview reloadData];
-    NSLog(@"数据源为：%@",dataArray);
     searchResults = dataArray;
     [_messageTableview reloadData];
 }
@@ -102,11 +97,9 @@
 -(void)GetFriendListDelegate:(BOOL)result{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (result) {
-        NSLog(@"更新好友列表成功");
         [_messageTableview reloadData];
         [defaults setObject:@YES forKey:@"FriendList"];
     }else{
-        NSLog(@"更新好友列表失败");
         [defaults setObject:@NO forKey:@"FriendList"];
     }
 }
@@ -281,8 +274,6 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (section == 0) {
-        NSLog(@"此处隐藏了我的医生一栏，以后需要加入,即将2变为3");
-#warning 此处隐藏了我的医生一栏，以后需要加入,即将2变为3
         return titleDataArray.count-1;//隐藏了我的医生一栏，以后需要加入
     }else{
         return searchResults.count;
@@ -312,7 +303,15 @@
             cell.descriptionText.text = NSLocalizedString(@"实时同步战友微信订阅号", @"");
         }
     }else{
-        FMResultSet *lastMessResult = [[DBManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+        cell.titleText.text = searchResults[indexPath.row];
+        int tempI;//搜索的时候的标序
+        for (int i=0;i<dataArray.count;i++) {
+            if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+                tempI = i;
+                break;
+            }
+        }
+        FMResultSet *lastMessResult = [[DBManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[tempI]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
         NSString *lastMess;
         NSString *lastTime;
         NSString *lastType;
@@ -321,7 +320,6 @@
             lastTime = [lastMessResult stringForColumn:@"timeStamp"];
             lastType = [lastMessResult stringForColumn:@"messType"];
         }
-        cell.titleText.text = searchResults[indexPath.row];
         if ([lastType isEqualToString:@"0"]) {
             cell.descriptionText.text = lastMess;
         }else if ([lastType isEqualToString:@"1"]){
@@ -331,13 +329,13 @@
         }
         cell.timeText.text = [self changeTheDateString:lastTime];
         
-        FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:tableJidName[indexPath.row]];
+        FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:tableJidName[tempI]];
         while ([messPicPath next]){
             NSString *picPath = [messPicPath stringForColumn:@"friendImageUrl"];
             cell.iconImageView.image = [UIImage imageWithContentsOfFile:picPath];
         }
         
-        FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[indexPath.row]] ItemName:@"ReadOrNot" ItemValue:0];
+        FMResultSet *messWithNumber = [[DBManager ShareInstance] SearchMessNotReadNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,tableJidName[tempI]] ItemName:@"ReadOrNot" ItemValue:0];
         NSInteger messNumer = 0;
         while ([messWithNumber next]) {
             messNumer++;
@@ -348,10 +346,10 @@
             [cell.timeText imageWithRedNumber:messNumer];
         }
     }
-#warning 设置分割线
     tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     tableView.separatorColor = lightGrayBackColor;
     tableView.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
     return cell;
 }
 
@@ -369,7 +367,13 @@
     }else{
         RootViewController *rtv = [[RootViewController alloc]init];
         rtv.privateOrNot = 0;//私聊
-        rtv.personJID = tableJidName[indexPath.row];
+        for (int i=0;i<dataArray.count;i++) {
+            if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+                rtv.personJID = tableJidName[i];
+                break;
+            }
+        }
+        rtv.personName = searchResults[indexPath.row];
         [self.navigationController pushViewController:rtv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -385,12 +389,8 @@
 }
 
 //自定义cell的编辑模式，可以是删除也可以是增加 改变左侧的按钮的样式 删除是'-' 增加是'+'
-- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
-    //    if (indexPath.row == 1) {
-    //        return UITableViewCellEditingStyleInsert;
-    //    } else {
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {\
     return UITableViewCellEditingStyleDelete;
-    //    }
 }
 
 
@@ -504,12 +504,46 @@
     _messageTableview.backgroundColor = grayBackgroundLightColor;
     _messageTableview.tableFooterView = [[UIView alloc]init];
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索联系人姓名", @"");
+    int friendNum = 0;
+    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+    FMResultSet *friendList = [[FriendDBManager ShareInstance] SearchAllFriend:YizhenFriendName];
+    while ([friendList next]) {
+        friendNum++;
+    }
+    
+    if (friendNum>1) {
+        [[NSUserDefaults standardUserDefaults]setObject:@"1" forKey:@"userOpenRemind"];
+    }
+    remindImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, ViewHeight-49-ViewWidth/2.14-22-44, ViewWidth, ViewWidth/2.14)];
+    remindImageView.userInteractionEnabled = YES;
+    if (ViewWidth>310&&ViewWidth<330) {
+        remindImageView.image = [UIImage imageNamed:@"first"];
+    }else if (ViewWidth>360&&ViewWidth<390){
+        remindImageView.image = [UIImage imageNamed:@"first3"];
+    }else{
+        remindImageView.image = [UIImage imageNamed:@"first2"];
+    }
+    [self.view addSubview:remindImageView];
+    if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userOpenRemind"]boolValue]) {
+        remindImageView.hidden = YES;
+    }else{
+        remindImageView.hidden = NO;
+    }
+    UITapGestureRecognizer *singleTapSex = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideRemindImage)];
+    [singleTapSex setNumberOfTapsRequired:1];
+    [remindImageView addGestureRecognizer:singleTapSex];
+    
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索战友姓名", @"");
     [[SetupView ShareInstance]setupSearchbar:searchViewController];
 }
 
+-(void)hideRemindImage{
+    remindImageView.hidden = YES;
+    [[NSUserDefaults standardUserDefaults]setObject:@"1" forKey:@"userOpenRemind"];
+}
+
 -(void)setupData{
-#warning 此处加入收到信息的dataarra
+#warning 此处加入收到信息的dataarray
     titleDataArray = [@[NSLocalizedString(@"群聊", @""),NSLocalizedString(@"咨讯", @""),NSLocalizedString(@"我的医生", @"")]mutableCopy];
     titleImageNameArray = [@[@"groups",@"news"]mutableCopy];
     titleColorArray = [@[themeColor,yellowTitleColor,themeColor]mutableCopy];
@@ -534,7 +568,8 @@
             if (res == 0) {
                 //请求完成
                 if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]]) {
-                    
+                    NSLog(@"xmpp连接完成");
+                    [[XMPPSupportClass ShareInstance]confirmAddFriend:@"p22142"];
                 }
             }
             else{

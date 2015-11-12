@@ -11,7 +11,7 @@
 #import "CurrentSymptomViewController.h"
 #import "DiseaseDescribeViewController.h"
 
-@interface UserDiseaseTraitViewController ()
+@interface UserDiseaseTraitViewController ()<changeDiseaseDescribe>
 
 {
     NSMutableArray *firstTitleArray;
@@ -140,11 +140,11 @@
                         tempRelativeDic = [source objectForKey:@"relativeInfo"];
                         tempPlanDic =  [source objectForKey:@"pregnantPlanInfo"];
                         tempSymptomDic = [source objectForKey:@"symptom"];
+                        [_diseaseTrait reloadData];
                     }
                 } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                     
                 }];
-                [_diseaseTrait reloadData];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
@@ -178,11 +178,11 @@
                         tempRelativeDic = [source objectForKey:@"relativeInfo"];
                         tempPlanDic =  [source objectForKey:@"pregnantPlanInfo"];
                         tempSymptomDic = [source objectForKey:@"symptom"];
+                        [_diseaseTrait reloadData];
                     }
                 } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                     
                 }];
-                [_diseaseTrait reloadData];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
@@ -593,7 +593,7 @@
                         tempString = [[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"];
                         CountNumber++;
                     }else if (CountNumber<3) {
-                        tempString = [NSString stringWithFormat:@"%@,%@",tempString,[[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"]];
+                        tempString = [NSString stringWithFormat:@"%@, %@",tempString,[[tempSymptomDic objectForKey:key] objectForKey:@"symptomname"]];
                         CountNumber++;
                     }else{
                         tempString = [tempString stringByAppendingString:@"..."];
@@ -663,6 +663,7 @@
         }else{
             DiseaseDescribeViewController *ddv = [[DiseaseDescribeViewController alloc]init];
             ddv.infoDic = tempSymptomDic;
+            ddv.diseaseDescribeDele = self;
             [self.navigationController pushViewController:ddv animated:YES];
         }
     }
@@ -728,6 +729,12 @@
         scrollView.contentInset = UIEdgeInsetsMake(-sectionHeaderHeight, 0, 0, 0);
     }
     [self.view endEditing:YES];
+}
+
+-(void)changeDescribe:(BOOL)result{
+    if (result) {
+        [_diseaseTrait reloadData];
+    }
 }
 
 #pragma 底部view出现和隐藏

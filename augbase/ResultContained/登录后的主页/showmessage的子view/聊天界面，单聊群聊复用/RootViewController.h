@@ -19,7 +19,7 @@
 @property (nonatomic) BOOL privateOrNot;//0,私聊；1，群聊.
 
 @property (nonatomic,strong) NSString *personJID;//选择的对象的jid,好友的jid。
-@property (nonatomic,strong) NSString *groupJID;//选择的对象的jid,好友的jid。
+@property (nonatomic,strong) NSString *personName;//选择对象的名字.
 
 
 @end

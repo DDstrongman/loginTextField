@@ -33,12 +33,12 @@
         _bottomView.hidden = NO;
         if (_detailDic != nil) {
             if ([[_detailDic objectForKey:@"testtime"] isKindOfClass:[NSNull class]]) {
-                _timeLabel.text = @"";
+                _timeLabel.text = @"--";
             }else{
                 _timeLabel.text = [_detailDic objectForKey:@"testtime"];
             }
             if ([[_detailDic objectForKey:@"hosname"] isKindOfClass:[NSNull class]]) {
-                _hospitalLabel.text = @"";
+                _hospitalLabel.text = @"--";
             }else{
                 _hospitalLabel.text = [_detailDic objectForKey:@"hosname"];
             }
@@ -67,7 +67,7 @@
     
     _showImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, ViewHeight-44-100)];
     _showImageUrl = [_showImageUrl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-    [_showImageView sd_setImageWithURL:[NSURL URLWithString:_showImageUrl] placeholderImage:[UIImage imageNamed:@"test"]];
+    [_showImageView sd_setImageWithURL:[NSURL URLWithString:_showImageUrl] placeholderImage:[UIImage imageNamed:@"yulantu_4"]];
     _showImageView.contentMode = UIViewContentModeScaleAspectFit;
     [self.view insertSubview:_contentImageScroll atIndex:0];
     [_contentImageScroll addSubview:_showImageView];
@@ -80,7 +80,7 @@
 -(void)deleteResult{
     UIActionSheet *deleteAction;
     if (_ResultOrING) {
-        deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"删除会被扣除积分", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
+        deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"删除", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
     }else{
         deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"放弃识别会被扣除积分", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:NSLocalizedString(@"取消", @"") otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
     }

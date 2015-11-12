@@ -73,7 +73,7 @@
 }
 
 -(void)ReceiveMessArray:(NSString *)receiveJID ChatItem:chatItem{
-    NSLog(@"接收到群聊通知");
+    NSLog(@"接收到群聊通知111");
 #warning 此处需要加入从数据库获取数据
     [self.chatModel.dataSource removeAllObjects];
     [self.chatModel addCellFromDB:_groupJID MessNumber:10];

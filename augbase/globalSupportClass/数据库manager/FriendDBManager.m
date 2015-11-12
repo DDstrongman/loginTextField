@@ -67,7 +67,6 @@
     NSString *friendSimilarity = obj.friendSimilarity;
     NSString *friendOnlineOrNot = obj.friendOnlineOrNot;
     FMResultSet *searchResult = [self SearchOneFriend:tableName FriendJID:friendJid];
-    NSLog(@"searchResult === %@",searchResult);
     int tempNumber = 0;
     while ([searchResult next]) {
         tempNumber++;
@@ -180,7 +179,6 @@
     if (isexit) {
         NSString *deletesql=[NSString stringWithFormat:@"DELETE FROM %@ WHERE friendJID='%@'",name,jid];
         issuccess = [self.yzFriendDB executeUpdate:deletesql];
-        NSLog(@"deletesql==%@",deletesql);
     }
     return issuccess;
 }

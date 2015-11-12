@@ -9,9 +9,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SendAddMessViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
-
-@property (nonatomic,strong) UITableView *sendMessTable;
+@interface SendAddMessViewController : UIViewController
 
 @property (nonatomic,strong) NSString *addFriendJID;//添加好友的jid
 

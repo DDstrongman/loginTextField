@@ -79,15 +79,22 @@
 #pragma 此处的cell的具体信息均需要从后端获取
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *cellIndentify = @"showGroupCell";//此处注册cell需要自己变动
+    int tempI;//搜索的时候的标序
+    for (int i=0;i<dataArray.count;i++) {
+        if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+            tempI = i;
+            break;
+        }
+    }
     [_groupTable registerClass:[MessTableViewCell class]forCellReuseIdentifier:cellIndentify];
     MessTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIndentify forIndexPath:indexPath];
     if (cell == nil) {
         cell = [[MessTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
     }
-    cell.iconImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%ld",@"grouptitle",(long)(indexPath.row+1)]];
-    cell.titleText.text = dataArray[indexPath.row];
+    cell.iconImageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%@%ld",@"grouptitle",(long)(tempI+1)]];
+    cell.titleText.text = dataArray[tempI];
     [[DBGroupManager ShareInstance] creatDatabase:GroupChatDBName];
-    FMResultSet *lastMessResult = [[DBGroupManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,groupJidArray[indexPath.row]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
+    FMResultSet *lastMessResult = [[DBGroupManager ShareInstance]SearchMessWithNumber:[NSString stringWithFormat:@"%@%@",YizhenTableName,groupJidArray[tempI]] MessNumber:1 SearchKey:@"chatid" SearchMethodDescOrAsc:@"Desc"];
     NSString *lastMess;
     NSString *lastTime;
     NSString *lastType;
@@ -123,12 +130,18 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
-    
+    int tempI;//搜索的时候的标序
+    for (int i=0;i<dataArray.count;i++) {
+        if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+            tempI = i;
+            break;
+        }
+    }
     GroupRootViewController *grtv = [[GroupRootViewController alloc]init];
-    grtv.groupJID = groupJidArray[indexPath.row];
-    grtv.groupTitle = dataArray[indexPath.row];
-    grtv.groupNote = groupNoteArray[indexPath.row];
-    [[XMPPSupportClass ShareInstance] setUpChatRoom:[NSString stringWithFormat: @"%@@%@.%@",groupJidArray[indexPath.row],@"conference",httpServer] NickName:[[NSUserDefaults standardUserDefaults] objectForKey:@"userNickName"]];
+    grtv.groupJID = groupJidArray[tempI];
+    grtv.groupTitle = dataArray[tempI];
+    grtv.groupNote = groupNoteArray[tempI];
+    [[XMPPSupportClass ShareInstance] setUpChatRoom:[NSString stringWithFormat: @"%@@%@.%@",groupJidArray[tempI],@"conference",httpServer] NickName:[[NSUserDefaults standardUserDefaults] objectForKey:@"userNickName"]];
     [self.navigationController pushViewController:grtv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
@@ -193,7 +206,7 @@
     //将搜索控制器的搜索条设置为页眉视图
     _groupTable.tableHeaderView = searchViewController.searchBar;
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索群名", @"");
     searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
     searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
     searchViewController.searchBar.layer.borderWidth = 0.5;

@@ -9,6 +9,8 @@
 #import "NewFriendNoticeViewController.h"
 
 #import "FriendDBManager.h"
+#import "ContactPersonDetailViewController.h"
+#import "AddFriendConfirmViewController.h"
 
 @interface NewFriendNoticeViewController ()
 
@@ -81,7 +83,7 @@
         [strangerGenderArray addObject:strangerGender];
         [strangerDescribeArray addObject:strangerNote];
         [strangerJIDArray addObject:strangerJID];
-        if ([strangerNote isEqualToString:@""]) {
+        if ([strangerNote isEqualToString:@""]||strangerNote == [NSNull class]) {
             [dataOfSimilarArray addObject:@"83%"];
         }else{
             [dataOfSimilarArray addObject:strangerNote];
@@ -117,14 +119,16 @@
     [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = userArray[indexPath.row];
     UIView *addLabelAndButtonView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, 100, 50)];
-    UILabel *numberLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 10, 40, 30)];
+    UILabel *numberLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 10, 50, 30)];
     numberLabel.font = [UIFont systemFontOfSize:17.0];
     numberLabel.textColor = [UIColor blackColor];
-    UIButton *addFriendButton = [[UIButton alloc]initWithFrame:CGRectMake(45,10, 50, 30)];
+//    numberLabel.text = dataOfSimilarArray[indexPath.row];
+    UIButton *addFriendButton = [[UIButton alloc]initWithFrame:CGRectMake(52,10, 50, 30)];
     [addFriendButton addTarget:self action:@selector(addFriendYes:) forControlEvents:UIControlEventTouchUpInside];
     addFriendButton.tag = indexPath.row;
     addFriendButton.titleLabel.font = [UIFont systemFontOfSize:13.0];
     addFriendButton.backgroundColor = themeColor;
+    [addFriendButton viewWithRadis:3.0];
     [addFriendButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
     addFriendButton.userInteractionEnabled = YES;
     [addLabelAndButtonView addSubview:numberLabel];
@@ -142,25 +146,36 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
-    NSMutableDictionary *strangerDic = [NSMutableDictionary dictionary];
-    [strangerDic setObject:strangerJIDArray[indexPath.row] forKey:@"strangerJID"];
-    [strangerDic setObject:picArray[indexPath.row] forKey:@"strangerPic"];
-    [strangerDic setObject:userArray[indexPath.row] forKey:@"strangerName"];
-    [strangerDic setObject:strangerAgeArray[indexPath.row] forKey:@"strangerAge"];
-    if([strangerGenderArray[indexPath.row] intValue] == 0){
-        [strangerDic setObject:NSLocalizedString(@"男", @"") forKey:@"strangerGender"];
-    }else{
-        [strangerDic setObject:NSLocalizedString(@"女", @"") forKey:@"strangerGender"];
-    }
-    
-#warning 此处的location以后要换为网络获取的地址
-    [strangerDic setObject:@"上海" forKey:@"strangerLocation"];
-    [strangerDic setObject:strangerDescribeArray[indexPath.row] forKey:@"strangerNote"];
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-    AddFriendConfirmViewController *afcv = [main instantiateViewControllerWithIdentifier:@"addfriendconfirmdetail"];
-    afcv.strangerDic = strangerDic;
-    [self.navigationController pushViewController:afcv animated:YES];
+    ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
+    cpdv.isJIDOrYizhenID = YES;
+    cpdv.isConfirm = YES;
+    cpdv.friendJID = strangerJIDArray[indexPath.row];
+    [self.navigationController pushViewController:cpdv animated:YES];
+    
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+//自定义cell的编辑模式，可以是删除也可以是增加 改变左侧的按钮的样式 删除是'-' 增加是'+'
+- (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
+    //    if (indexPath.row == 1) {
+    //        return UITableViewCellEditingStyleInsert;
+    //    } else {
+    return UITableViewCellEditingStyleDelete;
+    //    }
+}
+
+
+// 判断点击按钮的样式 来去做添加 或删除
+- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath{
+    // 删除的操作
+    if (editingStyle == UITableViewCellEditingStyleDelete) {
+        [userArray removeObjectAtIndex:indexPath.row];
+#warning 此处加入删除消息的数据库操作
+        [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+        [[FriendDBManager ShareInstance] deleteFriendObjTablename:StrangerTBName andinterobj:strangerJIDArray[indexPath.row]];
+        [_addFriendNotictTable reloadData];
+    }
 }
 
 @end

@@ -36,7 +36,7 @@
     _iconF = CGRectMake(iconX, iconY, ChatIconWH, ChatIconWH);
     
     // 3、计算ID位置
-    _nameF = CGRectMake(iconX, iconY+ChatIconWH, ChatIconWH, 20);
+    _nameF = CGRectMake(iconX+5, iconY+ChatIconWH, ChatIconWH, 20);
     
     // 4、计算内容位置
     CGFloat contentX = CGRectGetMaxX(_iconF)+ChatMargin;

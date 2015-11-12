@@ -86,7 +86,7 @@
         }
         
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"] != nil) {
-            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"战友号:", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]];
+            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"战友号: ", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]];
         }
         cell.layer.borderColor = lightGrayBackColor.CGColor;
         cell.layer.borderWidth = 0.5;
@@ -106,7 +106,7 @@
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageandlabelcell" forIndexPath:indexPath];
         if (indexPath.section == 1) {
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"collect"];
-            ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"我的收藏", @"");
+            ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"我收藏的资讯", @"");
             ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"", @"");
         }else{
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"set_up"];

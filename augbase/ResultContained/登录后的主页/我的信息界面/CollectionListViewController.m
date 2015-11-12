@@ -69,8 +69,11 @@
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = grayBackgroundLightColor;
-    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-    headerView.layer.borderWidth = 0.5;
+//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
+//    headerView.layer.borderWidth = 0.5;
+    UIView *topView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 0.5)];
+    topView.backgroundColor = lightGrayBackColor;
+    [headerView addSubview:topView];
     return headerView;
 }
 

@@ -381,6 +381,7 @@
         titleLabel.text = NSLocalizedString(@"结束时间", @"");
     }else{
         endTime = tempDateString;
+        IsUsed = NO;
         [endTimeButton setTitle:endTime forState:UIControlStateNormal];
         endTimeButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
         [UIView animateWithDuration:0.5 animations:^{

@@ -114,6 +114,8 @@
             make.right.equalTo(@-20);
             make.height.equalTo(@50);
         }];
+    }else{
+        [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"您不能使用分享功能", @"") Title:NSLocalizedString(@"您没有安装微信", @"") ViewController:self];
     }
 }
 

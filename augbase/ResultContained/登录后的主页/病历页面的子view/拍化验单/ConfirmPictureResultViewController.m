@@ -57,7 +57,7 @@
             break;
         case 2:
         {
-            UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"传化验单", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"非B超的普通化验单", @""),NSLocalizedString(@"B超", @""), nil];
+            UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"选择化验单种类", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"普通化验单(非B超)", @""),NSLocalizedString(@"B超", @""), nil];
             sheet.tag = 3;
             [sheet showInView:self.view];
         }

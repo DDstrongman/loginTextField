@@ -11,11 +11,11 @@
 #define ChatPicWH 200       //图片宽高
 #define ChatContentW 180    //内容宽度
 
-#define ChatTimeMarginW 15  //时间文本与边框间隔宽度方向
+#define ChatTimeMarginW 0  //时间文本与边框间隔宽度方向
 #define ChatTimeMarginH 10  //时间文本与边框间隔高度方向
 
 #define ChatContentTop 15   //文本内容与按钮上边缘间隔
-#define ChatContentLeft 25  //文本内容与按钮左边缘间隔
+#define ChatContentLeft 20  //文本内容与按钮左边缘间隔
 #define ChatContentBottom 15 //文本内容与按钮下边缘间隔
 #define ChatContentRight 15 //文本内容与按钮右边缘间隔
 

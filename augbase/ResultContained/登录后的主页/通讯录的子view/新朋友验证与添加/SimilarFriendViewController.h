@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
+@interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIAlertViewDelegate>
 
 
 @property (nonatomic,strong) IBOutlet UITableView *similarFriendTable;

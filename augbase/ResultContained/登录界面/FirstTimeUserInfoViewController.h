@@ -17,7 +17,8 @@
 @property (nonatomic,strong) UIImageView *cameraImageView;
 
 @property (nonatomic,strong) ImageViewLabelTextFieldView *nameView;
-@property (nonatomic,strong) ImageViewLabelTextFieldView *sexAndAgeView;
+@property (nonatomic,strong) ImageViewLabelTextFieldView *sexView;
+@property (nonatomic,strong) ImageViewLabelTextFieldView *ageView;
 
 @property (nonatomic,strong) UIButton *finishRegistButton;
 

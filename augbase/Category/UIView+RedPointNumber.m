@@ -23,6 +23,19 @@
     numberView.backgroundColor = [UIColor redColor];
     numberView.tag = 99;
     [numberView imageWithRound:NO];
+    numberView.center = CGPointMake(self.frame.size.width-3-8, 23+10);
+    numberView.text = [NSString stringWithFormat:@"%ld",(long)number];
+    numberView.textAlignment = NSTextAlignmentCenter;
+    numberView.font = [UIFont systemFontOfSize:15.0];
+    numberView.textColor = [UIColor whiteColor];
+    [self addSubview:numberView];
+}
+
+-(void)imageWithRedNumberUp:(NSInteger)number{
+    UILabel *numberView = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 22, 22)];
+    numberView.backgroundColor = [UIColor redColor];
+    numberView.tag = 99;
+    [numberView imageWithRound:NO];
     numberView.center = CGPointMake(self.frame.size.width-3, 3);
     numberView.text = [NSString stringWithFormat:@"%ld",(long)number];
     numberView.textAlignment = NSTextAlignmentCenter;

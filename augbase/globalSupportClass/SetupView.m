@@ -67,6 +67,11 @@
     [showAlert show];
 }
 
+-(void)showAlertViewOneButton:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller{
+    UIAlertView *showAlert = [[UIAlertView alloc]initWithTitle:title message:message delegate:controller cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+    [showAlert show];
+}
+
 -(void)showHUdAlertView:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller{
     UIAlertView *showAlert = [[UIAlertView alloc]initWithTitle:title message:message delegate:controller cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
     [showAlert show];
@@ -76,7 +81,7 @@
 -(void)showAlertView:(int)res Hud:(MBProgressHUD *)HUD ViewController:(UIViewController *)controller{
     [_HUD hide:YES];
     if (res == 1){
-        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"您输入的数据出错，请检查您的输入数据", @"") ViewController:controller];
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"输入数据出错", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 2){
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
@@ -160,7 +165,7 @@
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"小易在开小差，稍等一会儿", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 29){
-        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码已用完，请关注“战友”微信订阅号(绿色图标)索取新验证码", @"") ViewController:controller];
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码已用完，请关注“易诊”微信订阅号索取新验证码", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 30){
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"验证码填错啦，再试一遍吧=)", @"") ViewController:controller];
@@ -175,7 +180,7 @@
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"get User失败", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 34){
-        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"账户出错，请尽快联系“战友”微信订阅号(绿色图标)", @"") ViewController:controller];
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"账户出错，请尽快联系“易诊”微信订阅号", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 35){
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"获取消息失败", @"") ViewController:controller];

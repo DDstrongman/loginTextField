@@ -26,6 +26,7 @@
     UIDatePicker *datePicker;
     
     NSString *startTime;//开始时间
+    NSDate *startDate;
     NSString *endTime;//结束时间
     BOOL IsStart;//判断是开始时间还是结束时间，1为开始时间，0则是结束时间
     BOOL IsUsed;//判断是否至今
@@ -376,6 +377,7 @@
             label.frame = CGRectMake(startTimeButton.frame.origin.x+startTimeButton.bounds.size.width, 10, label.frame.size.width, 30);
             endTimeButton.frame = CGRectMake(label.frame.origin.x+label.frame.size.width+3, 10, endTimeButton.frame.size.width, 30);
         }];
+        datePicker.minimumDate = date;
         tillNowButton.hidden = NO;
         IsStart = NO;
         titleLabel.text = NSLocalizedString(@"结束时间", @"");

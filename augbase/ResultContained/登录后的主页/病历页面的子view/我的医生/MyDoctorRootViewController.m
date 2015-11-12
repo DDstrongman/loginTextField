@@ -70,21 +70,22 @@
 }
 
 -(void)addDoctor:(UIButton *)sender{
-    CGPoint point = CGPointMake(sender.frame.origin.x + sender.frame.size.width/2, 66);
-    NSArray *titles = @[@"搜索医生", @"扫二维码"];
-    NSArray *images = @[@"search3", @"qr_cord2"];
-    PopoverView *pop = [[PopoverView alloc] initWithPoint:point titles:titles images:images];
-    pop.selectRowAtIndex = ^(NSInteger index){
-        NSLog(@"select index:%d", index);
-        if (index == 0) {
-            AddDoctorListViewController *adlv = [[AddDoctorListViewController alloc]init];
-            [self.navigationController pushViewController:adlv animated:YES];
-        }else{
-            ScanQRCodeViewController *sqv = [[ScanQRCodeViewController alloc]init];
-            [self.navigationController pushViewController:sqv animated:YES];
-        }
-    };
-    [pop show];
+//    CGPoint point = CGPointMake(sender.frame.origin.x + sender.frame.size.width/2, 66);
+//    NSArray *titles = @[@"搜索医生", @"扫二维码"];
+//    NSArray *images = @[@"search3", @"qr_cord2"];
+//    PopoverView *pop = [[PopoverView alloc] initWithPoint:point titles:titles images:images];
+//    pop.selectRowAtIndex = ^(NSInteger index){
+//        NSLog(@"select index:%d", index);
+//        if (index == 0) {
+//            AddDoctorListViewController *adlv = [[AddDoctorListViewController alloc]init];
+//            [self.navigationController pushViewController:adlv animated:YES];
+//        }else{
+//            ScanQRCodeViewController *sqv = [[ScanQRCodeViewController alloc]init];
+//            [self.navigationController pushViewController:sqv animated:YES];
+//        }
+//    };
+//    [pop show];
+    [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"如需添加医生，请关注易诊微信订阅号，进入“我是战友/我的医生”进行添加", @"") Title:NSLocalizedString(@"添加医生", @"") ViewController:self];
 }
 
 #pragma mark - Table view data source
@@ -116,7 +117,14 @@
     cell.iconImageView.backgroundColor = themeColor;
     cell.titleText.text = [doctorArray[indexPath.row] objectForKey:@"name"];
     cell.descriptionText.text = [doctorArray[indexPath.row] objectForKey:@"lastMsg"];//测试用，以后改为传来的讯息,以下同
-    cell.timeText.text = [[doctorArray[indexPath.row] objectForKey:@"latestDate"] stringValue];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy年MM月dd日"];
+    NSString *dateLoca = [NSString stringWithFormat:@"%@",[[doctorArray[indexPath.row] objectForKey:@"latestDate"] stringValue]];
+    NSTimeInterval time = [dateLoca doubleValue]/1000;
+    NSDate *detaildate = [NSDate dateWithTimeIntervalSince1970:time];
+    NSString *timestr = [formatter stringFromDate:detaildate];
+    
+    cell.timeText.text =  timestr;
     return cell;
 }
 
@@ -139,6 +147,7 @@
         NSLog(@"聊天url====%@",url);
         WebContactDoctorViewController *wcd = [[WebContactDoctorViewController alloc]init];
         wcd.url = url;
+        wcd.popViewController = self;
         wcd.WebTitle = [doctorArray[indexPath.row] objectForKey:@"name"];
         [self.navigationController pushViewController:wcd animated:YES];
     }

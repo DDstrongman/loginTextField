@@ -82,11 +82,7 @@
 }
 
 - (void)initBar{
-    if(_privateOrNot == 0){
-        self.title = NSLocalizedString(@"私聊", @"");
-    }else{
-        self.title = NSLocalizedString(@"群聊", @"");
-    }
+    self.title = _personName;
 }
 
 - (void)addRefreshViews

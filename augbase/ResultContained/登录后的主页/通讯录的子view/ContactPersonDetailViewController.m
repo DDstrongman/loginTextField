@@ -15,6 +15,8 @@
 
 #import "FriendDBManager.h"
 
+#import "FriendsSetViewController.h"
+
 @interface ContactPersonDetailViewController ()
 
 {
@@ -34,12 +36,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupView];
-    [self setupData];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
+    [self setupData];
     self.title = NSLocalizedString(@"联系人详情", @"");
+}
+
+-(void)setFriendRight:(UIButton *)sender{
+    FriendsSetViewController *fsv = [[FriendsSetViewController alloc]init];
+    fsv.friendJID = _friendJID;
+    [self.navigationController pushViewController:fsv animated:YES];
 }
 
 #pragma mark - Table view data source
@@ -73,7 +81,7 @@
             return cellDiseaseHeightNumber*45+40+10;
         }
     }else{
-        return 160;
+        return 60;
     }
 }
 
@@ -85,8 +93,8 @@
             [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
             [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:_friendImageUrl] placeholderImage:[UIImage imageNamed:@"test"]];
             ((UILabel *)[cell.contentView viewWithTag:2]).text = _friendName;
-            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%ld%@",_similar,@"%"];
-            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@/%d",_friendGender,_friendAge];
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"相似度: %ld%@",(long)_similar,@"%"];
+            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ / %d",_friendGender,_friendAge];
             [((UIButton *)[cell.contentView viewWithTag:5]) setTitle:_friendLocation forState:UIControlStateNormal];
             
         }else{
@@ -105,7 +113,8 @@
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
         }
         if (indexPath.row != 2) {
-            UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(20, 10, cell.contentView.bounds.size.width-30, 20)];
+            UILabel *titleLabel = [[UILabel alloc]initWithFrame:CGRectMake(15, 10, cell.contentView.bounds.size.width-30, 20)];
+            titleLabel.font = [UIFont systemFontOfSize:15.0];
             [cell addSubview:titleLabel];
             UIView *buttonView = [[UIView alloc]init];
             [cell addSubview:buttonView];
@@ -116,37 +125,38 @@
                 make.top.mas_equalTo(titleLabel.mas_bottom).with.offset(10);
             }];
             if (indexPath.row == 0) {
-                titleLabel.text = NSLocalizedString(@"当前用药", @"");
-                if (showMedic == 0||(showMedic == 1&&_isFriend)) {
-                    [self addMedicBTNs:_friendMedicalArray View:buttonView];
-                }
+                titleLabel.text = NSLocalizedString(@"用药纪录", @"");
+                [self addMedicBTNs:_friendMedicalArray View:buttonView];
+                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
             }else if (indexPath.row == 1){
                 titleLabel.text = NSLocalizedString(@"当前疾病", @"");
-                if (showDisease == 0||(showDisease == 1&&_isFriend)) {
-                    [self addDiseaseBTNs:_friendDiseaseArray View:buttonView];
-                }
+                [self addDiseaseBTNs:_friendDiseaseArray View:buttonView];
+                [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
             }
         }else{
             cell.textLabel.text = NSLocalizedString(@"识别结果", @"");
-            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            cell.textLabel.font = [UIFont systemFontOfSize:15.0];
+            cell.accessoryView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"goin"]];
         }
     }
     else{
-        if (_isFriend) {
-            if (indexPath.row == 0) {
+        if (_isConfirm) {
+            cell = [tableView dequeueReusableCellWithIdentifier:@"confirmfriendcell" forIndexPath:indexPath];
+            [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(confirmMessNewFriend) forControlEvents:UIControlEventTouchUpInside];
+            [[cell.contentView viewWithTag:1] viewWithRadis:10.0];
+            cell.backgroundColor = grayBackgroundLightColor;
+        }else{
+            if (_isFriend) {
                 cell = [tableView dequeueReusableCellWithIdentifier:@"sendmesscell" forIndexPath:indexPath];
                 [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(sendMess) forControlEvents:UIControlEventTouchUpInside];
                 [[cell.contentView viewWithTag:1] viewWithRadis:10.0];
-                [((UIButton *)[cell.contentView viewWithTag:2]) addTarget:self action:@selector(deleteFriend) forControlEvents:UIControlEventTouchUpInside];
-                [cell.contentView viewWithTag:2].layer.borderWidth = 0.5;
-                [cell.contentView viewWithTag:2].layer.borderColor = [UIColor orangeColor].CGColor;
-                [[cell.contentView viewWithTag:2] viewWithRadis:10.0];
+                cell.backgroundColor = grayBackgroundLightColor;
+            }else{
+                cell = [tableView dequeueReusableCellWithIdentifier:@"addcell" forIndexPath:indexPath];
+                [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(addStrangerFriend:) forControlEvents:UIControlEventTouchUpInside];
+                [[cell.contentView viewWithTag:1] viewWithRadis:10.0];
                 cell.backgroundColor = grayBackgroundLightColor;
             }
-        }else{
-            cell = [tableView dequeueReusableCellWithIdentifier:@"addcell" forIndexPath:indexPath];
-            [((UIButton *)[cell.contentView viewWithTag:1]) addTarget:self action:@selector(addStrangerFriend:) forControlEvents:UIControlEventTouchUpInside];
-            [[cell.contentView viewWithTag:1] viewWithRadis:10.0];
         }
         [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
     }
@@ -162,18 +172,18 @@
     NSLog(@"加入切换判断和响应");
 }
 
+-(void)confirmMessNewFriend{
+    [[XMPPSupportClass ShareInstance]confirmAddFriend:_friendJID];
+    [self.navigationController popToRootViewControllerAnimated:YES];
+}
+
 #pragma 发送消息和删除好友的响应函数
 -(void)sendMess{
     NSLog(@"发送消息");
     RootViewController *rvc = [[RootViewController alloc]init];
     rvc.personJID = _friendJID;
+    rvc.personName = _friendName;
     [self.navigationController pushViewController:rvc animated:YES];
-}
-
--(void)deleteFriend{
-    NSLog(@"删除好友");
-    [[XMPPSupportClass ShareInstance] removeFriend:_friendJID];
-    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 -(void)addStrangerFriend:(UIButton *)sender{
@@ -241,11 +251,22 @@
             }else{
                 _friendGender = NSLocalizedString(@"女", @"");
             }
-            _friendAge = [[userInfo objectForKey:@"age"] intValue];
+            if ([userInfo objectForKey:@"age"] != [NSNull class]) {
+                _friendAge = [[userInfo objectForKey:@"age"] intValue];
+            }else{
+                _friendAge = @"-";
+            }
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
             imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             _friendImageUrl = imageurl;
             _friendLocation = [userInfo objectForKey:@"address"];
+            
+            if ([[userInfo objectForKey:@"address"] isEqualToString:@""]) {
+                _friendLocation = NSLocalizedString(@"--", @"");
+            }else{
+                _friendLocation = [userInfo objectForKey:@"address"];
+            }
+            
             FMResultSet *isFriendArray = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:_friendJID];
             int isfriendInt = 0;
             while ([isFriendArray next]){
@@ -255,6 +276,13 @@
                 _isFriend = NO;
             }else{
                 _isFriend = YES;
+                if (![_friendJID isEqualToString:@"p22142"]) {
+                    UIButton *setFrindButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
+                    [setFrindButton setImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
+                    setFrindButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                    [setFrindButton addTarget:self action:@selector(setFriendRight:) forControlEvents:UIControlEventTouchUpInside];
+                    [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:setFrindButton]];
+                }
             }
             if ([[userInfo objectForKey:@"introduction"] isEqualToString:@""]) {
                 
@@ -288,14 +316,25 @@
     }
     int xxxx = 10;
     int newrows = 0;
-    
+    NSString *temptitle;
+    if (array.count>0&&(showDisease == 0||(showDisease == 1&&_isFriend))) {
+        
+    }else{
+        temptitle = NSLocalizedString(@"暂无", @"");
+        CGSize size = [self get:temptitle];
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+        [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        btn.backgroundColor = lightGrayBackColor;
+        [btn setTitle:temptitle forState:UIControlStateNormal];
+        btn.layer.cornerRadius = 5;
+        btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
+        [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
+        [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
+        [view addSubview:btn];
+    }
     for (int i = 0; i<array.count; i++) {
         NSString *title;
-        if (array.count>0) {
-            title = [array[i] objectForKey:@"medicineBrandname"];
-        }else{
-            title = NSLocalizedString(@"没有用药", @"");
-        }
+        title = [array[i] objectForKey:@"medicineBrandname"];
         CGSize size = [self get:title];
         CGSize size2;
         if (i!=array.count-1) {
@@ -336,14 +375,27 @@
     int xxxx = 10;
     int newrows = 0;
     
+    NSString *temptitle;
+    if (array.count>0&&(showDisease == 0||(showDisease == 1&&_isFriend))) {
+        
+    }else{
+        temptitle = NSLocalizedString(@"暂无", @"");
+        CGSize size = [self get:temptitle];
+        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+        [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        btn.backgroundColor = lightGrayBackColor;
+        [btn setTitle:temptitle forState:UIControlStateNormal];
+        btn.layer.cornerRadius = 5;
+        btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
+        [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
+        [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
+        [view addSubview:btn];
+    }
+    
     for (int i = 0; i<array.count; i++) {
         
         NSString *title;
-        if (array.count>0) {
-            title = [array[i] objectForKey:@"name"];
-        }else{
-            title = NSLocalizedString(@"没有病史", @"");
-        }
+        title = [array[i] objectForKey:@"name"];
         CGSize size = [self get:title];
         CGSize size2;
         if (i!=array.count-1) {
@@ -397,6 +449,10 @@
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
     [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)viewWillDisappear:(BOOL)animated{
+    [[SetupView ShareInstance]setupNavigationRightButton:self RightButton:nil];
 }
 
 @end

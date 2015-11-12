@@ -72,7 +72,6 @@
 -(BOOL)addChatobjTablename:(NSString *)tableName andchatobj:(DBItem *)obj{
     BOOL isexit = [self isChatTableExist:tableName];
     NSString *personJID = obj.toPersonJID;
-    NSLog(@"personJId====%@,tableName====%@",personJID,tableName);
     NSString *personNickName = obj.personNickName;
     NSString *personImageUrl = obj.personImageUrl;
     NSInteger chatType = obj.chatType;
@@ -82,16 +81,27 @@
     NSString *timeStamp = obj.timeStamp;
     NSString *messContent = obj.messContent;
     NSString *messTime = obj.messVoiceTime;
+    FMResultSet *messWithTime;
+#warning 此处的limit 0,%ld表示从第一台哦开始，取％ld条数据，0可以自己修改为想要的数据或是传入
+    NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@ where timeStamp = '%@'",tableName,timeStamp];
+    
     if (isexit) {
-        //存在表
-        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
-        if ([self.yzdcdb executeUpdate:insertsql]) {
-            //插入成功
-            NSLog(@"插入成功");
-            return YES;
+        messWithTime = [self.yzdcdb executeQuery:searchsql];
+        BOOL isReady = YES;
+        while ([messWithTime next]){
+            isReady = NO;
         }
-        else{
-            return NO;
+        if (isReady) {
+            //存在表
+            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
+            if ([self.yzdcdb executeUpdate:insertsql]) {
+                //插入成功
+                NSLog(@"插入成功");
+                return YES;
+            }
+            else{
+                return NO;
+            }
         }
     }
     return YES;

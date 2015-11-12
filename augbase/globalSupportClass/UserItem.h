@@ -39,6 +39,7 @@
 @property (nonatomic,strong) NSString *userShareDoctor;//是否同步病历给官方医生
 @property (nonatomic,strong) NSString *userOpenVoice;//是否开启声音
 @property (nonatomic,strong) NSString *userOpenShake;//是否开启震动
+@property (nonatomic,strong) NSString *userOpenRemind;//是否开启没加好友提示界面
 
 +(UserItem *) ShareInstance;
 

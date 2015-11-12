@@ -51,7 +51,7 @@
     //将搜索控制器的搜索条设置为页眉视图
     _contactsTableview.tableHeaderView = searchViewController.searchBar;
     
-    searchViewController.searchBar.placeholder = NSLocalizedString(@"联系人姓名", @"");
+    searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索战友姓名", @"");
     searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
     searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
 //    searchViewController.searchBar.layer.borderWidth = 0.5;
@@ -72,18 +72,12 @@
     _contactsTableview.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
     _contactsTableview.backgroundColor = grayBackgroundLightColor;
     self.view.backgroundColor = grayBackgroundLightColor;
-    isStranger = NO;
-    FMResultSet *addStrangerList = [[FriendDBManager ShareInstance] SearchAllFriend:StrangerTBName];
-    while ([addStrangerList next]) {
-        isStranger = YES;
-    }
-    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     
-    self.tabBarController.title = NSLocalizedString(@"联系人", @"");
+    self.tabBarController.title = NSLocalizedString(@"战友", @"");
     UIButton *sendMessButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 15, 15)];
     [sendMessButton setBackgroundImage:[UIImage imageNamed:@"add"] forState:UIControlStateNormal];
     sendMessButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
@@ -94,6 +88,12 @@
     UIImage* imageSelected = [UIImage imageNamed:@"contacts_on"];
     self.tabBarItem.selectedImage = [imageSelected imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
     self.tabBarItem.image = [imageNormal imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+    [[XMPPSupportClass ShareInstance]getMyQueryRoster];
+    isStranger = NO;
+    FMResultSet *addStrangerList = [[FriendDBManager ShareInstance] SearchAllFriend:StrangerTBName];
+    while ([addStrangerList next]) {
+        isStranger = YES;
+    }
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -115,7 +115,11 @@
             [tableFrindName addObject:[friendList stringForColumn:@"friendName"]];
         }
         [tableFrindJID addObject:[friendList stringForColumn:@"friendJID"]];
-        [similarResults addObject:[NSString stringWithFormat:@"%@ %@",[friendList stringForColumn:@"friendSimilarity"],@"%"]];
+        if ([friendList stringForColumn:@"friendSimilarity"]!=[NSNull class]) {
+            [similarResults addObject:[NSString stringWithFormat:@"%@ %@",[friendList stringForColumn:@"friendSimilarity"],@"%"]];
+        }else{
+            [similarResults addObject:[NSString stringWithFormat:@"%@ %@",@"0",@"%"]];
+        }
     }
     
     dataArray = [[NSMutableArray alloc]initWithArray:tableFrindName];
@@ -187,14 +191,21 @@
         cell.layer.borderWidth = 0.5;
         [cell.contentView viewWithTag:3].hidden = YES;
     }else{
-        FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:dataJID[indexPath.row]];
+        int tempI;//搜索的时候的标序
+        for (int i=0;i<dataArray.count;i++) {
+            if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+                tempI = i;
+                break;
+            }
+        }
+        FMResultSet *messPicPath = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:dataJID[tempI]];
         while ([messPicPath next]) {
             NSString *picPath = [messPicPath stringForColumn:@"friendImageUrl"];
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:picPath];
         }
         ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = similarResults[indexPath.row];
-        ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[indexPath.row];
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = similarResults[tempI];
+        ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[tempI];
         [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
     }
     return cell;
@@ -213,10 +224,17 @@
             [self.navigationController pushViewController:nfnv animated:YES];
 //        }
     }else{
+        int tempI;//搜索的时候的标序
+        for (int i=0;i<dataArray.count;i++) {
+            if ([dataArray[i] isEqualToString:searchResults[indexPath.row]]) {
+                tempI = i;
+                break;
+            }
+        }
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
         cpdv.isJIDOrYizhenID = YES;
-        cpdv.friendJID = dataJID[indexPath.row];
+        cpdv.friendJID = dataJID[tempI];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];

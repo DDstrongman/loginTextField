@@ -129,6 +129,9 @@
 }
 
 -(void)testWeixin:(UIButton *)sender{
+//    UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+//    FirstTimeUserInfoViewController *ftui = [story instantiateViewControllerWithIdentifier:@"firsttimeuserinfo"];
+//    [self.navigationController pushViewController:ftui animated:YES];
     [self sendAuthRequest];
 }
 

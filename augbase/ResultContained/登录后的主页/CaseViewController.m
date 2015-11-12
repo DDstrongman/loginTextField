@@ -26,6 +26,8 @@
 
 #import "OcrTextResultViewController.h"
 
+#import "MyCaseRightsViewController.h"
+
 @interface CaseViewController ()<PhotoTweaksViewControllerDelegate,OpenCameraDele,CameraNewReportDele>
 
 {
@@ -33,9 +35,9 @@
     NSMutableArray *titleDataArray;//官方提供的选项的名称数组
     NSMutableArray *imageNameArray;//cell图片名称数组
     NSString *messCount;//收到的医生信息数
-    NSString *failedCount;//失败的数目
+    NSInteger failedCount;//失败的数目
     NSInteger doneCount;//完成的数目
-    NSString *doingCount;//进行中的数目
+    NSInteger doingCount;//进行中的数目
     NSString *lastDate;//最后一张化验单日期
     NSArray *diseaseArray;//疾病数组
     NSArray *medicArray;//用药数组
@@ -56,7 +58,7 @@
     lineLayout.interitemSpacing = 0;
     lineLayout.lineSpacing = 0;
     lineLayout.aspectRatio = 1.0/0.15;//长宽比例
-    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 19);
+//    lineLayout.headerReferenceSize = CGSizeMake(ViewWidth, 19);
     
     _settingCollection.collectionViewLayout = lineLayout;
     _settingCollection.alwaysBounceVertical = YES;
@@ -130,14 +132,34 @@
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     UICollectionViewCell *cell;
-    cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"casechoosecell" forIndexPath:indexPath];
+    if (indexPath.row == 0) {
+        cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"caseshowcell" forIndexPath:indexPath];
+        if (doingCount != 0||failedCount != 0||doneCount != 0) {
+            cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"caseshowcell" forIndexPath:indexPath];
+            if (doingCount != 0) {
+                ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%ld%@",(long)doingCount,NSLocalizedString(@"张正在识别中", @"")];
+                ((UIImageView *)[cell.contentView viewWithTag:4]).image = [UIImage imageNamed:@"recognition2"];
+            }else if (failedCount != 0){
+                ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%ld%@",(long)failedCount,NSLocalizedString(@"张识别失败", @"")];
+                ((UIImageView *)[cell.contentView viewWithTag:4]).image = [UIImage imageNamed:@"identification_failure"];
+            }else if (doneCount != 0){
+                ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@",NSLocalizedString(@"识别成功", @"")];
+                ((UIImageView *)[cell.contentView viewWithTag:4]).image = [UIImage imageNamed:@"carry_out"];
+            }
+        }else{
+            cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"casechoosecell" forIndexPath:indexPath];
+            ((UILabel *)[cell.contentView viewWithTag:3]).text = lastDate;
+        }
+    }else{
+        cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"casechoosecell" forIndexPath:indexPath];
+    }
     cell.backgroundColor = [UIColor whiteColor];
     ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:imageNameArray[indexPath.row]];
     [((UIImageView *)[cell.contentView viewWithTag:4]) setTintColor:grayBackColor];
     ((UILabel *)[cell.contentView viewWithTag:2]).text = titleDataArray[indexPath.row];
     ((UILabel *)[cell.contentView viewWithTag:3]).textColor = grayLabelColor;
     if (indexPath.row == 0) {
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = lastDate;
+        
     }else if (indexPath.row == 1) {
         NSString *diseaseTemp;
         if (diseaseArray.count<3) {
@@ -145,11 +167,11 @@
                 if (diseaseTemp == nil) {
                     diseaseTemp = [disease objectForKey:@"name"];
                 }else{
-                    diseaseTemp = [NSString stringWithFormat:@"%@,%@",diseaseTemp,[disease objectForKey:@"name"]];
+                    diseaseTemp = [NSString stringWithFormat:@"%@, %@",diseaseTemp,[disease objectForKey:@"name"]];
                 }
             }
         }else{
-            diseaseTemp = [NSString stringWithFormat:@"%@,%@...",[diseaseArray[0] objectForKey:@"name"],[diseaseArray[1] objectForKey:@"name"]];
+            diseaseTemp = [NSString stringWithFormat:@"%@, %@...",[diseaseArray[0] objectForKey:@"name"],[diseaseArray[1] objectForKey:@"name"]];
         }
         ((UILabel *)[cell.contentView viewWithTag:3]).text = diseaseTemp;
     }else if (indexPath.row == 2) {
@@ -159,18 +181,20 @@
                 if (medicTemp == nil) {
                     medicTemp = [medic objectForKey:@"medicineBrandname"];
                 }else{
-                    medicTemp = [NSString stringWithFormat:@"%@,%@",medicTemp,[medic objectForKey:@"medicineBrandname"]];
+                    medicTemp = [NSString stringWithFormat:@"%@, %@",medicTemp,[medic objectForKey:@"medicineBrandname"]];
                 }
             }
         }else{
-            medicTemp = [NSString stringWithFormat:@"%@,%@...",[medicArray[0] objectForKey:@"medicineBrandname"],[medicArray[1] objectForKey:@"medicineBrandname"]];
+            medicTemp = [NSString stringWithFormat:@"%@, %@...",[medicArray[0] objectForKey:@"medicineBrandname"],[medicArray[1] objectForKey:@"medicineBrandname"]];
         }
         ((UILabel *)[cell.contentView viewWithTag:3]).text = medicTemp;
     }else if (indexPath.row == 3) {
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@%@",NSLocalizedString(@"未读消息:", @""),messCount];
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@%@",NSLocalizedString(@"未读消息: ", @""),messCount];
     }else if (indexPath.row == 4) {
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }else if (indexPath.row == 5) {
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
+    }else if (indexPath.row == 6){
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }
     cell.layer.borderWidth = 0.5;
@@ -207,13 +231,16 @@
         swv.url = url;
         swv.isClassOrNot = YES;
         [self.navigationController pushViewController:swv animated:YES];
+    }else if (indexPath.row == 6){
+        MyCaseRightsViewController *mcv = [[MyCaseRightsViewController alloc]init];
+        [self.navigationController pushViewController:mcv animated:YES];
     }
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }
 
 -(void)setupData{
-    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"百科", @"")]mutableCopy];
-    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class1"]mutableCopy];
+    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"百科", @""),NSLocalizedString(@"病历权限", @"")]mutableCopy];
+    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class1",@"set_up"]mutableCopy];
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/overview?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
     NSLog(@"病历显示url====%@",url);
@@ -221,17 +248,17 @@
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         if (res == 0) {
-            doingCount = [[source objectForKey:@"unviewedDoingCount"] stringValue];
+            doingCount = [[source objectForKey:@"unviewedDoingCount"] integerValue];
             doneCount = [[source objectForKey:@"unviewedDoneCount"] integerValue];
             messCount = [[source objectForKey:@"unviewedMsgCount"] stringValue];
-            failedCount = [[source objectForKey:@"unviewedFailCount"] stringValue];
+            failedCount = [[source objectForKey:@"unviewedFailCount"] integerValue];
             medicArray = [source objectForKey:@"medicineInfoList"];
             diseaseArray = [source objectForKey:@"diseaseDetailList"];
             lastDate = [source objectForKey:@"latestDoneLtrDate"];
             if (doneCount == 0) {
                 
             }else{
-                [_checkResultButton imageWithRedNumber:doneCount];
+                [_checkResultButton imageWithRedNumberUp:doneCount];
             }
             [_settingCollection reloadData];
         }
@@ -242,7 +269,7 @@
 }
 
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
-    NSLog(@"点击了===%ld",buttonIndex);
+    NSLog(@"点击了===%ld",(long)buttonIndex);
     if (buttonIndex == 0||buttonIndex == 1) {
         UIImagePickerControllerSourceType type = UIImagePickerControllerSourceTypePhotoLibrary;
         if (buttonIndex == 0) {
@@ -285,7 +312,7 @@
 
 -(void)openCamera:(BOOL)openBool{
     if (openBool) {
-        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"准备识别化验单", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
         [sheet showInView:self.view];
     }
 }
@@ -302,8 +329,8 @@
 #pragma 重新拍摄的delegate
 -(void)cameraNewReport:(BOOL)result{
     if (result) {
-        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
-        [sheet showInView:self.view];
+//        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+//        [sheet showInView:self.view];
     }
 }
 

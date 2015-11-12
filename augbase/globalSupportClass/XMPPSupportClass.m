@@ -131,7 +131,6 @@
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message {
     _messArray = [NSMutableArray array];
     [_messArray removeAllObjects];
-//    NSLog(@"message====%@",message);
     NSString *messContent = [[message elementForName:@"body"]stringValue];//发送内容的主题必须是body，xmpp需求
     NSString *messTime = [[message elementForName:@"messTime"]stringValue];
     NSString *timeStamp = [[message elementForName:@"timeStamp"]stringValue];
@@ -208,6 +207,7 @@
             fItem.friendGender = [[friendInfo objectForKey:@"gender"] stringValue];
             fItem.friendName = [friendInfo objectForKey:@"username"];
             fItem.friendRealName = [friendInfo objectForKey:@"nickname"];
+            fItem.friendSimilarity = [friendInfo objectForKey:@"similarity"];
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[friendInfo objectForKey:@"picture"]];
             imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
@@ -217,7 +217,14 @@
                 [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:presenceFromUser Contents:responseObject];
                 fItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,presenceFromUser];
                 fItem.friendOnlineOrNot = @"2";
-                [[FriendDBManager ShareInstance]addFriendObjTablename:StrangerTBName andchatobj:fItem];
+                BOOL tempIsFriend = NO;
+                FMResultSet *strangerNum = [[FriendDBManager ShareInstance]SearchOneFriend:YizhenFriendName FriendJID:fItem.friendJID];
+                while ([strangerNum next]) {
+                    tempIsFriend = YES;
+                }
+                if (!tempIsFriend) {
+                    [[FriendDBManager ShareInstance]addFriendObjTablename:StrangerTBName andchatobj:fItem];
+                }
             }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 NSLog(@"获取图片信息失败");
             }];
@@ -395,7 +402,7 @@
 }
 
 -(void)xmppRoomDidJoin:(XMPPRoom *)sender{
-    NSLog(@"加入聊天室成功");
+    NSLog(@"加入聊天室成功====%@",sender.roomJID);
     [xmppRoom fetchConfigurationForm];
 //    [xmppRoom fetchBanList];
     [xmppRoom fetchMembersList];
@@ -404,7 +411,7 @@
 }
 
 -(void)leaveChatRoom:(NSString *)ROOM_JID{
-    NSLog(@"离开聊天室");
+    NSLog(@"离开聊天室111");
     [xmppRoom deactivate];//离开聊天室
 }
 
@@ -464,9 +471,9 @@
 - (void)xmppRoom:(XMPPRoom *)sender didNotFetchModeratorsList:(XMPPIQ *)iqError{
     NSLog(@"群信息获取失败");
 }
-//其他delegate，离开聊天室
+//其他delegate，离开聊天室222
 - (void)xmppRoomDidLeave:(XMPPRoom *)sender{
-    NSLog(@"离开聊天室");
+    NSLog(@"离开聊天室222");
 }
 //新人入群
 - (void)xmppRoom:(XMPPRoom *)sender occupantDidJoin:(XMPPJID *)occupantJID withPresence:(XMPPPresence *)presence{
@@ -609,15 +616,16 @@
             fdItem.friendRealName = [source objectForKey:@"nickname"];
             fdItem.friendGender = [source objectForKey:@"gender"];
             fdItem.friendAge = [source objectForKey:@"age"];
+            fdItem.friendSimilarity = [source objectForKey:@"similarity"];
             fdItem.friendDescribe = @"test";
             NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
             NSString *documentsDirectory = [paths objectAtIndex:0];
             fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,keyjid];
             fdItem.friendJID = keyjid;
             fdItem.friendOnlineOrNot = @"0";
-            [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
-            [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-            [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
+//            [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+//            [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+//            [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
             
             NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
@@ -668,64 +676,67 @@
         if ([@"query" isEqualToString:query.name]) {
             NSArray *items = [query children];
             for (NSXMLElement *item in items) {
-                NSString *jid = [item attributeStringValueForName:@"jid"];
-                XMPPJID *xmppJID = [XMPPJID jidWithString:jid];
-                NSString *name = xmppJID.description;
-                NSRange range = [name rangeOfString:@"@"];
-                if (range.location != NSNotFound) {
-                    name = [name substringToIndex:range.location];
-                }
-                NSLog(@"获取好友列表成功：jid===%@,name===%@",jid,name);
-                [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
-                [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-                
-                NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,name,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-                [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                    int res=[[source objectForKey:@"res"] intValue];
-                    if (res == 0) {
-                        FriendDBItem *fdItem = [[FriendDBItem alloc]init];
-                        fdItem.friendName = [source objectForKey:@"username"];
-                        fdItem.friendRealName = [source objectForKey:@"nickname"];
-                        fdItem.friendGender = [source objectForKey:@"gender"];
-                        fdItem.friendAge = [source objectForKey:@"age"];
-                        fdItem.friendDescribe = [source objectForKey:@"introduction"];
-                        fdItem.friendSimilarity = [source objectForKey:@"similarity"];
-                        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-                        NSString *documentsDirectory = [paths objectAtIndex:0];
-                        fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,name];
-                        fdItem.friendJID = name;
-                        fdItem.friendOnlineOrNot = @"0";
-                        [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
-                        [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-                        [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
-                        
-                        NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                        NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
-                        NSLog(@"imageurl === %@",imageurl);
-                        imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-                        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-                        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-                        manager.requestSerializer = [AFHTTPRequestSerializer serializer];
-                        [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-#warning 此处的获取好友头像可以变成lazyloading以便进一步优化效率
-                            [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:name Contents:responseObject];
-                            [_getFriendListDelegate GetFriendListDelegate:YES];
-                        }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                            NSLog(@"获取图片信息失败");
-                            [_getFriendListDelegate GetFriendListDelegate:NO];
-                        }];
-                    }else{
-                        [_getFriendListDelegate GetFriendListDelegate:NO];
+                NSString *describe = [item attributeStringValueForName:@"subscription"];
+                if (![describe isEqualToString:@"none"]) {
+                    NSString *jid = [item attributeStringValueForName:@"jid"];
+                    XMPPJID *xmppJID = [XMPPJID jidWithString:jid];
+                    NSString *name = xmppJID.description;
+                    NSRange range = [name rangeOfString:@"@"];
+                    if (range.location != NSNotFound) {
+                        name = [name substringToIndex:range.location];
                     }
-                } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                    NSLog(@"WEB端登录失败：%@",error);
-                    [_getFriendListDelegate GetFriendListDelegate:NO];
-                }];
+                    NSLog(@"获取好友列表成功：jid===%@,name===%@",jid,name);
+                    [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+                    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+                    [[FriendDBManager ShareInstance] deleteFriendObjTablename:StrangerTBName andinterobj:name];
+                    
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    NSString *url = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,name,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+                    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                    [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        if (res == 0) {
+                            FriendDBItem *fdItem = [[FriendDBItem alloc]init];
+                            fdItem.friendName = [source objectForKey:@"username"];
+                            fdItem.friendRealName = [source objectForKey:@"nickname"];
+                            fdItem.friendGender = [source objectForKey:@"gender"];
+                            fdItem.friendAge = [source objectForKey:@"age"];
+                            fdItem.friendDescribe = [source objectForKey:@"introduction"];
+                            fdItem.friendSimilarity = [source objectForKey:@"similarity"];
+                            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+                            NSString *documentsDirectory = [paths objectAtIndex:0];
+                            fdItem.friendImageUrl = [NSString stringWithFormat:@"%@/%@/%@",documentsDirectory,yizhenImageFile,name];
+                            fdItem.friendJID = name;
+                            fdItem.friendOnlineOrNot = @"0";
+                            [[FriendDBManager ShareInstance] creatDatabase:FriendDBName];
+                            [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+                            [[FriendDBManager ShareInstance] addFriendObjTablename:YizhenFriendName andchatobj:fdItem];
+                            
+                            NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                            imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                            manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+                            [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+#warning 此处的获取好友头像可以变成lazyloading以便进一步优化效率
+                                [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:name Contents:responseObject];
+                                [_getFriendListDelegate GetFriendListDelegate:YES];
+                            }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                NSLog(@"获取图片信息失败");
+                                [_getFriendListDelegate GetFriendListDelegate:NO];
+                            }];
+                        }else{
+                            [_getFriendListDelegate GetFriendListDelegate:NO];
+                        }
+                    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                        NSLog(@"WEB端登录失败：%@",error);
+                        [_getFriendListDelegate GetFriendListDelegate:NO];
+                    }];
+                }
             }
         }
     }

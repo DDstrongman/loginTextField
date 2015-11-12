@@ -45,6 +45,7 @@
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res = [[source objectForKey:@"res"] intValue];
         if (res == 0) {
+            [[NSUserDefaults standardUserDefaults]setObject:newTele.contentTextField.text forKey:@"userTele"];
             [_editTeleResultDele editTeleResult:YES];
         }else{
             [_editTeleResultDele editTeleResult:NO];
@@ -53,6 +54,7 @@
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         [_editTeleResultDele editTeleResult:NO];
     }];
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)confirmIsTele:(UITextField *)sender{

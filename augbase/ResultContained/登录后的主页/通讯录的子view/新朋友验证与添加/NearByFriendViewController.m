@@ -30,12 +30,13 @@
     _nearbyFriendTable.delegate = self;
     _nearbyFriendTable.dataSource = self;
     _nearbyFriendTable.backgroundColor = grayBackgroundLightColor;
+    _nearbyFriendTable.tableFooterView = [[UIView alloc]init];
     dataArray = [NSMutableArray array];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    self.title = NSLocalizedString(@"附近好友", @"");
+    self.title = NSLocalizedString(@"附近战友", @"");
     [self setupData];
     [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
 }
@@ -98,6 +99,7 @@
                     [_nearbyFriendTable reloadData];
                     [[SetupView ShareInstance]hideHUD];
                 }else{
+                    [[SetupView ShareInstance]hideHUD];
                     [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
                 }
             } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -137,8 +139,12 @@
         }else{
             sex = NSLocalizedString(@"男", @"");
         }
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@/%@",sex,[[dataArray[indexPath.row] objectForKey:@"age"] stringValue]];
-        [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:[[dataArray[indexPath.row] objectForKey:@"distance"] stringValue] forState:UIControlStateNormal];
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@ / %@",sex,[[dataArray[indexPath.row] objectForKey:@"age"] stringValue]];
+        if ([[dataArray[indexPath.row] objectForKey:@"distance"] floatValue]<0.1) {
+            [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:NSLocalizedString(@"100米以内", @"") forState:UIControlStateNormal];
+        }else{
+            [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:[NSString stringWithFormat:@"%.1f km",[[dataArray[indexPath.row] objectForKey:@"distance"] floatValue]] forState:UIControlStateNormal];
+        }
         if ([[dataArray[indexPath.row] objectForKey:@"introduction"] isEqualToString:@""]) {
             
             ((UILabel *)[cell.contentView viewWithTag:5]).text = NSLocalizedString(@"TA还在休息呢，暂无签名", @"");
@@ -169,11 +175,6 @@
     cpdv.friendJID = [dataArray[indexPath.row] objectForKey:@"jid"];
     [self.navigationController pushViewController:cpdv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-}
-
-#pragma 添加头和尾
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
 }
 
 -(void)viewWillDisappear:(BOOL)animated{

@@ -56,7 +56,7 @@
     BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.png",FileName] contents:pictureData attributes:nil];
     if (res)
     {
-        NSLog(@"文件创建成功: %@" ,testPath);
+        
     }else
     {
         NSLog(@"文件创建失败");
@@ -74,7 +74,7 @@
     BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.mp3",FileName] contents:mp3Data attributes:nil];
     if (res)
     {
-        NSLog(@"文件创建成功: %@" ,testPath);
+        
     }else
     {
         NSLog(@"文件创建失败");
@@ -92,7 +92,7 @@
     BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.jpg",FileName] contents:pictureData attributes:nil];
     if (res)
     {
-        NSLog(@"文件创建成功: %@" ,testPath);
+        
     }else
     {
         NSLog(@"文件创建失败");
@@ -307,7 +307,7 @@
     BOOL res=[fileManager createDirectoryAtPath:testDirectory withIntermediateDirectories:YES attributes:nil error:nil];
     if (res)
     {
-        NSLog(@"文件夹创建成功 %@",DirName);
+        
     }
     else
     {
@@ -326,7 +326,7 @@
     BOOL res = [content writeToFile:testPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
     if (res)
     {
-        NSLog(@"文件写入成功,%@",testPath);
+        
     }
     else
     {
@@ -351,6 +351,7 @@
     NSEnumerator *e = [contents objectEnumerator];
     NSString *filename;
     while ((filename = [e nextObject])) {
+        NSString *temp = [documentsDirectory stringByAppendingPathComponent:filename];
         [fileManager removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:filename] error:NULL];
     }
 }

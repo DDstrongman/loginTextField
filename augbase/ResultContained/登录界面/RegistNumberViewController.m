@@ -151,7 +151,7 @@
     //倒计时
     countTime = countAgainNumber;
     [twoRightButton setImage:[UIImage imageNamed:@"goin_w"] forState:UIControlStateNormal];
-//    delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
+    [twoRightButton setTitle:NSLocalizedString(@"", @"") forState:UIControlStateNormal];
     
     twoRightButton.userInteractionEnabled = NO;
     twoRightButton.backgroundColor = grayBackColor;
@@ -197,7 +197,7 @@
 -(void)showService{
     NSLog(@"显示服务条款");
     ServiceAndPrivateWebViewController *spv = [[ServiceAndPrivateWebViewController alloc]init];
-    spv.url = @"http://www.yizhenapp.com/privacy";
+    spv.url = @"http://www.yizhenapp.com/service.html";
     spv.WebTitle = NSLocalizedString(@"服务条款", @"");
     [self.navigationController pushViewController:spv animated:YES];
 }
@@ -206,7 +206,7 @@
 -(void)showPrivate{
     NSLog(@"显示隐私条款");
     ServiceAndPrivateWebViewController *spv = [[ServiceAndPrivateWebViewController alloc]init];
-    spv.url = @"http://www.yizhenapp.com/privacy";
+    spv.url = @"http://www.yizhenapp.com/privacy.html";
     spv.WebTitle = NSLocalizedString(@"隐私条款", @"");
     [self.navigationController pushViewController:spv animated:YES];
 }
@@ -252,7 +252,6 @@
             AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
             
             appDelegate.window.rootViewController = ftui;
-//            [self.navigationController pushViewController:ftui animated:YES];
         }
         else{
             [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
@@ -273,9 +272,10 @@
     NSLog(@"需要再次调用发送验证码的函数");
     //倒计时
     countTime = countAgainNumber;
-    delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
+    [twoRightButton setImage:nil forState:UIControlStateNormal];
     twoRightButton.userInteractionEnabled = NO;
     twoRightButton.backgroundColor = grayBackColor;
+    delayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(countNumber) userInfo:nil repeats:YES];
 }
 
 -(void)countNumber{
@@ -287,7 +287,8 @@
         delayTimer = nil;
         twoRightButton.userInteractionEnabled = YES;
         twoRightButton.backgroundColor = themeColor;
-        [twoRightButton setTitle:NSLocalizedString(@"重发", @"") forState:UIControlStateNormal];
+        [twoRightButton setTitle:NSLocalizedString(@"", @"") forState:UIControlStateNormal];
+        [twoRightButton setImage:[UIImage imageNamed:@"goin_w"] forState:UIControlStateNormal];
     }
 }
 
@@ -491,7 +492,7 @@
         NSLog(@"res===%d",res);
         if (res == 0) {
             //请求完成
-            
+            [self sendMessAgain];
         }else{
             if (res == 2 && _inputNumberView.contentTextField.text.length == 0) {
                 [[SetupView ShareInstance]showAlertView:19 Hud:nil ViewController:self];

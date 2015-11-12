@@ -24,6 +24,7 @@
 -(void)setupNavigationView:(UINavigationController *)navigation Image:(UIImage *)image;
 
 -(void)showAlertView:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller;
+-(void)showAlertViewOneButton:(NSString *)message Title:(NSString *)title ViewController:(UIViewController *)controller;
 
 -(void)showAlertView:(int)res Hud:(MBProgressHUD *)HUD ViewController:(UIViewController *)controller;
 

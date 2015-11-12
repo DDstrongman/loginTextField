@@ -35,9 +35,6 @@
     [super viewDidLoad];
     _newsTable.delegate = self;
     _newsTable.dataSource = self;
-    UIView *tableHeader = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    tableHeader.backgroundColor = grayBackgroundLightColor;
-    _newsTable.tableHeaderView = tableHeader;
     _newsTable.tableFooterView = [[UIView alloc]init];
     [self addRefreshViews];
     [self setupShareView];
@@ -132,6 +129,8 @@
             make.right.equalTo(@-20);
             make.height.equalTo(@50);
         }];
+    }else{
+        [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"您不能使用分享功能", @"") Title:NSLocalizedString(@"您没有安装微信", @"") ViewController:self];
     }
 }
 
@@ -195,10 +194,20 @@
     return cell;
 }
 
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = grayBackgroundLightColor;
     return headerView;
+}
+
+//去掉UItableview headerview黏性(sticky)
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat sectionHeaderHeight = 22;
+    if (scrollView.contentOffset.y<=sectionHeaderHeight&&scrollView.contentOffset.y>=0) {
+        scrollView.contentInset = UIEdgeInsetsMake(-scrollView.contentOffset.y, 0, 0, 0);
+    } else if (scrollView.contentOffset.y>=sectionHeaderHeight) {
+        scrollView.contentInset = UIEdgeInsetsMake(-sectionHeaderHeight, 0, 0, 0);
+    }
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -219,10 +228,10 @@
     NSString *url;
     if ([[newsDataArray[(long)sender.superview.superview.tag] objectForKey:@"iscollect"] intValue] == 1) {
         NSLog(@"收藏状态");
-        url = [NSString stringWithFormat:@"%@unq/cancelcollect?uid=%@&token=%@&queid=%ld",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[[newsDataArray[(long)sender.superview.superview.tag] objectForKey:@"id"] integerValue]];
+        url = [NSString stringWithFormat:@"%@unq/cancelcollect?uid=%@&token=%@&queid=%d",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[[newsDataArray[(long)sender.superview.superview.tag] objectForKey:@"id"] integerValue]];
     }else{
         NSLog(@"非收藏状态");
-        url = [NSString stringWithFormat:@"%@unq/collect?uid=%@&token=%@&queid=%ld",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[[newsDataArray[(long)sender.superview.superview.tag] objectForKey:@"id"] integerValue]];
+        url = [NSString stringWithFormat:@"%@unq/collect?uid=%@&token=%@&queid=%d",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[[newsDataArray[(long)sender.superview.superview.tag] objectForKey:@"id"] integerValue]];
     }
     NSLog(@"收藏url===%@",url);
     [[HttpManager ShareInstance] AFNetPOSTNobodySupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -266,8 +275,8 @@
 
 -(void)shareWechatFriend:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"战友app";
-    message.description = @"";
+    message.title = [newsDataArray[sender.superview.superview.tag] objectForKey:@"q"];
+    message.description = [newsDataArray[sender.superview.superview.tag] objectForKey:@"content"];
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];
@@ -286,8 +295,8 @@
 
 -(void)shareWechatGroup:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"战友app";
-    message.description = @"";
+    message.title = [newsDataArray[sender.superview.superview.tag] objectForKey:@"q"];
+    message.description = [newsDataArray[sender.superview.superview.tag] objectForKey:@"content"];
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];

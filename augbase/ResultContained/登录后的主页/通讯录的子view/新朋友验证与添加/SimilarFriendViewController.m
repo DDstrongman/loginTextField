@@ -29,12 +29,13 @@
     _similarFriendTable.delegate = self;
     _similarFriendTable.dataSource = self;
     _similarFriendTable.backgroundColor = grayBackgroundLightColor;
+    _similarFriendTable.tableFooterView = [[UIView alloc]init];
     [self setupData];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    self.title = NSLocalizedString(@"相似好友", @"");
+    self.title = NSLocalizedString(@"相似战友", @"");
     [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
 }
 
@@ -49,7 +50,12 @@
             dataArray = [source objectForKey:@"users"];
             [_similarFriendTable reloadData];
             [[SetupView ShareInstance]hideHUD];
+            if (dataArray.count == 0) {
+                UIAlertView *alerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"没有相似战友", @"") message:NSLocalizedString(@"进入“病历”页面识别化验单、选填用药记录、疾病等信息，即可找到相似战友", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"返回", @"") otherButtonTitles:nil, nil];
+                [alerView show];
+            }
         }else{
+            [[SetupView ShareInstance]hideHUD];
             [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -85,9 +91,9 @@
         }else{
             sex = NSLocalizedString(@"男", @"");
         }
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@/%d",sex,[[dataArray[indexPath.row] objectForKey:@"age"] intValue]];
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"%@ / %d",sex,[[dataArray[indexPath.row] objectForKey:@"age"] intValue]];
         if ([[dataArray[indexPath.row] objectForKey:@"address"] isEqualToString:@""]) {
-            [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:NSLocalizedString(@"暂无", @"") forState:UIControlStateNormal];
+            [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:NSLocalizedString(@"--", @"") forState:UIControlStateNormal];
         }else{
             [((UIButton *)[cell.contentView viewWithTag:4]) setTitle:[dataArray[indexPath.row] objectForKey:@"address"] forState:UIControlStateNormal];
         }
@@ -123,9 +129,8 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
-#pragma 添加头和尾
--(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
-    return nil;
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 @end

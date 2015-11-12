@@ -68,6 +68,10 @@
     NSDictionary *picList;//总详情
     
     UITableView *bChaoTable;//b超的表
+    
+    int pageNumber;//当前一页的table数目
+    
+    UIButton *bottomButton;//底部提示用button
 }
 
 @end
@@ -119,7 +123,7 @@
     if (tableView.tag == 555) {
         NSString static *cellIndentify = @"bChaoInfoCell";
         if (cell == nil) {
-            cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIndentify];
+            cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:cellIndentify];
         }
         if (ocrDetailValueArray.count>0) {
             if ([[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] != [NSNull null]) {
@@ -127,7 +131,13 @@
                     //                cell.imageView.image = [UIImage imageNamed:@"the_b_of_super"];
                     UIImageView *tailImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"the_b_of_super"]];
                     cell.accessoryView = tailImageView;
+                }else{
+                    cell.detailTextLabel.text = @"-";
+                    cell.selectionStyle = UITableViewCellSelectionStyleNone;
                 }
+            }else{
+                cell.detailTextLabel.text = @"-";
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
             }
         }
         if (indexPath.row%2 == 0) {
@@ -139,12 +149,31 @@
         BOOL tempIsFinished = YES;
         if (ocrDetailValueArray.count>0) {
             for (NSDictionary *dic in [ocrDetailValueArray[indexPath.row] objectForKey:@"medhis"]) {
-                if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]) {
+                if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]||[[dic objectForKey:@"progress"] isEqualToString:@"finish"]) {
                     cell = [tableView dequeueReusableCellWithIdentifier:@"doubleresult" forIndexPath:indexPath];
-                    ((UIButton *)[cell.contentView viewWithTag:2]).imageView.backgroundColor = themeColor;
-                    [((UIButton *)[cell.contentView viewWithTag:2]).imageView viewWithRadis:10.0];
+                    [((UIButton *)[cell.contentView viewWithTag:2]).imageView viewWithRadis:3.0];
+                    if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]) {
+                        [((UIButton *)[cell.contentView viewWithTag:2]) setImage:[UIImage imageNamed:@"begin"] forState:UIControlStateNormal];
+                    }else{
+                        [((UIButton *)[cell.contentView viewWithTag:2]) setImage:[UIImage imageNamed:@"stop"] forState:UIControlStateNormal];
+                    }
                     [((UIButton *)[cell.contentView viewWithTag:2]) setTitle:[dic objectForKey:@"medname"] forState:UIControlStateNormal];
+                    for (int i= 0; i<medicineArray.count; i++) {
+                        if ([[dic objectForKey:@"medname"] isEqualToString:medicineArray[i]]) {
+                            ((UIButton *)[cell.contentView viewWithTag:2]).imageView.backgroundColor = colorArray[(i%10)];
+                        }
+                    }
                     tempIsFinished = NO;
+                    [cell viewWithTag:7].hidden = YES;
+                    if ([[ocrDetailValueArray[indexPath.row] objectForKey:@"isViewedByMe"] boolValue]) {
+                        [cell viewWithTag:6].backgroundColor = themeColor;
+                        [[cell viewWithTag:6] imageWithRound:NO];
+                        [cell viewWithTag:6].hidden = YES;
+                    }else{
+                        [cell viewWithTag:6].backgroundColor = themeColor;
+                        [[cell viewWithTag:6] imageWithRound:NO];
+                        [cell viewWithTag:6].hidden = NO;
+                    }
                     break;
                 }
             }
@@ -158,15 +187,11 @@
             ((UILabel *)[cell.contentView viewWithTag:1]).text = [(NSString *)titleArray[indexPath.row] substringFromIndex:2];
         }
         cell.backgroundColor = [UIColor whiteColor];
-        
         cell.layer.borderWidth = 0.25;
         cell.layer.borderColor = grayBackgroundDarkColor.CGColor;
-        
-        if (cell.tag != indexPath.row) {
-            //添加阴影
-            [cell makeInsetShadowWithRadius:8.0 Color:[UIColor colorWithRed:238.0 green:238.0 blue:238.0 alpha:0.1] Directions:[NSArray arrayWithObjects:@"right", nil]];
-            cell.tag = indexPath.row;
-        }
+        UIView *shadowView = [[UIView alloc]initWithFrame:CGRectMake(cell.bounds.size.width-2, -2, 1.5, cell.bounds.size.height+4)];
+        shadowView.backgroundColor = [UIColor colorWithRed:238.0/255.0 green:238.0/255.0 blue:238.0/255.0 alpha:1.0];
+        [cell addSubview:shadowView];
     }else if(tableView.tag == 3){
         NSDictionary *lineDetailDic;
         if (ocrDetailValueArray.count > 0) {
@@ -182,7 +207,34 @@
                 NSArray *medicArray = [lineDetailDic objectForKey:@"medhis"];
                 if (medicArray.count >indexPath.row) {
                     cell.textLabel.text = [(NSDictionary *)medicArray[indexPath.row] objectForKey:@"medname"];
-                    cell.detailTextLabel.text = [[[(NSDictionary *)medicArray[indexPath.row] objectForKey:@"week"] stringValue] stringByAppendingString:@"周"];
+                    UIButton *weekBottonButton = [[UIButton alloc]init];
+                    [weekBottonButton viewWithRadis:3.0];
+                    for (int i= 0; i<medicineArray.count; i++) {
+                        if ([[(NSDictionary *)medicArray[indexPath.row] objectForKey:@"medname"] isEqualToString:medicineArray[i]]) {
+                            weekBottonButton.backgroundColor = colorArray[(i%10)];
+                        }
+                    }
+//                    cell.detailTextLabel.text = [[[(NSDictionary *)medicArray[indexPath.row] objectForKey:@"week"] stringValue] stringByAppendingString:@"周"];
+                    weekBottonButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                    [weekBottonButton setTitleEdgeInsets:UIEdgeInsetsMake(0, 5, 0, 0)];
+                    [weekBottonButton setTitle:[[[(NSDictionary *)medicArray[indexPath.row] objectForKey:@"week"] stringValue] stringByAppendingString:@"周"] forState:UIControlStateNormal];
+                    [cell addSubview:weekBottonButton];
+                    [weekBottonButton mas_makeConstraints:^(MASConstraintMaker *make) {
+                        make.right.equalTo(@-15);
+                        make.centerY.mas_equalTo(cell.mas_centerY);
+                        make.width.equalTo(@60);
+                        make.height.equalTo(@30);
+                    }];
+                    
+                    for (NSDictionary *dic in [ocrDetailValueArray[indexPath.row] objectForKey:@"medhis"]) {
+                        if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]||[[dic objectForKey:@"progress"] isEqualToString:@"finish"]) {
+                            if ([[dic objectForKey:@"progress"] isEqualToString:@"start"]) {
+                                [weekBottonButton setImage:[UIImage imageNamed:@"begin"] forState:UIControlStateNormal];
+                            }else{
+                                [weekBottonButton setImage:[UIImage imageNamed:@"stop"] forState:UIControlStateNormal];
+                            }
+                        }
+                    }
                 }
             }
         }else{
@@ -205,13 +257,25 @@
             }
             cell.textLabel.text = bottomValueArray[indexPath.row];
             if (indexPath.row == 0) {
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"(%@~%@)%@",[valuesDetailDic objectForKey:@"lowerlimit"],[valuesDetailDic objectForKey:@"upperlimit"],[valuesDetailDic objectForKey:@"unit"]];
+                if ([[valuesDetailDic objectForKey:@"type"]intValue] != 0) {
+                    cell.detailTextLabel.text = NSLocalizedString(@"阴", @"");
+                }else{
+                    cell.detailTextLabel.text = [NSString stringWithFormat:@"(%@~%@)%@",[valuesDetailDic objectForKey:@"lowerlimit"],[valuesDetailDic objectForKey:@"upperlimit"],[valuesDetailDic objectForKey:@"unit"]];
+                }
             }else if (indexPath.row == 1){
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@",[valuesDetailDic objectForKey:@"value"],[valuesDetailDic objectForKey:@"unit"]];
+                if ([[valuesDetailDic objectForKey:@"calmethod"]intValue] != 0) {
+                    cell.detailTextLabel.text = [NSString stringWithFormat:@"%g %@",[[valuesDetailDic objectForKey:@"value"] doubleValue],[valuesDetailDic objectForKey:@"unit"]];
+                }else{
+                    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@",[valuesDetailDic objectForKey:@"value"],[valuesDetailDic objectForKey:@"unit"]];
+                }
             }else if (indexPath.row == 2){
                 cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",[valuesDetailDic objectForKey:@"categoryName"]];
             }else{
-                cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",[lineDetailDic objectForKey:@"hospitalName"]];
+                if ([[lineDetailDic objectForKey:@"hospitalName"] isKindOfClass:[NSNull class]]) {
+                    cell.detailTextLabel.text = @"--";
+                }else{
+                    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@",[lineDetailDic objectForKey:@"hospitalName"]];
+                }
             }
         }
     }
@@ -224,27 +288,6 @@
         if (ocrDetailTempValueArray.count > 0) {
             lineDetailDic = ocrDetailTempValueArray[indexPath.row];
         }
-//        UIButton *bChaoButton = (UIButton *)[_titleScroller viewWithTag:(901)];
-//        [bChaoButton setTitle:NSLocalizedString(@"B超", @"") forState:UIControlStateNormal];
-//        if (showNameTempArray.count>10) {
-//            for (int i = 0; i<10; i++) {
-//                NSDictionary *tempDic = showNameTempArray[i];
-//                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1+1)];
-//                if (tempDic != nil && tempButton != nil) {
-//                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
-//                }
-//            }
-//        }else{
-//            for (int i = 0; i<showNameTempArray.count; i++) {
-//                NSDictionary *tempDic = showNameTempArray[i];
-//                UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900+1+1)];
-//                if (tempDic != nil && tempButton != nil) {
-//                    [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
-//                }
-//            }
-//        }
-        
-#warning 此处加入需要的cell
         if (tableView == _firstResultTable) {
             NSNumber *firstWidth;
             NSNumber *secondWidth;
@@ -387,16 +430,32 @@
             NSDictionary *finalValues = [tempValues objectForKey:key];
             if ([finalValues objectForKey:@"value"] == nil) {
                 contentLabel.text = @"-";
+                cell.selectionStyle = UITableViewCellSelectionStyleNone;
                 contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
             }else{
 #warning 以后要尽量避免在cell里使用stringformat提升效率
-                contentLabel.text = [NSString stringWithFormat:@"%@ %@",[finalValues objectForKey:@"value"],[finalValues objectForKey:@"unit"]];
-                float max = [[finalValues objectForKey:@"upperlimit"] floatValue];
-                float min = [[finalValues objectForKey:@"lowerlimit"] floatValue];
-                if ([[finalValues objectForKey:@"value"] floatValue] > min && [[finalValues objectForKey:@"value"] floatValue] < max) {
-                    contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
+                if ([[finalValues objectForKey:@"type"] intValue] != 0) {
+                    if ([[finalValues objectForKey:@"value"]intValue] == 1) {
+                        contentLabel.text = NSLocalizedString(@"阳（+）", @"");
+                        contentLabel.textColor = [UIColor redColor];
+                    }else{
+                        contentLabel.text = NSLocalizedString(@"阴（-）", @"");
+                        contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
+                    }
                 }else{
-                    contentLabel.textColor = [UIColor redColor];
+                    if ([[finalValues objectForKey:@"calmethod"]intValue] != 0) {
+                        contentLabel.text = [NSString stringWithFormat:@"%g %@",[[finalValues objectForKey:@"value"] doubleValue],[finalValues objectForKey:@"unit"]];
+                        NSLog(@"text=====%@",[NSString stringWithFormat:@"%g %@",[[finalValues objectForKey:@"value"] doubleValue],[finalValues objectForKey:@"unit"]]);
+                    }else{
+                        contentLabel.text = [NSString stringWithFormat:@"%@ %@",[finalValues objectForKey:@"value"],[finalValues objectForKey:@"unit"]];
+                    }
+                    float max = [[finalValues objectForKey:@"upperlimit"] floatValue];
+                    float min = [[finalValues objectForKey:@"lowerlimit"] floatValue];
+                    if ([[finalValues objectForKey:@"value"] floatValue] > min && [[finalValues objectForKey:@"value"] floatValue] < max) {
+                        contentLabel.textColor = [UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0];
+                    }else{
+                        contentLabel.textColor = [UIColor redColor];
+                    }
                 }
             }
             contentLabel.textAlignment = NSTextAlignmentRight;
@@ -419,7 +478,7 @@
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    NSLog(@"点击了第几个表===%ld，点击了第几列====%ld",tableView.tag,(long)indexPath.row);
+    NSLog(@"点击了第几个表===%ld，点击了第几列====%ld",(long)tableView.tag,(long)indexPath.row);
     if (tableView.tag == 555) {
         if ([[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] != [NSNull null]) {
             if ([[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] intValue] == 1) {
@@ -436,12 +495,28 @@
         }
     }else if (tableView.tag != 3) {
         tableTag = tableView.tag;
-        [self popSpringAnimationOut:bottomMessView];
+        NSDictionary *lineDetailDic;
+        if (ocrDetailTempValueArray.count > 0) {
+            lineDetailDic = ocrDetailTempValueArray[indexPath.row];
+        }
+        NSDictionary *tempValues = [lineDetailDic objectForKey:@"values"];
+        NSNumber *key;
+        if (customizedIdsTempOrder.count >tableView.tag - 100 -1 ) {
+            key = customizedIdsTempOrder[tableView.tag -100-1];
+        }
+        NSDictionary *finalValues = [tempValues objectForKey:key];
+        if ([finalValues objectForKey:@"value"] == nil&&tableView.tag != 100) {
+            
+        }else{
+            [self popSpringAnimationOut:bottomMessView];
+        }
     }
     if (tableView.tag == 100) {
         [bottomMessView viewWithTag:123].hidden = YES;
+        [bottomButton setTitle:NSLocalizedString(@"用药记录", @"") forState:UIControlStateNormal];
     }else{
         [bottomMessView viewWithTag:123].hidden = NO;
+        [bottomButton setTitle:NSLocalizedString(@"对应化验单", @"") forState:UIControlStateNormal];
     }
     tableIndexRow = indexPath.row;
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -452,6 +527,7 @@
     tableIndexRow = sender.tag;
     [bottomMessView viewWithTag:123].hidden = YES;
     [self popSpringAnimationOut:bottomMessView];
+    [bottomButton setTitle:NSLocalizedString(@"用药记录", @"") forState:UIControlStateNormal];
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
@@ -475,6 +551,14 @@
         _ninesultTable.contentOffset = scrollView.contentOffset;
         _tensultTable.contentOffset = scrollView.contentOffset;
         _elevensultTable.contentOffset = scrollView.contentOffset;
+        if (scrollView.contentOffset.x<260) {
+            _firstResultTable.contentOffset = scrollView.contentOffset;
+            _secondResultTable.contentOffset = scrollView.contentOffset;
+            _thirdsultTable.contentOffset = scrollView.contentOffset;
+            _forthsultTable.contentOffset = scrollView.contentOffset;
+        }else{
+            
+        }
     }
     else if(scrollView == _titleScroller||scrollView == _resultScroller){
         if (scrollView == _titleScroller) {
@@ -489,12 +573,12 @@
 -(void)scrollViewDidEndDecelerating:(UIScrollView*)scrollView
 {
     if(scrollView == _titleScroller||scrollView == _resultScroller){
-        if ((int)(scrollView.contentOffset.x) % 150 !=0) {
-            int tempNumber = (int)(scrollView.contentOffset.x-260)/150+1;
+        if ((int)(scrollView.contentOffset.x) % 120 !=0) {
+            int tempNumber = (int)(scrollView.contentOffset.x-240)/120+1;
             //设置了_titlescroller和resultscroller一样的offset，所以此处只能设置一次animate，否则出错
             //            [_titleScroller setContentOffset:scrollView.contentOffset animated:YES];
             if (tempNumber<7&&tempNumber>1) {
-                [_resultScroller setContentOffset:CGPointMake(260+tempNumber*150, scrollView.contentOffset.y) animated:YES];
+                [_resultScroller setContentOffset:CGPointMake(240+tempNumber*120, scrollView.contentOffset.y) animated:YES];
             }
         }
     }
@@ -513,83 +597,96 @@
 -(void)setupView{
     _nameTable.delegate = self;
     _nameTable.dataSource = self;
-    
+    pageNumber = (int)(ViewWidth - 120)/120+1;
     //初始化两个scrollerview
-    _titleScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 0, ViewWidth-100, 66)];
-    _titleScroller.contentSize = CGSizeMake(1760, 66-20);
+    _titleScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 0, ViewWidth-100, 50)];
+    _titleScroller.contentSize = CGSizeMake(190+50+120*10, 50-20);
     _titleScroller.delegate = self;
     _titleScroller.backgroundColor = [UIColor blackColor];
     _titleScroller.scrollEnabled = YES;
-    _resultScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 66, ViewWidth-100, ViewHeight-66-49)];
-    _resultScroller.contentSize = CGSizeMake(1760, ViewHeight-66-49-20);
+    _resultScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 50, ViewWidth-100, ViewHeight-50-49)];
+    _resultScroller.contentSize = CGSizeMake(190+50+120*10, ViewHeight-50-49-20);
     _resultScroller.backgroundColor = grayBackgroundLightColor;
     _resultScroller.scrollEnabled = YES;
     _resultScroller.delegate = self;
     [self.view addSubview:_titleScroller];
     [self.view addSubview:_resultScroller];
     
-    _firstTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 190, 66)];
+    _firstTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 190, 50)];
     [_titleScroller addSubview:_firstTitleButton];
     [_firstTitleButton setTitle:NSLocalizedString(@"用药周期", @"") forState:UIControlStateNormal];
     _firstTitleButton.backgroundColor = [UIColor blackColor];
-    _secondTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_firstTitleButton.frame.origin.x+_firstTitleButton.bounds.size.width, 0, 70, 66)];
+    _secondTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_firstTitleButton.frame.origin.x+_firstTitleButton.bounds.size.width, 0, 50, 50)];
     [_secondTitleButton setTitle:NSLocalizedString(@"B超", @"") forState:UIControlStateNormal];
     _secondTitleButton.backgroundColor = [UIColor blackColor];
     [_titleScroller addSubview:_secondTitleButton];
     
-    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 150, 66)];
+    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
     _thirdTitleButton.backgroundColor = [UIColor blackColor];
     _thirdTitleButton.tag = 901;
     _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_thirdTitleButton];
-    _forthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_thirdTitleButton.frame.origin.x+_thirdTitleButton.bounds.size.width, 0, 150, 66)];
+    _forthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_thirdTitleButton.frame.origin.x+_thirdTitleButton.bounds.size.width, 0, 120, 50)];
     _forthTitleButton.backgroundColor = [UIColor blackColor];
     _forthTitleButton.tag = 902;
     _forthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_forthTitleButton];
-    _fifthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_forthTitleButton.frame.origin.x+_forthTitleButton.bounds.size.width, 0, 150, 66)];
+    _fifthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_forthTitleButton.frame.origin.x+_forthTitleButton.bounds.size.width, 0, 120, 50)];
     _fifthTitleButton.backgroundColor = [UIColor blackColor];
     _fifthTitleButton.tag = 903;
     _fifthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_fifthTitleButton];
-    _sixthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_fifthTitleButton.frame.origin.x+_fifthTitleButton.bounds.size.width, 0, 150, 66)];
+    _sixthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_fifthTitleButton.frame.origin.x+_fifthTitleButton.bounds.size.width, 0, 120, 50)];
     _sixthTitleButton.backgroundColor = [UIColor blackColor];
     _sixthTitleButton.tag = 904;
     _sixthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_sixthTitleButton];
-    _sevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sixthTitleButton.frame.origin.x+_sixthTitleButton.bounds.size.width, 0, 150, 66)];
+    _sevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sixthTitleButton.frame.origin.x+_sixthTitleButton.bounds.size.width, 0, 120, 50)];
     _sevenTitleButton.backgroundColor = [UIColor blackColor];
     _sevenTitleButton.tag = 905;
     _sevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_sevenTitleButton];
-    _eightTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sevenTitleButton.frame.origin.x+_sevenTitleButton.bounds.size.width, 0, 150, 66)];
+    _eightTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sevenTitleButton.frame.origin.x+_sevenTitleButton.bounds.size.width, 0, 120, 50)];
     _eightTitleButton.backgroundColor = [UIColor blackColor];
     _eightTitleButton.tag = 906;
     _eightTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_eightTitleButton];
-    _nineTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_eightTitleButton.frame.origin.x+_eightTitleButton.bounds.size.width, 0, 150, 66)];
+    _nineTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_eightTitleButton.frame.origin.x+_eightTitleButton.bounds.size.width, 0, 120, 50)];
     _nineTitleButton.backgroundColor = [UIColor blackColor];
     _nineTitleButton.tag = 907;
     _nineTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_nineTitleButton];
-    _tenthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_nineTitleButton.frame.origin.x+_nineTitleButton.bounds.size.width, 0, 150, 66)];
+    _tenthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_nineTitleButton.frame.origin.x+_nineTitleButton.bounds.size.width, 0, 120, 50)];
     _tenthTitleButton.backgroundColor = [UIColor blackColor];
     _tenthTitleButton.tag = 908;
     _tenthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_tenthTitleButton];
-    _elevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_tenthTitleButton.frame.origin.x+_tenthTitleButton.bounds.size.width, 0, 150, 66)];
+    _elevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_tenthTitleButton.frame.origin.x+_tenthTitleButton.bounds.size.width, 0, 120, 50)];
     _elevenTitleButton.backgroundColor = [UIColor blackColor];
     _elevenTitleButton.tag = 909;
     _elevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_elevenTitleButton];
-    _twelveTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_elevenTitleButton.frame.origin.x+_elevenTitleButton.bounds.size.width, 0, 150, 66)];
+    _twelveTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_elevenTitleButton.frame.origin.x+_elevenTitleButton.bounds.size.width, 0, 120, 50)];
     _twelveTitleButton.backgroundColor = [UIColor blackColor];
     _twelveTitleButton.tag = 910;
     _twelveTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [_titleScroller addSubview:_twelveTitleButton];
     
     
-    UITableView *firstTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, 190, ViewHeight-66-49)];
+    _firstTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _secondTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _forthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _fifthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _sixthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _sevenTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _eightTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _nineTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _tenthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _elevenTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    _twelveTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    
+    UITableView *firstTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, 190, ViewHeight-50-49)];
     firstTable.delegate = self;
     firstTable.dataSource = self;
     firstTable.tag = 100;
@@ -597,7 +694,7 @@
     firstTable.separatorStyle = UITableViewCellSelectionStyleNone;
     [_resultScroller addSubview:firstTable];
     
-    bChaoTable = [[UITableView alloc]initWithFrame:CGRectMake(firstTable.frame.origin.x+firstTable.bounds.size.width, 0, 70, ViewHeight-66-49)];
+    bChaoTable = [[UITableView alloc]initWithFrame:CGRectMake(firstTable.frame.origin.x+firstTable.bounds.size.width, 0, 50, ViewHeight-50-49)];
     bChaoTable.dataSource = self;
     bChaoTable.delegate = self;
     bChaoTable.tag = 555;
@@ -606,7 +703,7 @@
     [_resultScroller addSubview:bChaoTable];
     
     for (int i = 101; i<111; i++) {
-        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((150*(i - 100+1)-40), 0, 150, ViewHeight-66-49)];
+        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
         tempTable.delegate = self;
         tempTable.dataSource = self;
         tempTable.tag = i;
@@ -628,10 +725,10 @@
     _elevensultTable = (UITableView *)[_resultScroller viewWithTag:110];
     tableViewArray = [NSMutableArray array];
     
-    bottomArray = [@[NSLocalizedString(@"分享", @""),NSLocalizedString(@"排序", @"")]mutableCopy];
+    bottomArray = [@[NSLocalizedString(@"置顶指标", @""),NSLocalizedString(@"分享表格", @"")]mutableCopy];
     //底部工具条
     UIView *bottomToolBar = [[UIView alloc]initWithFrame:CGRectMake(0, ViewHeight-49, ViewWidth, 49)];
-    bottomToolBar.backgroundColor = themeColor;
+    bottomToolBar.backgroundColor = [UIColor whiteColor];
     firstButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
     secondButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, ViewWidth/2, 49)];
     
@@ -643,9 +740,9 @@
     [firstButton setTitle:bottomArray[0] forState:UIControlStateNormal];
     firstButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
     firstButton.titleEdgeInsets = UIEdgeInsetsMake(0,15, 0, 0);
-    [firstButton setImage:[UIImage imageNamed:@"share"] forState:UIControlStateNormal];
+    [firstButton setImage:[UIImage imageNamed:@"sequence"] forState:UIControlStateNormal];
     [secondButton setTitle:bottomArray[1] forState:UIControlStateNormal];
-    [secondButton setImage:[UIImage imageNamed:@"sequence"] forState:UIControlStateNormal];
+    [secondButton setImage:[UIImage imageNamed:@"share"] forState:UIControlStateNormal];
     secondButton.titleEdgeInsets = UIEdgeInsetsMake(0,15, 0, 0);
     secondButton.titleLabel.font = [UIFont systemFontOfSize:14.0];
     
@@ -653,8 +750,8 @@
     [bottomToolBar addSubview:secondButton];
     [self.view addSubview:bottomToolBar];
     
-    [firstButton addTarget:self action:@selector(shareResults:) forControlEvents:UIControlEventTouchUpInside];
-    [secondButton addTarget:self action:@selector(orderResults:) forControlEvents:UIControlEventTouchUpInside];
+    [firstButton addTarget:self action:@selector(orderResults:) forControlEvents:UIControlEventTouchUpInside];
+    [secondButton addTarget:self action:@selector(shareResults:) forControlEvents:UIControlEventTouchUpInside];
     
     [self setUpBottomTable];
     [self setUpBottomRightView];
@@ -686,6 +783,9 @@
     [detailButton setBackgroundImage:[UIImage imageNamed:@"detail"] forState:UIControlStateNormal];
     [detailButton addTarget:self action:@selector(showDetail:) forControlEvents:UIControlEventTouchUpInside];
     [bottomMessView addSubview:detailButton];
+    UIView *lineView = [[UIView alloc]initWithFrame:CGRectMake(0, 44, ViewWidth, 1)];
+    [bottomMessView addSubview:lineView];
+    lineView.backgroundColor = lightGrayBackColor;
     
     bottomTable = [[UITableView alloc]init];
     bottomTable.delegate = self;
@@ -693,12 +793,12 @@
     bottomTable.separatorColor = lightGrayBackColor;
     bottomTable.tag = 3;
     bottomTable.showsVerticalScrollIndicator = NO;
-    bottomTable.layer.borderColor = lightGrayBackColor.CGColor;
-    bottomTable.layer.borderWidth = 1;
+//    bottomTable.layer.borderColor = lightGrayBackColor.CGColor;
+//    bottomTable.layer.borderWidth = 1;
     bottomTable.tableFooterView = [[UIView alloc]init];
     [bottomMessView addSubview:bottomTable];
     
-    UIButton *bottomButton = [[UIButton alloc]init];
+    bottomButton = [[UIButton alloc]init];
     [bottomButton setTitle:NSLocalizedString(@"去看看", @"") forState:UIControlStateNormal];
     [bottomButton setTitleColor:themeColor forState:UIControlStateNormal];
     [bottomButton addTarget:self action:@selector(gotoOtherView:) forControlEvents:UIControlEventTouchUpInside];
@@ -801,8 +901,13 @@
             medicineArray = [source objectForKey:@"medcine"];
             NSArray *keysOrder = [source objectForKey:@"keysOrder"];
             if (keysOrder.count == 0) {
-                UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
-                [showNoticeAlert show];
+                if (_isMine) {
+                    UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                    [showNoticeAlert show];
+                }else{
+                    UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"TA没有病历数据", @"") message:NSLocalizedString(@"请提醒TA上传化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                    [showNoticeAlert show];
+                }
             }
             allCodeDetails = [source objectForKey:@"allCodeDetails"];
             if (_isReView) {
@@ -810,13 +915,21 @@
                 titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
                 firstButton.hidden = YES;
                 secondButton.hidden = YES;
+                bottomButton.hidden = YES;
             }else{
                 customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
                 titleArray = [NSMutableArray arrayWithArray:keysOrder];
                 firstButton.hidden = NO;
                 secondButton.hidden = NO;
+                bottomButton.hidden = NO;
             }
-            for (int i = 0; i<customizedIdsOrder.count; i++) {
+            if (!_isMine) {
+                firstButton.hidden = YES;
+                secondButton.hidden = YES;
+                bottomButton.hidden = YES;
+            }
+            
+            for (int i = 0; i<customizedIdsOrder.count ; i++) {
                 NSString *resultIndex = customizedIdsOrder[i];
                 if ([allCodeDetails objectForKey:resultIndex] != nil) {
                     [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
@@ -826,7 +939,7 @@
                 NSString *temp = keysOrder[i];
                 if ([picList objectForKey:temp] != nil) {
                     NSDictionary *tempValueDic = [picList objectForKey:temp];
-                    if ([[[tempValueDic objectForKey:@"isViewedByMe"] stringValue] isEqualToString:@"false"]) {
+                    if (![[tempValueDic objectForKey:@"isViewedByMe"] boolValue]) {
                         if (changeStatus == nil) {
                             changeStatus = [[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue];
                         }else{
@@ -857,7 +970,7 @@
                     }
                 }
             }else{
-                for (int i = 1; i<showNameArray.count; i++) {
+                for (int i = 1; i<showNameArray.count+1; i++) {
                     NSDictionary *tempDic = showNameArray[i-1];
                     UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900)];
                     if (tempDic != nil && tempButton != nil) {
@@ -899,12 +1012,6 @@
     }  FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"WEB端登录失败：%@",error);
     }];
-}
-
-#pragma 改变观察状体
--(void)changeViewedStatus{
-    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
-    NSString *changeUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus/?uid=%@&token=%@&isDoctor=%@&ltrIds=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],@"false",@""];
 }
 
 #pragma 分享
@@ -974,6 +1081,7 @@
 
 -(void)tapvisualEffectView:(UIView *)sender{
     [self popSpringAnimationHidden:bottomMessView];
+    [self hideRightSpringAnimationHidden:bottomRightView];
 }
 
 -(void)popSpringAnimationHidden:(UIView *)targetView{
@@ -1037,6 +1145,7 @@
 -(void)cancelBottomView:(UIButton *)sender{
     [bottomMessView viewWithTag:123].hidden = NO;
     [self popSpringAnimationHidden:bottomMessView];
+    [self hideRightSpringAnimationHidden:bottomRightView];
 }
 
 -(void)backBottomRightView:(UIButton *)sender{
@@ -1062,6 +1171,7 @@
         DrugHistroyViewController *dhv = [[DrugHistroyViewController alloc]init];
         [self.navigationController pushViewController:dhv animated:YES];
     }
+    [self popSpringAnimationHidden:bottomMessView];
 }
 
 -(void)shareResults:(UIButton *)sender{

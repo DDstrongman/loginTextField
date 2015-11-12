@@ -275,7 +275,6 @@
 		0FA219D51B538F8D00B0C775 /* UUMessageFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA219A11B538F8D00B0C775 /* UUMessageFrame.m */; };
 		0FA219D61B538F8D00B0C775 /* UUProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA219A31B538F8D00B0C775 /* UUProgressHUD.m */; };
 		0FA219F01B54BC6000B0C775 /* PersonSettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA219EF1B54BC6000B0C775 /* PersonSettingViewController.m */; };
-		0FA219F31B54BD0000B0C775 /* coordinate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FA219F11B54BD0000B0C775 /* coordinate@2x.png */; };
 		0FA219F71B54D40500B0C775 /* ReportTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA219F61B54D40500B0C775 /* ReportTableViewController.m */; };
 		0FA21A0B1B54FE8100B0C775 /* ChatModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA219FE1B54FE8100B0C775 /* ChatModel.m */; };
 		0FA21A0D1B54FE8100B0C775 /* RootViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA21A021B54FE8100B0C775 /* RootViewController.m */; };
@@ -289,9 +288,13 @@
 		0FA463511B625F9E00A37ECC /* OcrTextResultViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA4634F1B625F9E00A37ECC /* OcrTextResultViewController.m */; };
 		0FA463561B65C83400A37ECC /* IPDFCameraViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA463551B65C83400A37ECC /* IPDFCameraViewController.m */; };
 		0FA4635F1B65CF1000A37ECC /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0FA4635E1B65CF1000A37ECC /* Images.xcassets */; };
-		0FA463631B65D59100A37ECC /* light_on@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FA463611B65D59100A37ECC /* light_on@2x.png */; };
 		0FA463671B65DEE000A37ECC /* ConfirmPictureResultViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FA463651B65DEE000A37ECC /* ConfirmPictureResultViewController.m */; };
 		0FA463681B65DEE000A37ECC /* ConfirmPictureResultViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0FA463661B65DEE000A37ECC /* ConfirmPictureResultViewController.xib */; };
+		0FB11F721BE9AE660043DF3A /* FriendsSetViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FB11F711BE9AE660043DF3A /* FriendsSetViewController.m */; };
+		0FB11F761BEA24780043DF3A /* default_avatar5@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FB11F751BEA24780043DF3A /* default_avatar5@2x.png */; };
+		0FB11F7C1BEA3E8F0043DF3A /* first@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FB11F791BEA3E8F0043DF3A /* first@2x.png */; };
+		0FB11F7D1BEA3E8F0043DF3A /* first2@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FB11F7A1BEA3E8F0043DF3A /* first2@2x.png */; };
+		0FB11F7E1BEA3E8F0043DF3A /* first3@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0FB11F7B1BEA3E8F0043DF3A /* first3@2x.png */; };
 		0FB66BF41B44E24600DE71D8 /* ShowAllMessageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FB66BF31B44E24600DE71D8 /* ShowAllMessageViewController.m */; };
 		0FB66BF71B44E29900DE71D8 /* FindOthersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FB66BF61B44E29900DE71D8 /* FindOthersViewController.m */; };
 		0FB66BFA1B44E2ED00DE71D8 /* CaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0FB66BF91B44E2ED00DE71D8 /* CaseViewController.m */; };
@@ -609,7 +612,7 @@
 		0F7796CB1B906731005E89A8 /* PrivateSettingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PrivateSettingViewController.m; sourceTree = "<group>"; };
 		0F7796CD1B906817005E89A8 /* CollectionListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CollectionListViewController.h; sourceTree = "<group>"; };
 		0F7796CE1B906817005E89A8 /* CollectionListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CollectionListViewController.m; sourceTree = "<group>"; };
-		0F7796D01B906CF8005E89A8 /* set_up@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "set_up@2x.png"; sourceTree = "<group>"; };
+		0F7796D01B906CF8005E89A8 /* set_up@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "set_up@2x.png"; path = "../我的icon/set_up@2x.png"; sourceTree = "<group>"; };
 		0F7796D41B906E91005E89A8 /* MyCaseRightsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyCaseRightsViewController.h; sourceTree = "<group>"; };
 		0F7796D51B906E91005E89A8 /* MyCaseRightsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyCaseRightsViewController.m; sourceTree = "<group>"; };
 		0F78C4C21BABA83A00C1F373 /* CurrentSymptomViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CurrentSymptomViewController.h; sourceTree = "<group>"; };
@@ -724,7 +727,6 @@
 		0FA219A31B538F8D00B0C775 /* UUProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UUProgressHUD.m; sourceTree = "<group>"; };
 		0FA219EE1B54BC6000B0C775 /* PersonSettingViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PersonSettingViewController.h; sourceTree = "<group>"; };
 		0FA219EF1B54BC6000B0C775 /* PersonSettingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PersonSettingViewController.m; sourceTree = "<group>"; };
-		0FA219F11B54BD0000B0C775 /* coordinate@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "coordinate@2x.png"; sourceTree = "<group>"; };
 		0FA219F51B54D40500B0C775 /* ReportTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReportTableViewController.h; sourceTree = "<group>"; };
 		0FA219F61B54D40500B0C775 /* ReportTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReportTableViewController.m; sourceTree = "<group>"; };
 		0FA219FD1B54FE8100B0C775 /* ChatModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChatModel.h; sourceTree = "<group>"; };
@@ -749,10 +751,15 @@
 		0FA463541B65C83400A37ECC /* IPDFCameraViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IPDFCameraViewController.h; sourceTree = "<group>"; };
 		0FA463551B65C83400A37ECC /* IPDFCameraViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IPDFCameraViewController.m; sourceTree = "<group>"; };
 		0FA4635E1B65CF1000A37ECC /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		0FA463611B65D59100A37ECC /* light_on@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "light_on@2x.png"; sourceTree = "<group>"; };
 		0FA463641B65DEE000A37ECC /* ConfirmPictureResultViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ConfirmPictureResultViewController.h; sourceTree = "<group>"; };
 		0FA463651B65DEE000A37ECC /* ConfirmPictureResultViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ConfirmPictureResultViewController.m; sourceTree = "<group>"; };
 		0FA463661B65DEE000A37ECC /* ConfirmPictureResultViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ConfirmPictureResultViewController.xib; sourceTree = "<group>"; };
+		0FB11F701BE9AE660043DF3A /* FriendsSetViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FriendsSetViewController.h; sourceTree = "<group>"; };
+		0FB11F711BE9AE660043DF3A /* FriendsSetViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FriendsSetViewController.m; sourceTree = "<group>"; };
+		0FB11F751BEA24780043DF3A /* default_avatar5@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "default_avatar5@2x.png"; sourceTree = "<group>"; };
+		0FB11F791BEA3E8F0043DF3A /* first@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "first@2x.png"; sourceTree = "<group>"; };
+		0FB11F7A1BEA3E8F0043DF3A /* first2@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "first2@2x.png"; sourceTree = "<group>"; };
+		0FB11F7B1BEA3E8F0043DF3A /* first3@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "first3@2x.png"; sourceTree = "<group>"; };
 		0FB66BF21B44E24600DE71D8 /* ShowAllMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ShowAllMessageViewController.h; sourceTree = "<group>"; };
 		0FB66BF31B44E24600DE71D8 /* ShowAllMessageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ShowAllMessageViewController.m; sourceTree = "<group>"; };
 		0FB66BF51B44E29900DE71D8 /* FindOthersViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindOthersViewController.h; sourceTree = "<group>"; };
@@ -1207,6 +1214,7 @@
 				0F9B42951BD73BA200E6E3A5 /* no_hyd@2x.png */,
 				0F9B42961BD73BA200E6E3A5 /* no_hyd2@2x.png */,
 				0F9B42971BD73BA200E6E3A5 /* no_hyd3@2x.png */,
+				0F7796D01B906CF8005E89A8 /* set_up@2x.png */,
 			);
 			path = "病历icon";
 			sourceTree = "<group>";
@@ -1235,7 +1243,6 @@
 				0F78C4D31BAC02C200C1F373 /* collect4@2x.png */,
 				0F5A1E721BA164D000DE39B0 /* wrong@2x.png */,
 				0F5A1E731BA164D000DE39B0 /* right@2x.png */,
-				0F7796D01B906CF8005E89A8 /* set_up@2x.png */,
 			);
 			path = "我的icon";
 			sourceTree = "<group>";
@@ -1475,7 +1482,6 @@
 			isa = PBXGroup;
 			children = (
 				0F6187201B60ADF500C241E5 /* bar640×99@2x.png */,
-				0FA219F11B54BD0000B0C775 /* coordinate@2x.png */,
 				0FA2193C1B536C2E00B0C775 /* groups@2x.png */,
 				0FA2193D1B536C2E00B0C775 /* news@2x.png */,
 				0FA2193E1B536C2E00B0C775 /* point1@2x.png */,
@@ -1667,6 +1673,8 @@
 				0F431F971B58AFB200067A93 /* 咨询 */,
 				0FA21A5A1B565E2400B0C775 /* ContactPersonDetailViewController.h */,
 				0FA21A5B1B565E2400B0C775 /* ContactPersonDetailViewController.m */,
+				0FB11F701BE9AE660043DF3A /* FriendsSetViewController.h */,
+				0FB11F711BE9AE660043DF3A /* FriendsSetViewController.m */,
 			);
 			path = "通讯录的子view";
 			sourceTree = "<group>";
@@ -1864,7 +1872,6 @@
 				0F6238411B7DDA690022BC86 /* persontitle8@2x.png */,
 				0F6238421B7DDA690022BC86 /* persontitle9@2x.png */,
 				0FEA1F801BE0ADFB00FB2F95 /* weixinIcon@2x.png */,
-				0FA463611B65D59100A37ECC /* light_on@2x.png */,
 				0F663E841B4CC3D9008BE58B /* not_visible@2x.png */,
 				0F663E821B4CC15B008BE58B /* wechat@2x.png */,
 				0F663E801B4BD8A2008BE58B /* visible@2x.png */,
@@ -1885,6 +1892,10 @@
 				0F9B42671BD60A6100E6E3A5 /* search3@2x.png */,
 				0F15BA851BDA2E6A00DA12FB /* default_avatar4@2x.png */,
 				0F921AB41BE3884200D3338D /* verify_friend_no@2x.png */,
+				0FB11F791BEA3E8F0043DF3A /* first@2x.png */,
+				0FB11F7A1BEA3E8F0043DF3A /* first2@2x.png */,
+				0FB11F7B1BEA3E8F0043DF3A /* first3@2x.png */,
+				0FB11F751BEA24780043DF3A /* default_avatar5@2x.png */,
 			);
 			path = image;
 			sourceTree = "<group>";
@@ -1990,7 +2001,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0FA463631B65D59100A37ECC /* light_on@2x.png in Resources */,
 				0F6237D81B79D6B90022BC86 /* edge_off@2x.png in Resources */,
 				0F62384B1B7DDA690022BC86 /* persontitle9@2x.png in Resources */,
 				0F6237E31B79D6B90022BC86 /* light_off@2x.png in Resources */,
@@ -2022,6 +2032,7 @@
 				0F62379C1B79D6B90022BC86 /* add@2x.png in Resources */,
 				0F9B42991BD73BA200E6E3A5 /* no_hyd2@2x.png in Resources */,
 				0F7796C51B90151A005E89A8 /* lanchImage.png in Resources */,
+				0FB11F7D1BEA3E8F0043DF3A /* first2@2x.png in Resources */,
 				0F6237F01B79D6B90022BC86 /* recognition_is_complete@2x.png in Resources */,
 				0FC7CF611BB4ECB600082B71 /* qq_friends@2x.png in Resources */,
 				0F6237F31B79D6B90022BC86 /* scanning_returns@2x.png in Resources */,
@@ -2085,6 +2096,7 @@
 				0F6237D71B79D6B90022BC86 /* drop_down@2x.png in Resources */,
 				0F6238491B7DDA690022BC86 /* persontitle7@2x.png in Resources */,
 				0FEA1F811BE0ADFB00FB2F95 /* weixinIcon@2x.png in Resources */,
+				0FB11F7C1BEA3E8F0043DF3A /* first@2x.png in Resources */,
 				0FDC36D81B7865BC00E28764 /* MyDoctorDetailViewController.xib in Resources */,
 				0F9B42181BD4D34000E6E3A5 /* grouptitle8@2x.png in Resources */,
 				0F9B42191BD4D34000E6E3A5 /* grouptitle9@2x.png in Resources */,
@@ -2105,6 +2117,7 @@
 				0FFF894A1B4BD14700DD4F36 /* back@2x.png in Resources */,
 				0FDF96F91B958D8700515C12 /* GroupRootViewController.xib in Resources */,
 				0FA219401B536C2E00B0C775 /* groups@2x.png in Resources */,
+				0FB11F7E1BEA3E8F0043DF3A /* first3@2x.png in Resources */,
 				0FCFA3441BB5220F0001DDD6 /* modify_back@2x.png in Resources */,
 				0FBC6C171B58CD79007799FD /* Main.storyboard in Resources */,
 				0F9B42171BD4D34000E6E3A5 /* grouptitle7@2x.png in Resources */,
@@ -2161,9 +2174,9 @@
 				0F6237CB1B79D6B90022BC86 /* back_w@2x.png in Resources */,
 				0FD739D91BCD1474008E7FF0 /* the_b_of_super@2x.png in Resources */,
 				0F6237C91B79D6B90022BC86 /* again@2x.png in Resources */,
-				0FA219F31B54BD0000B0C775 /* coordinate@2x.png in Resources */,
 				0FCEBF931BBB959D0074AD75 /* hydy3.png in Resources */,
 				0F6238431B7DDA690022BC86 /* persontitle1@2x.png in Resources */,
+				0FB11F761BEA24780043DF3A /* default_avatar5@2x.png in Resources */,
 				0F6237A51B79D6B90022BC86 /* editor2@2x.png in Resources */,
 				0F6237E61B79D6B90022BC86 /* message_on@2x.png in Resources */,
 				0F9B42921BD7374400E6E3A5 /* my_doc@2x.png in Resources */,
@@ -2336,6 +2349,7 @@
 				0FB66BFD1B44E35400DE71D8 /* MyInfoViewController.m in Sources */,
 				0F5A1E531B9FEEC200DE39B0 /* NewTeleViewController.m in Sources */,
 				0F5E911B1B4677770098758A /* PinYinForObjc.m in Sources */,
+				0FB11F721BE9AE660043DF3A /* FriendsSetViewController.m in Sources */,
 				0FEF4EDA1B6F2B1900687057 /* FriendDBItem.m in Sources */,
 				0F5A1E591B9FF29000DE39B0 /* NewPasswordViewController.m in Sources */,
 				0FDC36D71B7865BC00E28764 /* MyDoctorDetailViewController.m in Sources */,
@@ -2506,7 +2520,7 @@
 				);
 				GCC_PREFIX_HEADER = ResultContained/Yizhenapp.pch;
 				INFOPLIST_FILE = ResultContained/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2581,7 +2595,7 @@
 				);
 				GCC_PREFIX_HEADER = ResultContained/Yizhenapp.pch;
 				INFOPLIST_FILE = ResultContained/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
