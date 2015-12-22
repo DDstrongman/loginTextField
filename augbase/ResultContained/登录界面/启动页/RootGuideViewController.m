@@ -30,7 +30,7 @@
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
     AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
-    appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+    appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
 }
 
 -(void)setupView{

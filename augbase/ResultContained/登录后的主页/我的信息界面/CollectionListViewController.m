@@ -43,13 +43,12 @@
     UITableViewCell *cell;
     cell = [tableView dequeueReusableCellWithIdentifier:@"collectioncell" forIndexPath:indexPath];
 //    [[cell.contentView viewWithTag:1] imageWithRound:NO];
-    for (NSDictionary *dic in collectionArray) {
-        [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/author/%@",[dic objectForKey:@"authorimg"]]] placeholderImage:[UIImage imageNamed:@"test"]];
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = [dic objectForKey:@"q"];
-        ((UILabel *)[cell.contentView viewWithTag:3]).text = [dic objectForKey:@"a"];
-        ((UILabel *)[cell.contentView viewWithTag:4]).text = [dic objectForKey:@"author"];
-        ((UILabel *)[cell.contentView viewWithTag:5]).text = [dic objectForKey:@"publishdate"];
-    }
+    NSDictionary *dic = collectionArray[indexPath.row];
+    [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/author/%@",[dic objectForKey:@"authorimg"]]] placeholderImage:[UIImage imageNamed:@"yulantu_3"]];
+    ((UILabel *)[cell.contentView viewWithTag:2]).text = [dic objectForKey:@"q"];
+    ((UILabel *)[cell.contentView viewWithTag:3]).text = [dic objectForKey:@"a"];
+    ((UILabel *)[cell.contentView viewWithTag:4]).text = [dic objectForKey:@"author"];
+    ((UILabel *)[cell.contentView viewWithTag:5]).text = [dic objectForKey:@"publishdate"];
 #warning 设置分割线
     tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
     tableView.separatorColor = lightGrayBackColor;
@@ -79,7 +78,7 @@
 
 
 -(void)setupView{
-    self.title = NSLocalizedString(@"收藏", @"");
+    self.title = NSLocalizedString(@"我收藏的咨讯", @"");
     _collectionTable.dataSource = self;
     _collectionTable.delegate = self;
     _collectionTable.tableFooterView = [[UIView alloc]init];

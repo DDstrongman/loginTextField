@@ -476,6 +476,14 @@ typedef NS_ENUM(NSInteger, CropCornerType) {
         [_resetBtn addTarget:self action:@selector(resetBtnTapped) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:_resetBtn];
         
+        UILabel *RemindLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, ViewWidth-40, 20)];
+        RemindLabel.font = [UIFont systemFontOfSize:14.0];
+        RemindLabel.textColor = [UIColor whiteColor];
+        RemindLabel.text = NSLocalizedString(@"只识别框内信息，此处可调节框大小", @"");
+        RemindLabel.textAlignment = NSTextAlignmentCenter;
+        RemindLabel.center = CGPointMake(self.bounds.size.width/2, ViewHeight-95-24-5);
+        [self addSubview:RemindLabel];
+        
         NSArray *segmentArray = [NSArray arrayWithObjects:@"1:1",@"16:9",@"4:3",@"9:16",@"3:4",nil];
         rationSegment =[[UISegmentedControl alloc] initWithItems:segmentArray];
         rationSegment.frame = CGRectMake(0, 0,ViewWidth-40,30);

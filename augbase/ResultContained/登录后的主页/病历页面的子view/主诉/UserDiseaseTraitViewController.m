@@ -150,10 +150,37 @@
             
         }];
         [self popSpringAnimationHidden:bottomChooseView];
-//        chooseIndex = 3;
-//        titleChooseLabel.text = NSLocalizedString(@"请选择体重", @"");
-//        chooseArray = [@[@"0",@"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9"]mutableCopy];
-//        [choosePicker reloadAllComponents];
+        NSString *BMIID = [[[tempSymptomDic objectForKey:@"BMI"] objectForKey:@"id"] stringValue];
+        float tempWeight = weight;
+        float tempHeight = height;
+        float BMI = tempWeight/(tempHeight*tempHeight/10000.00);
+        NSString *tempBMI = [NSString stringWithFormat:@"%.2f",BMI];
+        NSLog(@"bmi====%@",tempBMI);
+        [[NSUserDefaults standardUserDefaults] setObject:tempBMI forKey:@"userBMI"];
+        NSString *BMIurl = [NSString stringWithFormat:@"%@v2/user/symptom/%@?uid=%@&token=%@&value=%@",Baseurl,BMIID,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],tempBMI];
+        [[HttpManager ShareInstance]AFNetPUTSupport:BMIurl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            if (res == 0) {
+                NSLog(@"上传修改成功");
+                NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+                NSString *url = [NSString stringWithFormat:@"%@v2/user/symptom?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+                [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    if (res == 0) {
+                        tempRelativeDic = [source objectForKey:@"relativeInfo"];
+                        tempPlanDic =  [source objectForKey:@"pregnantPlanInfo"];
+                        tempSymptomDic = [source objectForKey:@"symptom"];
+                    }
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    
+                }];
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
+        [_diseaseTrait reloadData];
     }else if(chooseIndex == 3){
         weight = [titleChooseLabel.text floatValue];
         chooseIndex = 2;
@@ -468,6 +495,8 @@
             tempPlanDic =  [source objectForKey:@"pregnantPlanInfo"];
             tempSymptomDic = [source objectForKey:@"symptom"];
             [_diseaseTrait reloadData];
+        }else{
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         

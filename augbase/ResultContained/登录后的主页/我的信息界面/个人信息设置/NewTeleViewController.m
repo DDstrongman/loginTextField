@@ -47,6 +47,87 @@
         if (res == 0) {
             [[NSUserDefaults standardUserDefaults]setObject:newTele.contentTextField.text forKey:@"userTele"];
             [_editTeleResultDele editTeleResult:YES];
+        }else if (res == 49){
+            if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChat"] boolValue]) {
+                NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatToken"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatUID"],0];
+                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    NSLog(@"device activitation source=%@,res=====%d",source,res);
+                    if (res == 0) {
+                        [[NSUserDefaults standardUserDefaults] setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@user/edit",Baseurl];
+                        NSString *yzuid = [users objectForKey:@"userUID"];
+                        
+                        NSString *yztoken = [users objectForKey:@"userToken"];
+                        
+                        url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&tel=%@&verificationCode=%@",url,yzuid,yztoken,newTele.contentTextField.text,confirmNumber.contentTextField.text];
+                        [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            int res = [[source objectForKey:@"res"] intValue];
+                            if (res == 0) {
+                                [[NSUserDefaults standardUserDefaults]setObject:newTele.contentTextField.text forKey:@"userTele"];
+                                [_editTeleResultDele editTeleResult:YES];
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }else{
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+                NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+                [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+                [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+                url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    if (res==0) {
+                        [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@user/edit",Baseurl];
+                        NSString *yzuid = [users objectForKey:@"userUID"];
+                        
+                        NSString *yztoken = [users objectForKey:@"userToken"];
+                        
+                        url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&tel=%@&verificationCode=%@",url,yzuid,yztoken,newTele.contentTextField.text,confirmNumber.contentTextField.text];
+                        [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            int res = [[source objectForKey:@"res"] intValue];
+                            if (res == 0) {
+                                [[NSUserDefaults standardUserDefaults]setObject:newTele.contentTextField.text forKey:@"userTele"];
+                                [_editTeleResultDele editTeleResult:YES];
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }
         }else{
             [_editTeleResultDele editTeleResult:NO];
             [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
@@ -226,6 +307,85 @@
         NSLog(@"res===%d",res);
         if (res == 0) {
             
+        }else if (res == 49){
+            if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChat"] boolValue]) {
+                NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatToken"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatUID"],0];
+                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    NSLog(@"device activitation source=%@,res=====%d",source,res);
+                    if (res == 0) {
+                        [[NSUserDefaults standardUserDefaults] setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,newTele.contentTextField.text,inputNumberView.contentTextField.text];
+                        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                        [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            NSLog(@"reponson===%@",source);
+                            int res=[[source objectForKey:@"res"] intValue];
+                            NSLog(@"res===%d",res);
+                            if (res == 0) {
+                                
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }else{
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+                NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+                [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+                [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+                url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    if (res==0) {
+                        [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@user/signup/telephone_pre?telephone=%@&verifycode=%@",Baseurl,newTele.contentTextField.text,inputNumberView.contentTextField.text];
+                        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                        [manager GET:url parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            NSLog(@"reponson===%@",source);
+                            int res=[[source objectForKey:@"res"] intValue];
+                            NSLog(@"res===%d",res);
+                            if (res == 0) {
+                                
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }
         }else{
             [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }

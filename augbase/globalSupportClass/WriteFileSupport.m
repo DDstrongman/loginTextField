@@ -24,25 +24,13 @@
 -(NSString *)writeFileAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(UIImage *)contents{
     [self createDir:Dirname];
     NSData *pictureData=[self transformPNG:contents];
-    
-//    UIImage *jpgContent=[self imageByScalingProportionallyToSize:CGSizeMake(200, 200) sourceImage:contents];
-//    NSData *pictureCropData=[self transformJEPG:jpgContent];
     NSString *returnString=[self createFile:fileName DirName:Dirname PictureData:pictureData];
-    
-//    NSString *returnCropString=[self createCropFile:[fileName stringByAppendingString:@"_th"] DirName:Dirname PictureData:pictureCropData];
-    //    NSString *returnString=[self writeFile:contents DirName:Dirname FileName:fileName];
     return returnString;
 }
 
 -(NSString *)writeImageAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(NSData *)contents{
     [self createDir:Dirname];
     NSString *returnString=[self createFile:fileName DirName:Dirname PictureData:contents];
-    return returnString;
-}
-
--(NSString *)writeMP3AndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(NSData *)contents{
-    [self createDir:Dirname];
-    NSString *returnString=[self createMP3File:fileName DirName:Dirname MP3Data:contents];
     return returnString;
 }
 
@@ -53,15 +41,11 @@
     NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *testPath =testDirectory;
-    BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.png",FileName] contents:pictureData attributes:nil];
-    if (res)
-    {
-        
-    }else
-    {
-        NSLog(@"文件创建失败");
-    }
-    return [testPath stringByAppendingFormat:@"/%@.png",FileName];
+    NSString *filePath = [testPath stringByAppendingFormat:@"/%@.png",FileName];
+    BOOL res;
+    if(![fileManager fileExistsAtPath:filePath]) //如果不存在
+        res = [fileManager createFileAtPath:filePath contents:pictureData attributes:nil];
+    return filePath;
 }
 
 //创建文件
@@ -107,72 +91,17 @@
     //在这里获取应用程序Documents文件夹里的文件及文件夹列表
     NSError *error = nil;
     NSArray *fileList = [[NSArray alloc] init];
-    //    NSMutableArray *returnPictureArray=[[NSMutableArray alloc] init];
     NSString *picturePath;
     //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
     fileList = [fileManager contentsOfDirectoryAtPath:filePath error:&error];
-    //    NSLog(@"%@",fileList);
-    NSMutableArray *returnAllInfoArry=[[NSMutableArray alloc]init];
-    for(int i=0;i<fileList.count;i++)
-    {
+    for(int i=0;i<fileList.count;i++){
         picturePath=[NSString stringWithFormat:@"%@%@%@",filePath,@"/",fileList[i]];
-//        UIImage *img = [UIImage imageWithContentsOfFile:picturePath];
-//        Item *getMessage=[[Item alloc]init];
-//        //        if ([fileList[i] rangeOfString:@".png"].length > 0)
-//        //        {
-//        //            NSLog(@"格式为png");
-//        //            getMessage.fileName=fileList[i];
-//        //
-//        //        }
-//        if([fileList[i] rangeOfString:@".jpg"].length > 0)
-//        {
-//            //NSLog(@"格式为jpg");
-//            getMessage.thFileName=[NSString stringWithFormat:@"%@",fileList[i]];
-//            getMessage.fileName=[getMessage.thFileName stringByReplacingOccurrencesOfString:@"_th.jpg" withString:@".png"];
-//            //NSLog(@"写入thFileName====%@",getMessage.thFileName);
-//            
-//            if(img)
-//            {
-//                getMessage.picture=img;
-//                //NSLog(@"img====%@",getMessage.picture);
-//                getMessage.thFilePath=picturePath;
-//                getMessage.filePath=[getMessage.thFilePath stringByReplacingOccurrencesOfString:@"_th.jpg" withString:@".png"];
-//                [returnAllInfoArry addObject:getMessage];
-//            }
-//        }
-//        else
-//        {
-//            //NSLog(@"读取图片格式出错,非png,jpg");
-//        }
-        
     }
-    
-    
-//    NSArray *sortedArray = [returnAllInfoArry sortedArrayUsingComparator:^NSComparisonResult(Item *p1, Item *p2){
-//        return [p2.fileName compare:p1.fileName];
-//    }];
-    
-    
-//    return sortedArray;
     return nil;
 }
 
--(NSInteger)getPictureNumber
-{
-    NSInteger PictureNumber;
-    NSString *documentsPath =[self dirDoc];
-    NSError *err;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-//    NSArray *fileList = [fileManager contentsOfDirectoryAtPath:[documentsPath stringByAppendingPathComponent:kPNGDir] error:&err];
-//    PictureNumber=fileList.count;
-    
-    return PictureNumber/2;
-}
-
-
 //删除文件
--(void)removePicture:(NSString *)filePath
-{
+-(void)removePicture:(NSString *)filePath{
     NSFileManager *fileMgr = [NSFileManager defaultManager];
     NSError *err;
     BOOL bRet = [fileMgr fileExistsAtPath:filePath];
@@ -221,19 +150,12 @@
 }
 
 #pragma 获取当前时间和设备id处理为需要的字符串
--(NSString *)getTimeAndDeviceString
-{
-    //    NSString *deviceID  =[[[UIDevice currentDevice] identifierForVendor] UUIDString];
-    //    CocoaSecurityResult *sha1 = [CocoaSecurity sha1:[NSString stringWithFormat:@"%@ %@",[self getDateTimeStr],deviceID]];
-    //
-    //    //16进制变小写
+-(NSString *)getTimeAndDeviceString{
     return [self getDateTimeStr];
 }
 
 //取得当前时间字符串
--(NSString*)getDateTimeStr
-{
-    
+-(NSString*)getDateTimeStr{
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
     
@@ -245,7 +167,6 @@
 }
 
 #pragma 转化UIImage为NSData样例,方案废弃,改用文件存储image，数据库存储图片存储路径
-
 #pragma PNG
 -(NSData *)transformPNG:(UIImage *)image
 {
@@ -260,16 +181,8 @@
     return insertJepgImageData;
 }
 
-
-//获取根目录路径
--(void)dirHome
-{
-    NSString *dirHome=NSHomeDirectory();
-}
-
 //获取documents路径
--(NSString *)dirDoc
-{
+-(NSString *)dirDoc{
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     return documentsDirectory;
@@ -304,35 +217,192 @@
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *testDirectory = [documentsPath stringByAppendingPathComponent:DirName];
     // 创建目录
-    BOOL res=[fileManager createDirectoryAtPath:testDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-    if (res)
-    {
+    BOOL res = [fileManager createDirectoryAtPath:testDirectory withIntermediateDirectories:YES attributes:nil error:nil];
+    if (res){
         
     }
-    else
-    {
+    else{
         NSLog(@"文件夹创建失败");
     }
 }
 
-
-//写文件
--(NSString *)writeFile:(NSString *)fileDirectory DirName:(NSString *)dirName FileName:(NSString *)fileName
+//写数组
+-(NSString *)writeArray:(NSArray *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName
 {
     NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
     NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:testDirectory]) {
+        [self createDir:dirName];
+    }
     NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
-    NSString *content = fileDirectory;
-    BOOL res = [content writeToFile:testPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-    if (res)
-    {
+    BOOL res = [contents writeToFile:testPath atomically:YES];
+    
+    if (fileName != nil&&contents != nil) {
+        [_FileCache setObject:contents forKey:fileName];
+    }
+    if (res){
         
     }
-    else
-    {
-        NSLog(@"文件写入失败");
+    else{
+        NSLog(@"数组写入失败");
     }
     return testPath;
+}
+
+//写字典
+-(NSString *)writeDictionary:(NSDictionary *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName
+{
+    NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
+    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:testDirectory]) {
+        [self createDir:dirName];
+    }
+    NSData *myData = [NSKeyedArchiver archivedDataWithRootObject:contents];
+    NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
+    BOOL res = [myData writeToFile:testPath atomically:YES];
+    if (fileName != nil&&contents != nil) {
+        [_FileCache setObject:contents forKey:fileName];
+    }
+    if (res){
+        
+    }
+    else{
+        NSLog(@"字典写入失败");
+    }
+    return testPath;
+}
+
+-(NSString *)writeData:(NSData *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName{
+    NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
+    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:testDirectory]) {
+        [self createDir:dirName];
+    }
+    NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
+    BOOL res = [contents writeToFile:testPath atomically:YES];
+    if (fileName != nil&&contents != nil) {
+        [_FileCache setObject:contents forKey:fileName];
+    }
+    if (res){
+        
+    }
+    else{
+        NSLog(@"data写入失败");
+    }
+    return testPath;
+}
+
+-(BOOL)isFileExist:(NSString *)fileName{
+    BOOL isExist;
+    NSString *documentsPath =[self dirDoc];
+    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:fileName];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    isExist = [fileManager fileExistsAtPath:testDirectory];
+    return isExist;
+}
+
+-(NSMutableArray *)readArray:(NSString *)dirName FileName:(NSString *)fileName{
+    NSMutableArray *tempArray = [NSMutableArray array];
+    BOOL isExist;
+    NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
+    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
+    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
+    
+    NSMutableArray *cacheData = [_FileCache objectForKey:fileName];
+    if(cacheData){
+        return cacheData;
+    }else{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        isExist = [fileManager fileExistsAtPath:testDirectory];
+        if (isExist) {
+            tempArray = [NSMutableArray arrayWithContentsOfFile:testDirectory];
+            [_FileCache setObject:tempArray forKey:fileName];
+            return tempArray;
+        }else{
+            return nil;
+        }
+    }
+}
+
+-(NSMutableDictionary *)readDictionary:(NSString *)dirName FileName:(NSString *)fileName{
+    NSMutableDictionary *tempDic = [NSMutableDictionary dictionary];
+    BOOL isExist;
+    NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
+    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
+    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
+    
+    NSMutableDictionary *cacheData = [_FileCache objectForKey:fileName];
+    if(cacheData){
+        return cacheData;
+    }else{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        isExist = [fileManager fileExistsAtPath:testDirectory];
+        if (isExist) {
+            tempDic = (NSMutableDictionary *)[NSKeyedUnarchiver unarchiveObjectWithData:[NSData dataWithContentsOfFile:testDirectory]];
+            [_FileCache setObject:tempDic forKey:fileName];
+            return tempDic;
+        }else{
+            return nil;
+        }
+    }
+}
+
+-(NSData *)readData:(NSString *)dirName FileName:(NSString *)fileName{
+    NSData *tempData;
+    BOOL isExist;
+    NSString *documentsPath =[self dirDoc];
+    if (!_FileCache) {
+        _FileCache = [[NSCache alloc]init];
+    }
+    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
+    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
+    NSData *cacheData = [_FileCache objectForKey:fileName];
+    if(cacheData){
+        return cacheData;
+    }else{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        isExist = [fileManager fileExistsAtPath:testDirectory];
+        if (isExist) {
+            tempData = [NSData dataWithContentsOfFile:testDirectory];
+            [_FileCache setObject:tempData forKey:fileName];
+            return tempData;
+        }else{
+            return nil;
+        }
+    }
+}
+
+-(void)removeDirFile:(NSString *)dirName FileName:(NSString *)fileName{
+    BOOL isExist;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *documentsPath = [self dirDoc];
+    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
+    NSString *finalPath = [tempPath stringByAppendingPathComponent:fileName];
+    isExist = [fileManager fileExistsAtPath:finalPath];
+    if (isExist)
+        [fileManager removeItemAtPath:finalPath error:NULL];
+}
+
+-(void)flushCache{
+    [_FileCache removeAllObjects];
 }
 
 #pragma 读取文件
@@ -352,8 +422,70 @@
     NSString *filename;
     while ((filename = [e nextObject])) {
         NSString *temp = [documentsDirectory stringByAppendingPathComponent:filename];
-        [fileManager removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:filename] error:NULL];
+        [fileManager removeItemAtPath:temp error:NULL];
     }
 }
+//计算缓存大小
+-(float)countAllDirDocuments{
+    NSString *documentsDirectory = [self dirDoc];
+    float size = [self folderSizeAtPath:documentsDirectory];
+    return size;
+}
+
+-(float)countSingleDirDocuments:(NSString *)fileName{
+    NSString *documentsDirectory = [self dirDoc];
+    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
+    float size = [self folderSizeAtPath:temp];
+    return size;
+}
+
+-(float)countSingleDirFile:(NSString *)fileName{
+    NSString *documentsDirectory = [self dirDoc];
+    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
+    float size = [self fileSizeAtPath:temp];
+    return size/(1024.0*1024.0);
+}
+
+-(void)removeCache:(NSString *)fileName{
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    NSError *err;
+    NSString *documentsDirectory = [self dirDoc];
+    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
+    BOOL bRet = [fileMgr fileExistsAtPath:temp];
+    if (bRet){
+        [fileMgr removeItemAtPath:temp error:&err];
+    }
+}
+
+//单个文件的大小
+- (long long) fileSizeAtPath:(NSString*) filePath{
+    NSFileManager* manager = [NSFileManager defaultManager];
+    if ([manager fileExistsAtPath:filePath]){
+        return [[manager attributesOfItemAtPath:filePath error:nil] fileSize];
+    }
+    return 0;
+}
+
+//遍历文件夹获得文件夹大小，返回多少M
+-(float )folderSizeAtPath:(NSString*) folderPath{
+    
+    NSFileManager* manager = [NSFileManager defaultManager];
+    
+    if (![manager fileExistsAtPath:folderPath]) return 0;
+    
+    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
+    
+    NSString* fileName;
+    long long folderSize = 0;
+    while ((fileName = [childFilesEnumerator nextObject]) != nil){
+        
+        NSString* fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
+        
+        folderSize += [self fileSizeAtPath:fileAbsolutePath];
+        
+    }
+    return folderSize/(1024.0*1024.0);
+}
+
 
 @end

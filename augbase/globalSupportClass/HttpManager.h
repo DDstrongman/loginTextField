@@ -22,4 +22,5 @@
 #pragma 同步缓存get请求
 -(NSData *)httpGetSupport:(NSString *)url;
 -(NSData *)httpPostSupport:(NSString *)urlString PostName:(NSData *)fileData FileType:(NSString *)fileType FileTrail:(NSString *)fileTrail;
+
 @end

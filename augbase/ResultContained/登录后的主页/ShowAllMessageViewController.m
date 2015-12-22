@@ -50,8 +50,11 @@
     [super viewDidLoad];
     [self setupView];
     [self setupData];
-    [self setupConnect];
     
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"连接中...", @"")];
+    
+    
+    [self setupConnect];
     [self setLocation];//获取地理位置
 }
 
@@ -62,7 +65,6 @@
     [[DBManager ShareInstance] creatDatabase:DBName];
     [[DBManager ShareInstance] isChatTableExist:[NSString stringWithFormat:@"%@%@",YizhenTableName, receiveMess]];
     tableJidName = [[DBManager ShareInstance] getAllTableName];
-#warning 此处需要加入通过jid判断用户name的网络需求
     dataArray = [NSMutableArray arrayWithCapacity:0];
     if ([tableJidName count] >0) {
         for (NSString *JID in tableJidName) {
@@ -98,6 +100,21 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (result) {
         [_messageTableview reloadData];
+        int friendNum = 0;
+        [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
+        FMResultSet *friendList = [[FriendDBManager ShareInstance] SearchAllFriend:YizhenFriendName];
+        while ([friendList next]) {
+            friendNum++;
+        }
+        
+        if (friendNum>1) {
+            [[NSUserDefaults standardUserDefaults]setObject:@"1" forKey:@"userOpenRemind"];
+        }
+        if ([[defaults objectForKey:@"userOpenRemind"]boolValue]) {
+            remindImageView.hidden = YES;
+        }else{
+            remindImageView.hidden = NO;
+        }
         [defaults setObject:@YES forKey:@"FriendList"];
     }else{
         [defaults setObject:@NO forKey:@"FriendList"];
@@ -198,7 +215,7 @@
     if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userSystemVersion"] floatValue]<8.0) {
         
     }else{
-        [locationManager requestAlwaysAuthorization];
+        [locationManager requestWhenInUseAuthorization];
     }
     locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     locationManager.distanceFilter = 1000.f;
@@ -324,8 +341,10 @@
             cell.descriptionText.text = lastMess;
         }else if ([lastType isEqualToString:@"1"]){
             cell.descriptionText.text = NSLocalizedString(@"[图片]", @"");
-        }else{
+        }else if ([lastType isEqualToString:@"2"]){
             cell.descriptionText.text = NSLocalizedString(@"[语音]", @"");
+        }else if ([lastType isEqualToString:@"3"]){
+            cell.descriptionText.text = NSLocalizedString(@"[识别结果]", @"");
         }
         cell.timeText.text = [self changeTheDateString:lastTime];
         
@@ -489,6 +508,7 @@
 
 #pragma viewdidload等中初始化的方法写在这里
 -(void)setupView{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible =YES;
     _messageTableview.delegate = self;
     _messageTableview.dataSource = self;
     searchViewController = [[UISearchController alloc]initWithSearchResultsController:nil];
@@ -504,16 +524,7 @@
     _messageTableview.backgroundColor = grayBackgroundLightColor;
     _messageTableview.tableFooterView = [[UIView alloc]init];
     
-    int friendNum = 0;
-    [[FriendDBManager ShareInstance] isFriendTableExist:YizhenFriendName];
-    FMResultSet *friendList = [[FriendDBManager ShareInstance] SearchAllFriend:YizhenFriendName];
-    while ([friendList next]) {
-        friendNum++;
-    }
     
-    if (friendNum>1) {
-        [[NSUserDefaults standardUserDefaults]setObject:@"1" forKey:@"userOpenRemind"];
-    }
     remindImageView = [[UIImageView alloc]initWithFrame:CGRectMake(0, ViewHeight-49-ViewWidth/2.14-22-44, ViewWidth, ViewWidth/2.14)];
     remindImageView.userInteractionEnabled = YES;
     if (ViewWidth>310&&ViewWidth<330) {
@@ -524,11 +535,14 @@
         remindImageView.image = [UIImage imageNamed:@"first2"];
     }
     [self.view addSubview:remindImageView];
-    if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userOpenRemind"]boolValue]) {
+    
+    
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userOpenRemind"]boolValue]) {
         remindImageView.hidden = YES;
     }else{
         remindImageView.hidden = NO;
     }
+    
     UITapGestureRecognizer *singleTapSex = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideRemindImage)];
     [singleTapSex setNumberOfTapsRequired:1];
     [remindImageView addGestureRecognizer:singleTapSex];
@@ -554,39 +568,105 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NotFirstTimeLogin = (BOOL)[defaults stringForKey:@"NotFirstTime"];//no为初次登录，yes则不是
     if (NotFirstTimeLogin) {
-        NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
-        NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
-        [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
-        [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
-        url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-        [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-            int res=[[source objectForKey:@"res"] intValue];
-            if (res == 0) {
-                //请求完成
-                if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]]) {
-                    NSLog(@"xmpp连接完成");
-                    [[XMPPSupportClass ShareInstance]confirmAddFriend:@"p22142"];
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:@"userPassword"] == nil) {
+            NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatToken"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatUID"],0];
+            [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                int res=[[source objectForKey:@"res"] intValue];
+                NSLog(@"device activitation source=%@,res=====%d",source,res);
+                if (res == 0) {
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    //请求完成
+                    [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]]) {
+                        NSLog(@"xmpp连接完成");
+                        [[SetupView ShareInstance]hideHUD];
+                        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+                        [[XMPPSupportClass ShareInstance]confirmAddFriend:@"p22142"];
+                        NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
+                        NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
+                        [createDic setObject:@0 forKey:@"clienttype"];
+                        if ([defaults objectForKey:@"userDeviceID"]!= nil) {
+                            [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                        }
+                        [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                        [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            if ([[createRes objectForKey:@"res"] intValue] == 0) {
+                                NSLog(@"更新设备号成功");
+                            }
+                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            
+                        }];
+                    }
+                }else{
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
                 }
-            }
-            else{
-//                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
-            }
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"WEB端登录失败：%@",error);
-        }];
+            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                [[SetupView ShareInstance]hideHUD];
+                [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"网络错误", @"") ViewController:self];
+            }];
+        }else{
+            NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+            NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+            [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+            [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+            url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+            [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                int res=[[source objectForKey:@"res"] intValue];
+                if (res == 0) {
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    //请求完成
+                    [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults objectForKey:@"userJID"],httpServer]]) {
+                        NSLog(@"xmpp连接完成");
+                        [[SetupView ShareInstance]hideHUD];
+                        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+                        [[XMPPSupportClass ShareInstance]confirmAddFriend:@"p22142"];
+                        NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
+                        NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
+                        [createDic setObject:@0 forKey:@"clienttype"];
+                        if ([defaults objectForKey:@"userDeviceID"]!= nil) {
+                            [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
+                        }
+                        [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                        [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            if ([[createRes objectForKey:@"res"] intValue] == 0) {
+                                NSLog(@"更新设备号成功");
+                            }
+                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"网络错误", @"") ViewController:self];
+                        }];
+                    }
+                }
+                else{
+                    [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                }
+            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                [[SetupView ShareInstance]hideHUD];
+                [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"网络错误", @"") ViewController:self];
+            }];
+        }
+        
     }
-
 }
 
 //"08-10 晚上08:09:41.0" ->
 //"昨天 上午10:09"或者"2012-08-10 凌晨07:09"
-- (NSString *)changeTheDateString:(NSString *)Str
-{
-    NSString *subString = [Str substringWithRange:NSMakeRange(0, 19)];
+- (NSString *)changeTheDateString:(NSString *)Str{
+    NSString *subString;
+    if (Str.length>18) {
+         subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    }
     NSDate *lastDate = [NSDate dateFromString:subString withFormat:@"yyyy-MM-dd HH:mm:ss"];
     NSTimeZone *zone = [NSTimeZone systemTimeZone];
     NSInteger interval = [zone secondsFromGMTForDate:lastDate];

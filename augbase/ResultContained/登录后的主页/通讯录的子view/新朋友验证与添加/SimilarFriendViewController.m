@@ -30,13 +30,13 @@
     _similarFriendTable.dataSource = self;
     _similarFriendTable.backgroundColor = grayBackgroundLightColor;
     _similarFriendTable.tableFooterView = [[UIView alloc]init];
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
     [self setupData];
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
     self.title = NSLocalizedString(@"相似战友", @"");
-    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"加载中", @"")];
 }
 
 -(void)setupData{
@@ -51,15 +51,62 @@
             [_similarFriendTable reloadData];
             [[SetupView ShareInstance]hideHUD];
             if (dataArray.count == 0) {
-                UIAlertView *alerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"没有相似战友", @"") message:NSLocalizedString(@"进入“病历”页面识别化验单、选填用药记录、疾病等信息，即可找到相似战友", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"返回", @"") otherButtonTitles:nil, nil];
+                UIAlertView *alerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"还差一步", @"") message:NSLocalizedString(@"尚未在「病历」完善资料，无法找到相似病友，先去「病历」拍拍化验单、选填用药和疾病信息吧！", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"返回", @"") otherButtonTitles:nil, nil];
                 [alerView show];
             }
         }else{
             [[SetupView ShareInstance]hideHUD];
-            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+            if (res == 44) {
+                UIAlertView *alerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"还差一步", @"") message:NSLocalizedString(@"尚未在「病历」完善资料，无法找到相似病友，先去「病历」拍拍化验单、选填用药和疾病信息吧！", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"返回", @"") otherButtonTitles:nil, nil];
+                [alerView show];
+            }else if (res == 49){
+                if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChat"] boolValue]) {
+                    NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatToken"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatUID"],0];
+                    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        NSLog(@"device activitation source=%@,res=====%d",source,res);
+                        if (res == 0) {
+                            [[NSUserDefaults standardUserDefaults] setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        }else{
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                        }
+                    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                    }];
+                }else{
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+                    NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+                    [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+                    [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+                    url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                    [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        if (res==0) {
+                            [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        }else{
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                        }
+                    }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                    }];
+                }
+            }else{
+                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+            }
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
+        [[SetupView ShareInstance]hideHUD];
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络", @"") Title:NSLocalizedString(@"网络出错", @"") ViewController:self];
     }];
 }
 
@@ -123,7 +170,7 @@
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-    cpdv.isJIDOrYizhenID = YES;
+    cpdv.isJIDOrYizhenID = NO;
     cpdv.friendJID = [dataArray[indexPath.row] objectForKey:@"jid"];
     [self.navigationController pushViewController:cpdv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];

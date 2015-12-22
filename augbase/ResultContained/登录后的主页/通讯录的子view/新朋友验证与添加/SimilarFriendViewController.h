@@ -10,7 +10,6 @@
 
 @interface SimilarFriendViewController : UIViewController<UITableViewDataSource,UITableViewDelegate,UIAlertViewDelegate>
 
-
 @property (nonatomic,strong) IBOutlet UITableView *similarFriendTable;
 
 @end

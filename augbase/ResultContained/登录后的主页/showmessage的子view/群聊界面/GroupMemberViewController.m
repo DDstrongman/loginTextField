@@ -76,9 +76,9 @@
         [cell.contentView viewWithTag:7].hidden = NO;
         NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[memberDataArray[indexPath.row-1] objectForKey:@"picture"]];
         [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:imageurl] placeholderImage:[UIImage imageNamed:@"test"]];
-        ((UILabel *)[cell.contentView viewWithTag:2]).text = [memberDataArray[indexPath.row-1] objectForKey:@"nickname"];
-        if ([memberDataArray[indexPath.row-1] objectForKey:@"nickname"] != nil) {
-            CGSize titleSize = [self getWidth:[memberDataArray[indexPath.row-1] objectForKey:@"nickname"]];
+        ((UILabel *)[cell.contentView viewWithTag:2]).text = [memberDataArray[indexPath.row-1] objectForKey:@"username"];
+        if ([memberDataArray[indexPath.row-1] objectForKey:@"username"] != nil) {
+            CGSize titleSize = [self getWidth:[memberDataArray[indexPath.row-1] objectForKey:@"username"]];
             NSNumber *titleWidth = [NSNumber numberWithDouble:titleSize.width];
             [[cell.contentView viewWithTag:2] mas_makeConstraints:^(MASConstraintMaker *make) {
                 make.width.equalTo(titleWidth);
@@ -120,7 +120,7 @@
     }else{
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-        cpdv.isJIDOrYizhenID = YES;
+        cpdv.isJIDOrYizhenID = NO;
         cpdv.friendJID = [memberDataArray[indexPath.row-1] objectForKey:@"jid"];
         [self.navigationController pushViewController:cpdv animated:YES];
     }
@@ -178,7 +178,7 @@
 }
 
 -(CGSize)getWidth:(NSString *)title{
-    NSDictionary* attrs =@{NSFontAttributeName:[UIFont systemFontOfSize:15]};
+    NSDictionary* attrs =@{NSFontAttributeName:[UIFont systemFontOfSize:22]};
     NSAttributedString *newatt=[[NSAttributedString alloc] initWithString:title attributes:attrs];
     CGRect rect=[newatt boundingRectWithSize:CGSizeMake(MAXFLOAT, 18) options:NSStringDrawingTruncatesLastVisibleLine context:nil];
     CGSize titleSize=rect.size;

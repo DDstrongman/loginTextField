@@ -45,7 +45,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzGroupDB tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messContent TEXT,messTime TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messTableUrl TEXT,messTableTitle TEXT,messContent TEXT,messTime TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
         BOOL success=[self.yzGroupDB executeUpdate:sql];
         return success;
     }
@@ -61,6 +61,8 @@
     NSString *personJID = obj.personJID;
     NSString *personNickName = obj.personNickName;
     NSString *personImageUrl = obj.personImageUrl;
+    NSString *messTableUrl = obj.messTableUrl;
+    NSString *messTableTitle = obj.messTableTitle;
     NSInteger chatType = obj.chatType;
     NSInteger messType = obj.messType;
     NSInteger ReadOrNot = obj.ReadOrNot;
@@ -82,11 +84,11 @@
         NSDate *endDate = [self changeStringToDate:lastTime];
         
         NSTimeInterval secondsInterval= [fromDate timeIntervalSinceDate:endDate];
-        NSLog(@"secondsInterval=  %lf",secondsInterval);
+//        NSLog(@"secondsInterval=  %lf",secondsInterval);
         
-        if (number != 0&&secondsInterval>0) {
+        if (number == 0||secondsInterval>0) {
             //存在表
-            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
+            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messTableUrl,messTableTitle,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messTableUrl,messTableTitle,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
             if ([self.yzGroupDB executeUpdate:insertsql]) {
                 //插入成功
                 NSLog(@"插入成功");
@@ -107,15 +109,10 @@
     NSTimeZone *fromzone = [NSTimeZone systemTimeZone];
     NSInteger frominterval = [fromzone secondsFromGMTForDate: fromdate];
     NSDate *fromDate = [fromdate  dateByAddingTimeInterval: frominterval];
-    NSLog(@"date=%@",fromDate);
     return  fromDate;
 }
 
 #pragma mark-查询数据
-#warning 取材方式
-//while ([messWithNumber next]) {
-//obj.mycontent = [messWithNumber stringForColumn:@"key"];
-
 //查询固定数额的讯息,推荐设置第一次为倒数10条，之后递增，searchKey推荐为主键chatid，tableName为默认Yizhen+jid值,SearchMethodDescOrAsc推荐desc
 -(FMResultSet *)SearchMessWithNumber:(NSString *)tableNameJID MessNumber:(NSInteger)messNumber SearchKey:(NSString *)searchKey SearchMethodDescOrAsc:(NSString *)methodDescOrAsc{
     FMResultSet *messWithNumber;
@@ -138,7 +135,6 @@
 
 -(BOOL)SetNotReadToRead:(NSString *)tableName{
     BOOL res;
-//    NSString *upxdatesql = [NSString stringWithFormat:@"UPDATE %@ SET ReadOrNot=1 where ReadOrNot=0",tableName];
     NSString *updatesql = [NSString stringWithFormat:@"UPDATE %@ set ReadOrNot = 1 where ReadOrNot = 0",tableName];
     if ([self.yzGroupDB open]) {
         if ([self isChatTableExist:tableName]) {
@@ -151,8 +147,6 @@
 #pragma 获取所有表名,获取的是表名的jid
 -(NSMutableArray *)getAllTableName{
     NSMutableArray *tableMessName = [NSMutableArray array];
-//    NSMutableArray *tableFriendName = [NSMutableArray array];
-//    NSMutableDictionary *tableNameDic = [NSMutableDictionary dictionaryWithCapacity:0];
     FMResultSet  *tableNameSet;
      NSString *searchsql=[NSString stringWithFormat:@"SELECT NAME FROM sqlite_master WHERE type='table' order by name"];
     tableNameSet = [self.yzGroupDB executeQuery:searchsql];

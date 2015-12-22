@@ -178,7 +178,8 @@
                 access_token = [dicTemp objectForKey:@"access_token"];
                 openID = [dicTemp objectForKey:@"openid"];
                 unID = [dicTemp objectForKey:@"unionid"];
-            
+                [[NSUserDefaults standardUserDefaults]setObject:unID forKey:@"userWeChatUID"];
+                [[NSUserDefaults standardUserDefaults]setObject:access_token forKey:@"userWeChatToken"];
                 [self getUserInfo];
             }
         });
@@ -221,76 +222,83 @@
                     int res=[[source objectForKey:@"res"] intValue];
                     NSLog(@"device activitation source=%@,res=====%d",source,res);
                     if (res == 0) {
-                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                        int res=[[source objectForKey:@"res"] intValue];
-                        NSLog(@"device activitation source=%@",source);
-                        if (res==0) {
-                            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-                            //请求完成
-                            [UserItem ShareInstance].userUID = [source objectForKey:@"uid"];
-                            [UserItem ShareInstance].userName = [source objectForKey:@"username"];
-                            [UserItem ShareInstance].userNickName = [source objectForKey:@"username"];
-                            [UserItem ShareInstance].userRealName = [source objectForKey:@"nickname"];
-                            [UserItem ShareInstance].userToken = [source objectForKey:@"token"];
-                            [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
-                            [UserItem ShareInstance].userTele = [source objectForKey:@"tel"];
-                            [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
-                            [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
-                            [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
-                            [defaults setObject:[UserItem ShareInstance].userRealName forKey:@"userRealName"];
-                            [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
-                            [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
-                            [defaults setObject:[UserItem ShareInstance].userTele forKey:@"userTele"];
-                            //jid获取用户信息
-                            NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-                            jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                        //请求完成
+                        [UserItem ShareInstance].userUID = [source objectForKey:@"uid"];
+                        [UserItem ShareInstance].userName = [source objectForKey:@"username"];
+                        [UserItem ShareInstance].userNickName = [source objectForKey:@"username"];
+                        [UserItem ShareInstance].userRealName = [source objectForKey:@"nickname"];
+                        [UserItem ShareInstance].userToken = [source objectForKey:@"token"];
+                        [UserItem ShareInstance].userJID = [source objectForKey:@"ji"];
+                        [UserItem ShareInstance].userTele = [source objectForKey:@"tel"];
+                        [defaults setObject:[UserItem ShareInstance].userUID forKey:@"userUID"];
+                        [defaults setObject:[UserItem ShareInstance].userName forKey:@"userName"];
+                        [defaults setObject:[UserItem ShareInstance].userNickName forKey:@"userNickName"];
+                        [defaults setObject:[UserItem ShareInstance].userRealName forKey:@"userRealName"];
+                        [defaults setObject:[UserItem ShareInstance].userToken forKey:@"userToken"];
+                        [defaults setObject:[UserItem ShareInstance].userJID forKey:@"userJID"];
+                        [defaults setObject:[UserItem ShareInstance].userTele forKey:@"userTele"];
+                        //jid获取用户信息
+                        NSString *jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,[defaults objectForKey:@"userJID"],[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+                        jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                        [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            [defaults setObject:[[userInfo objectForKey:@"age"] stringValue] forKey:@"userAge"];
+                            [defaults setObject:[[userInfo objectForKey:@"gender"] stringValue] forKey:@"userGender"];
+                            [defaults setObject:[userInfo objectForKey:@"introduction"] forKey:@"userNote"];
+                            [defaults setObject:[userInfo objectForKey:@"address"] forKey:@"userAddress"];
+                            [defaults setObject:[userInfo objectForKey:@"hasBindWechat"] forKey:@"userWeChat"];
+                            [defaults setObject:[userInfo objectForKey:@"yizhenId"] forKey:@"userYizhenID"];
+                            NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
+                            imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                            [defaults setObject:imageurl forKey:@"userHttpImageUrl"];
                             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
                             manager.responseSerializer = [AFHTTPResponseSerializer serializer];
                             manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-                            [manager GET:jidurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                                NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                                [defaults setObject:[[userInfo objectForKey:@"age"] stringValue] forKey:@"userAge"];
-                                [defaults setObject:[[userInfo objectForKey:@"gender"] stringValue] forKey:@"userGender"];
-                                [defaults setObject:[userInfo objectForKey:@"introduction"] forKey:@"userNote"];
-                                [defaults setObject:[userInfo objectForKey:@"address"] forKey:@"userAddress"];
-                                [defaults setObject:[userInfo objectForKey:@"hasBindWechat"] forKey:@"userWeChat"];
-                                [defaults setObject:[userInfo objectForKey:@"yizhenId"] forKey:@"userYizhenID"];
-                                NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
-                                imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
-                                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-                                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
-                                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-                                [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                                    [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
-                                    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
-                                    if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
-                                        NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
-                                        NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
-                                        [createDic setObject:@0 forKey:@"clienttype"];
-                                        if ([defaults objectForKey:@"userDeviceID"]!= nil) {
-                                            [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
-                                        }
-                                        [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
-                                        [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
-                                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-                                            NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                                            if ([[createRes objectForKey:@"res"] intValue] == 0) {
-                                                NSLog(@"更新设备号成功");
-                                            }
-                                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                            
-                                        }];
+                            [manager GET:imageurl parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                [[WriteFileSupport ShareInstance] writeImageAndReturn:yizhenImageFile FileName:myImageName Contents:responseObject];
+                                [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"%@/%@/%@.png",[[WriteFileSupport ShareInstance] dirDoc],yizhenImageFile,myImageName] forKey:@"userImageUrl"];
+                                if ([[XMPPSupportClass ShareInstance] boolConnect:[NSString stringWithFormat:@"%@@%@",[defaults valueForKey:@"userJID"],httpServer]]) {
+                                    NSString *creatUrl = [NSString stringWithFormat:@"%@unm/create",Baseurl];
+                                    NSMutableDictionary *createDic = [NSMutableDictionary dictionary];
+                                    [createDic setObject:@0 forKey:@"clienttype"];
+                                    if ([defaults objectForKey:@"userDeviceID"]!= nil) {
+                                        [createDic setObject:[defaults objectForKey:@"userDeviceID"] forKey:@"machineid"];
                                     }
-                                }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                    NSLog(@"获取图片信息失败");
-                                }];
+                                    [createDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                                    [createDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                                    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:creatUrl Parameters:createDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                        NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                        if ([[createRes objectForKey:@"res"] intValue] == 0) {
+                                            NSLog(@"更新设备号成功");
+                                            NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
+                                            NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
+                                            [recordDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                                            [recordDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                                            [recordDic setObject:@0 forKey:@"clientType"];
+                                            [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                                int res=[[source objectForKey:@"res"] intValue];
+                                                if (res == 0) {
+                                                    NSLog(@"记录成功");
+                                                }
+                                            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                                
+                                            }];
+                                        }
+                                    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                        
+                                    }];
+                                }
                             }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                                NSLog(@"获取jid信息失败");
+                                NSLog(@"获取图片信息失败");
                             }];
-                        }
-                        else{
-                            
-                        }
+                        }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            NSLog(@"获取jid信息失败");
+                        }];
                     }else if(res == 2){
                         [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请重新授权", @"") Title:NSLocalizedString(@"授权出错", @"") ViewController:self];
                     }else if (res == 45){
@@ -389,6 +397,20 @@
                             NSDictionary *createRes = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                             if ([[createRes objectForKey:@"res"] intValue] == 0) {
                                 NSLog(@"更新设备号成功");
+                                NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
+                                NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
+                                [recordDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
+                                [recordDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+                                [recordDic setObject:@0 forKey:@"clientType"];
+                                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                    int res=[[source objectForKey:@"res"] intValue];
+                                    if (res == 0) {
+                                        NSLog(@"记录成功");
+                                    }
+                                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                    
+                                }];
                             }
                         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
                             
@@ -429,7 +451,7 @@
         UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
         AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
         
-        appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:tabbarController];
+        appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:tabbarController];
     }else{
         NSLog(@"XMPP服务器登陆失败");
         UIAlertView *xmppFailedAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"聊天服务器登陆失败", @"") message:NSLocalizedString(@"聊天服务器登陆失败,请联系管理员", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
@@ -481,7 +503,7 @@
         UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
         AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-        appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+        appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
         [[NSUserDefaults standardUserDefaults]setObject:@YES forKey:@"ShowGuide"];
     }
 }

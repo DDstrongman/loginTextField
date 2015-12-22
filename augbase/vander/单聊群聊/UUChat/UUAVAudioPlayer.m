@@ -26,8 +26,7 @@
     return sharedInstance;
 }
 
--(void)playSongWithUrl:(NSString *)songUrl
-{
+-(void)playSongWithUrl:(NSString *)songUrl{
     
     dispatch_async(dispatch_queue_create("playSoundFromUrl", NULL), ^{
         [self.delegate UUAVAudioPlayerBeiginLoadVoice];
@@ -39,8 +38,7 @@
     });
 }
 
--(void)playSongWithData:(NSData *)songData
-{
+-(void)playSongWithData:(NSData *)songData{
     [self setupPlaySound];
     [self playSoundWithData:songData];
 }
@@ -68,10 +66,15 @@
     [[AVAudioSession sharedInstance] setCategory: AVAudioSessionCategoryPlayback error: nil];
 }
 
-- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag
-{
+- (void)audioPlayerDidFinishPlaying:(AVAudioPlayer *)player successfully:(BOOL)flag{
     [self.delegate UUAVAudioPlayerDidFinishPlay];
 }
+
+- (void)audioPlayerDecodeErrorDidOccur:(AVAudioPlayer *)player error:(NSError *)error;{
+    //解码错误执行的动作
+    NSLog(@"解析错误");
+}
+
 
 - (void)stopSound
 {

@@ -15,6 +15,7 @@
 #import "DBManager.h"
 #import "FriendDBManager.h"
 
+
 @interface FindOthersViewController ()
 
 {
@@ -54,8 +55,6 @@
     searchViewController.searchBar.placeholder = NSLocalizedString(@"搜索战友姓名", @"");
     searchViewController.searchBar.backgroundColor = [UIColor whiteColor];
     searchViewController.searchBar.backgroundImage = [UIImage imageNamed:@"white"];
-//    searchViewController.searchBar.layer.borderWidth = 0.5;
-//    searchViewController.searchBar.layer.borderColor = lightGrayBackColor.CGColor;
     for (UIView *sb in [[searchViewController.searchBar subviews][0] subviews]) {
         if ([sb isKindOfClass:[UITextField class]]) {
             sb.layer.borderColor = themeColor.CGColor;
@@ -64,7 +63,7 @@
         }
     }
 //    @"咨询",@"群组",@"等待验证好友",
-    titleDataArray = [@[/*NSLocalizedString(@"群组", @""),*/NSLocalizedString(@"等待验证好友", @"")]mutableCopy];
+    titleDataArray = [@[/*NSLocalizedString(@"群组", @""),*/NSLocalizedString(@"等待验证战友", @"")]mutableCopy];
     titleImageNameArray = [@[/*@"groups",*/@"verify_friend"]mutableCopy];
     
     _contactsTableview.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
@@ -94,6 +93,8 @@
     while ([addStrangerList next]) {
         isStranger = YES;
     }
+    
+    [[XMPPSupportClass ShareInstance]searchGroup:@""];
 }
 
 -(void)viewDidAppear:(BOOL)animated{
@@ -203,6 +204,8 @@
             NSString *picPath = [messPicPath stringForColumn:@"friendImageUrl"];
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:picPath];
         }
+        NSData *tempData = [[WriteFileSupport ShareInstance]readData:yizhenImageFile FileName:[dataJID[tempI] stringByAppendingString:@".png"]];
+        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithData:tempData];
         ((UILabel *)[cell.contentView viewWithTag:2]).text = searchResults[indexPath.row];
         ((UILabel *)[cell.contentView viewWithTag:3]).text = similarResults[tempI];
         ((UILabel *)[cell.contentView viewWithTag:4]).text = dataDescribe[tempI];
@@ -233,7 +236,7 @@
         }
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-        cpdv.isJIDOrYizhenID = YES;
+        cpdv.isJIDOrYizhenID = NO;
         cpdv.friendJID = dataJID[tempI];
         [self.navigationController pushViewController:cpdv animated:YES];
     }

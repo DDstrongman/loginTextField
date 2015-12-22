@@ -23,4 +23,6 @@
 
 @property (nonatomic,strong) UIViewController *caseRootVC;//
 
+@property (nonatomic,assign) BOOL LocalOrNet;//是否需要更新数据
+
 @end

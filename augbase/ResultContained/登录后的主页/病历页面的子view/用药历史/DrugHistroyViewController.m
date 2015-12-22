@@ -9,7 +9,9 @@
 #import "DrugHistroyViewController.h"
 
 #import "AddDrugHistoryViewController.h"
+
 #import "ModifyDrugHistoryViewController.h"
+
 
 @interface DrugHistroyViewController ()<AddDrugSucessDelegate,ModifyDrugSucess>
 
@@ -30,27 +32,34 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupView];
+    [self setupData];
 }
 
 -(void)AddDrugSucess:(BOOL)sucess{
     if (sucess) {
         [self setupData];
+        [[WriteFileSupport ShareInstance]removeCache:yizhenMineTable];
+        [[WriteFileSupport ShareInstance]flushCache];
+        _OcrTextViewController.newResNumber = 1;
     }
 }
 
 -(void)modifyDrugResult:(BOOL)success{
     if (success) {
         [self setupData];
+        [[WriteFileSupport ShareInstance]removeCache:yizhenMineTable];
+        [[WriteFileSupport ShareInstance]flushCache];
+        _OcrTextViewController.newResNumber = 1;
     }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    [self setupData];
     UIButton *addDrugButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 30)];
     [addDrugButton setTitle:NSLocalizedString(@"添加", @"") forState:UIControlStateNormal];
     addDrugButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     [addDrugButton addTarget:self action:@selector(addDrugHistory:) forControlEvents:UIControlEventTouchUpInside];
     [[SetupView ShareInstance]setupNavigationRightButton:self RightButton:addDrugButton];
+    _OcrTextViewController.newResNumber = 0;
 }
 
 #pragma mark - Table view data source
@@ -73,12 +82,6 @@
     if (cell == nil) {
         cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentify];
     }
-//    cell.textLabel.text = [historyDrugArray[indexPath.row] objectForKey:@"medicinename"];
-//    cell.textLabel.font = [UIFont systemFontOfSize:15.0];
-//    cell.detailTextLabel.text = [NSString stringWithFormat:@"%@-%@",[historyDrugArray[indexPath.row] objectForKey:@"begindate"],[historyDrugArray[indexPath.row] objectForKey:@"stopdate"]];
-//    cell.detailTextLabel.textColor = grayLabelColor;
-//    cell.detailTextLabel.font = [UIFont systemFontOfSize:12.0];
-    
     UILabel *titleLabel = [[UILabel alloc]init];
     titleLabel.text = [historyDrugArray[indexPath.row] objectForKey:@"medicinename"];
     titleLabel.font = [UIFont systemFontOfSize:15.0];
@@ -165,7 +168,7 @@
 
 -(void)setupView{
     self.view.backgroundColor = [UIColor whiteColor];
-    self.title = NSLocalizedString(@"用药历史", @"");
+    self.title = NSLocalizedString(@"用药记录", @"");
     _drugHistroyTable = [[UITableView alloc]init];
     _drugHistroyTable.delegate = self;
     _drugHistroyTable.dataSource = self;
@@ -205,8 +208,11 @@
 }
 
 -(void)setupData{
+//    if (historyDrugArray) {
     historyDrugArray = [NSMutableArray array];
+//    }
     NSString *url = [NSString stringWithFormat:@"%@emr/medicinemanagement/list",Baseurl];
+    NSLog(@"用药历史url＝＝＝%@",url);
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer = [AFHTTPRequestSerializer serializer];
@@ -259,11 +265,13 @@
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res=[[source objectForKey:@"res"] intValue];
         NSLog(@"%@",source);
-        
         if (res==0) {
             //请求完成
             NSLog(@"删除完成");
             [self setupData];
+            _OcrTextViewController.newResNumber = 1;
+            [[WriteFileSupport ShareInstance]removeCache:yizhenMineTable];
+            [[WriteFileSupport ShareInstance]flushCache];
         }
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         

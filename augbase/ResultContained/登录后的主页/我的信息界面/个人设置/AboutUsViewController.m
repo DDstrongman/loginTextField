@@ -39,7 +39,7 @@
     self.title = NSLocalizedString(@"关于我们", @"");
     self.view.backgroundColor = grayBackColor;
     _openUrl = [[UIWebView alloc] init];
-    NSURLRequest *request =[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.yizhenapp.com/dashengguilai/dist/whatIsYizhen_patient.html"]];
+    NSURLRequest *request =[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.yizhenapp.com/about.html"]];
     [_openUrl loadRequest:request];
     [self.view addSubview: _openUrl];
     [_openUrl mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -137,8 +137,8 @@
 
 -(void)shareWechatFriend:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"战友app";
-    message.description = @"";
+    message.title = @"「易诊」为肝病人群而生！";
+    message.description = @"由一名临床治愈的肝病患者设计的App";
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];
@@ -157,8 +157,8 @@
 
 -(void)shareWechatGroup:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"战友app";
-    message.description = @"";
+    message.title = @"「易诊」为肝病人群而生！";
+    message.description = @"由一名临床治愈的肝病患者设计的App";
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];

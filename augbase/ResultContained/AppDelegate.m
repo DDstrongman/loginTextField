@@ -46,7 +46,7 @@
 
 {
     BOOL NotFirstTimeLogin;//no为初次登录，yes则不是
-    RZTransitionsNavigationController* rootNavController;
+    ControlAllNavigationViewController* rootNavController;
 }
 
 @end
@@ -65,21 +65,27 @@
     BOOL showGuide = [[defaults objectForKey:@"ShowGuide"] boolValue];//是否进入引导页
     NotFirstTimeLogin = [[defaults objectForKey:@"NotFirstTime"] boolValue];//no为初次登录，yes则不是
     
+    if (![[defaults objectForKey:@"ourAPPVersion"]isEqualToString:yizhenAPPVersion]) {
+        [[WriteFileSupport ShareInstance] removeAllDirDocuments];
+        [defaults setObject:yizhenAPPVersion forKey:@"ourAPPVersion"];
+    }
+    
     [[UINavigationBar appearance] setBackIndicatorImage:[UIImage imageNamed:@"back"]];
     [[UINavigationBar appearance] setBackIndicatorTransitionMaskImage:[UIImage imageNamed:@"back"]];
     [[UIBarButtonItem appearance] setBackButtonTitlePositionAdjustment:UIOffsetMake(0, -60) forBarMetrics:UIBarMetricsDefault];
     if (!showGuide&&!NotFirstTimeLogin) {
         RootGuideViewController *rgv = [[RootGuideViewController alloc]init];
-        rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:rgv];
+        rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:rgv];
     }else{
         if (NotFirstTimeLogin) {
             //已经登录过了
-            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:showMessViewController];
+            rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:showMessViewController];
             
             NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
             NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
             [recordDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
             [recordDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+            [recordDic setObject:@0 forKey:@"clientType"];
             [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
                 NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 int res=[[source objectForKey:@"res"] intValue];
@@ -90,7 +96,7 @@
                 
             }];
         }else{
-            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+            rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
             [[DBManager ShareInstance] creatDatabase:DBName];
             [[DBManager ShareInstance] closeDB];
         }
@@ -187,16 +193,17 @@
     NotFirstTimeLogin = [[defaults objectForKey:@"NotFirstTime"] boolValue];//no为初次登录，yes则不是
     if (!showGuide&&!NotFirstTimeLogin) {
         RootGuideViewController *rgv = [[RootGuideViewController alloc]init];
-        rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:rgv];
+        rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:rgv];
     }else{
         if (NotFirstTimeLogin) {
             //已经登录过了
-            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:showMessViewController];
+            rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:showMessViewController];
             
             NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
             NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
             [recordDic setObject:[defaults objectForKey:@"userUID"] forKey:@"uid"];
             [recordDic setObject:[defaults objectForKey:@"userToken"] forKey:@"token"];
+            [recordDic setObject:@0 forKey:@"clientType"];
             [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
                 NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
                 int res=[[source objectForKey:@"res"] intValue];
@@ -210,7 +217,7 @@
                 OcrTextResultViewController *otrv = [story instantiateViewControllerWithIdentifier:@"ocrtextresult"];
                 otrv.isMine = YES;
                 [rootNavController pushViewController:otrv animated:YES];
-            }else if([shortcutItem.type isEqualToString:@"设置信息权限"]){
+            }else if([shortcutItem.type isEqualToString:@"设置个人信息"]){
                 MineSettingInfoViewController *msiv = [[MineSettingInfoViewController alloc]init];
                 [rootNavController pushViewController:msiv animated:YES];
             }else{
@@ -220,7 +227,7 @@
                 [rootNavController pushViewController:orgv animated:YES];
             }
         }else{
-            rootNavController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+            rootNavController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
             [[DBManager ShareInstance] creatDatabase:DBName];
             [[DBManager ShareInstance] closeDB];
         }
@@ -233,8 +240,7 @@
 }
 
 -(void) onReq:(BaseReq*)req{
-    if([req isKindOfClass:[GetMessageFromWXReq class]])
-    {
+    if([req isKindOfClass:[GetMessageFromWXReq class]]){
         // 微信请求App提供内容， 需要app提供内容后使用sendRsp返回
         NSString *strTitle = [NSString stringWithFormat:@"微信请求App提供内容"];
         NSString *strMsg = @"微信请求App提供内容，App要调用sendResp:GetMessageFromWXResp返回给微信";
@@ -243,8 +249,7 @@
         alert.tag = 1000;
         [alert show];
     }
-    else if([req isKindOfClass:[ShowMessageFromWXReq class]])
-    {
+    else if([req isKindOfClass:[ShowMessageFromWXReq class]]){
         ShowMessageFromWXReq* temp = (ShowMessageFromWXReq*)req;
         WXMediaMessage *msg = temp.message;
         
@@ -257,8 +262,7 @@
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:strTitle message:strMsg delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
         [alert show];
     }
-    else if([req isKindOfClass:[LaunchFromWXReq class]])
-    {
+    else if([req isKindOfClass:[LaunchFromWXReq class]]){
         //从微信启动App
         NSString *strTitle = [NSString stringWithFormat:@"从微信启动"];
         NSString *strMsg = @"这是从微信启动的消息";

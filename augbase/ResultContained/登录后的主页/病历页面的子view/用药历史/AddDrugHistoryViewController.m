@@ -207,12 +207,14 @@
         NSDictionary *dic = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:yzuid,yztoken,drugInputText.text,startTime,endTime,[NSNumber numberWithBool:resistSwitch.on],[NSString stringWithFormat:@"%d",IsUsed],mid,nil] forKeys:[NSArray arrayWithObjects:@"uid",@"token",@"medicinename",@"begindate",@"stopdate",@"resistant",@"isuse",@"mid",nil]];
         [[HttpManager ShareInstance] AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
             NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-            int res=[[source objectForKey:@"res"] intValue];
+            int res = [[source objectForKey:@"res"] intValue];
             NSLog(@"res===%d",res);
             if (res==0) {
+                NSLog(@"添加用药成功");
                 [_addDrugDelegate AddDrugSucess:YES];
             }else{
-                [_addDrugDelegate AddDrugSucess:NO];
+                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+//                [_addDrugDelegate AddDrugSucess:NO];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             [_addDrugDelegate AddDrugSucess:NO];

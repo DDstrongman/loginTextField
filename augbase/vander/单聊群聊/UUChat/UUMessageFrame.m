@@ -36,7 +36,7 @@
     _iconF = CGRectMake(iconX, iconY, ChatIconWH, ChatIconWH);
     
     // 3、计算ID位置
-    _nameF = CGRectMake(iconX+5, iconY+ChatIconWH, ChatIconWH, 20);
+    _nameF = CGRectMake(iconX, iconY+ChatIconWH, ChatIconWH, 20);
     
     // 4、计算内容位置
     CGFloat contentX = CGRectGetMaxX(_iconF)+ChatMargin;
@@ -47,13 +47,15 @@
     switch (_message.type) {
         case UUMessageTypeText:
             contentSize = [_message.strContent sizeWithFont:ChatContentFont  constrainedToSize:CGSizeMake(ChatContentW, CGFLOAT_MAX) lineBreakMode:NSLineBreakByWordWrapping];
- 
             break;
         case UUMessageTypePicture:
             contentSize = CGSizeMake(ChatPicWH, ChatPicWH);
             break;
         case UUMessageTypeVoice:
             contentSize = CGSizeMake(120, 20);
+            break;
+        case UUMessageTypeTable:
+            contentSize = CGSizeMake(ViewWidth-120-50, 64);
             break;
         default:
             break;

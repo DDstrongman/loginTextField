@@ -34,4 +34,6 @@
 
 - (NSString*) doDevicePlatform;
 
+-(NSString *)getNetWorkStates;//获取网络状态
+
 @end

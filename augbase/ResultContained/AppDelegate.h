@@ -30,13 +30,7 @@
 /***************************************************************************************/
 
 #import <UIKit/UIKit.h>
-
 #import <ADTransitionController.h>
-
-#import "RZTransitionsManager.h"
-#import "RZTransitionsNavigationController.h"
-
-
 #import "WXApi.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate,WXApiDelegate>

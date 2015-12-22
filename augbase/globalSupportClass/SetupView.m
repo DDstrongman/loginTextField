@@ -77,6 +77,45 @@
     [showAlert show];
 }
 
+-(NSString *)getNetWorkStates{
+    UIApplication *app = [UIApplication sharedApplication];
+    NSArray *children = [[[app valueForKeyPath:@"statusBar"]valueForKeyPath:@"foregroundView"]subviews];
+    NSString *state = [[NSString alloc]init];
+    int netType = 0;
+    //获取到网络返回码
+    for (id child in children) {
+        if ([child isKindOfClass:NSClassFromString(@"UIStatusBarDataNetworkItemView")]) {
+            //获取到状态栏
+            netType = [[child valueForKeyPath:@"dataNetworkType"]intValue];
+            
+            switch (netType) {
+                case 0:
+                    state = @"无网络";
+                    //无网模式
+                    break;
+                case 1:
+                    state = @"2G";
+                    break;
+                case 2:
+                    state = @"3G";
+                    break;
+                case 3:
+                    state = @"4G";
+                    break;
+                case 5:
+                {
+                    state = @"WIFI";
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    //根据状态选择
+    return state;
+}
+
 
 -(void)showAlertView:(int)res Hud:(MBProgressHUD *)HUD ViewController:(UIViewController *)controller{
     [_HUD hide:YES];
@@ -150,7 +189,7 @@
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"用户编号和预留电话号码不一致", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 24){
-        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"二维码不属于战友23  ？", @"") ViewController:controller];
+        [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"二维码不属于易诊？", @"") ViewController:controller];
         [HUD hide:YES];
     }else if (res == 25){
         [self showHUdAlertView:NSLocalizedString(@"", @"") Title:NSLocalizedString(@"二维码已用", @"") ViewController:controller];

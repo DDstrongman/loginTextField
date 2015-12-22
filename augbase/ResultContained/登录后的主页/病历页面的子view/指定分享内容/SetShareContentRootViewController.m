@@ -44,6 +44,41 @@
     [self popSpringAnimationHidden:shareView];
 }
 
+-(void)send:(UIButton *)sender{
+    [[SetupView ShareInstance]showHUD:self Title:NSLocalizedString(@"发送中...", @"")];
+    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+    NSString *tempTitle;
+    NSString *tempTime;
+    for (int i = 0; i<setChoosedENGTitleArray.count; i++) {
+        if (i==0) {
+            tempTitle = setChoosedENGTitleArray[0];
+        }else{
+            tempTitle = [NSString stringWithFormat:@"%@,%@",tempTitle,setChoosedENGTitleArray[i]];
+        }
+    }
+    for (int i = 0; i<setChoosedTimeArray.count; i++) {
+        if (i==0) {
+            tempTime = setChoosedTimeArray[0];
+        }else{
+            tempTime = [NSString stringWithFormat:@"%@,%@",tempTime,setChoosedTimeArray[i]];
+        }
+    }
+    NSString *tempurl = [NSString stringWithFormat:@"%@v2/user/share/indicator/url?uid=%@&token=%@&th=%@&tr=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],tempTitle,tempTime];
+    [[HttpManager ShareInstance]AFNetGETSupport:tempurl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+        int res=[[source objectForKey:@"res"] intValue];
+        if (res == 0) {
+            shareUrl = [source objectForKey:@"url"];
+            [[SetupView ShareInstance]hideHUD];
+            [_sendTableResultDele SendTableResult:YES ShareUrl:shareUrl];
+            NSLog(@"shareUrl === %@",shareUrl);
+            [self.navigationController popViewControllerAnimated:YES];
+        }
+    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+        
+    }];
+}
+
 -(void)share:(UIButton *)sender{
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *tempTitle;
@@ -76,7 +111,11 @@
 }
 
 -(void)setupView{
-    self.title = NSLocalizedString(@"指定分享内容", @"");
+    if (_shareOrSend) {
+        self.title = NSLocalizedString(@"指定发送内容", @"");
+    }else{
+        self.title = NSLocalizedString(@"指定分享内容", @"");
+    }
     _setShareTable = [[UITableView alloc]init];
     _setShareTable.delegate = self;
     _setShareTable.dataSource = self;
@@ -195,6 +234,7 @@
     tempTitleArray = [NSMutableArray array];
     tableTitleArray = [@[NSLocalizedString(@"指定指标", @""),NSLocalizedString(@"指定时间", @""),NSLocalizedString(@"预览表格", @"")]mutableCopy];
     for (int i=0; i<_titleArray.count; i++) {
+        [_titleDic objectForKey:_titleArray[i]];
         [tempTitleArray addObject:[[_titleDic objectForKey:_titleArray[i]] objectForKey:@"showname"]];
     }
 }
@@ -229,8 +269,13 @@
     tableView.separatorInset = UIEdgeInsetsMake(0, 15, 0, 0);//上左下右,顺序
     if (indexPath.section == 1&&indexPath.row == 1) {
         UIButton *shareButton = [[UIButton alloc]init];
-        [shareButton setTitle:NSLocalizedString(@"分享", @"") forState:UIControlStateNormal];
-        [shareButton addTarget: self action:@selector(share:) forControlEvents:UIControlEventTouchUpInside];
+        if (_shareOrSend) {
+            [shareButton setTitle:NSLocalizedString(@"发送", @"") forState:UIControlStateNormal];
+            [shareButton addTarget: self action:@selector(send:) forControlEvents:UIControlEventTouchUpInside];
+        }else{
+            [shareButton setTitle:NSLocalizedString(@"分享", @"") forState:UIControlStateNormal];
+            [shareButton addTarget: self action:@selector(share:) forControlEvents:UIControlEventTouchUpInside];
+        }
         [shareButton viewWithRadis:10.0];
         [cell addSubview:shareButton];
         [shareButton mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -348,7 +393,6 @@
 -(void)shareWechatFriend:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
     message.title = @"一键分享战友肝病随访表格";
-    NSLog(@"setchoosetime===%@,day====%@",setChoosedTimeArray,[self intervalFromLastDate:setChoosedTimeArray[0] toTheDate:setChoosedTimeArray[setChoosedTimeArray.count-1]]);
     message.description = [NSString stringWithFormat:@"这是一份长达%@天的病情汇总，麻烦您帮忙分析一下？",[self intervalFromLastDate:setChoosedTimeArray[0] toTheDate:setChoosedTimeArray[setChoosedTimeArray.count-1]]];
     [message setThumbImage:[UIImage imageNamed:@"test"]];
     
@@ -369,7 +413,6 @@
 -(void)shareWechatGroup:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
     message.title = @"一键分享战友肝病随访表格";
-    NSLog(@"setchoosetime===%@,day====%@",setChoosedTimeArray,[self intervalFromLastDate:setChoosedTimeArray[0] toTheDate:setChoosedTimeArray[setChoosedTimeArray.count-1]]);
     message.description = [NSString stringWithFormat:@"这是一份长达%@天的病情汇总，麻烦您帮忙分析一下？",[self intervalFromLastDate:setChoosedTimeArray[0] toTheDate:setChoosedTimeArray[setChoosedTimeArray.count-1]]];
     [message setThumbImage:[UIImage imageNamed:@"test"]];
     
@@ -498,7 +541,6 @@
 
 - (NSString *)intervalFromLastDate: (NSString *) dateString1  toTheDate:(NSString *) dateString2
 {
-    NSLog(@"date1====%@,date2====%@",dateString1,dateString2);
     NSDateFormatter *inputFormatter = [[NSDateFormatter alloc] init];
      [inputFormatter setDateFormat:@"yyyy-MM-dd"];
 //    [inputFormatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"zh_CN"]];

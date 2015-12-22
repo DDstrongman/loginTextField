@@ -63,6 +63,7 @@
     XMPPReconnect *xmppReconnect;
     XMPPRoster *xmppRoster;
     XMPPRoom *xmppRoom;//聊天室
+    XMPPMUC *xmppMUC;//监听邀请
 }
 
 @property (nonatomic,weak)  id<ReceiveMessDelegate> receiveMessDelegate;
@@ -106,7 +107,10 @@
 -(void)setUpChatRoom:(NSString *)ROOM_JID NickName:(NSString *)nickName;
 
 -(void)leaveChatRoom:(NSString *)ROOM_JID;
-
+//加入聊天室之后才能邀请，否则需要自己实例化聊天室之后再邀请
 -(void)inviteFriendToChatRoom:(NSString *)friendJID Message:(NSString *)message;
+//搜索群,通过群的jid
+-(NSDictionary *)searchGroup:(NSString *)GroupJID;
+
 
 @end

@@ -19,6 +19,7 @@
 {
     NSMutableArray *dataArray;//搜索的数据元数组
     CLLocationManager *locationManager;
+    UIAlertView *remindAlert;
 }
 
 @end
@@ -42,13 +43,12 @@
 }
 
 -(void)setupData{
-    
     locationManager = [[CLLocationManager alloc]init];
     locationManager.delegate = self;
     if ([[[NSUserDefaults standardUserDefaults]objectForKey:@"userSystemVersion"] floatValue]<8.0) {
         
     }else{
-        [locationManager requestAlwaysAuthorization];
+        [locationManager requestWhenInUseAuthorization];
     }
     locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     locationManager.distanceFilter = 1000.f;
@@ -63,12 +63,21 @@
 
 - (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status {
     switch (status) {
+        case kCLAuthorizationStatusDenied:{
+            [[SetupView ShareInstance]hideHUD];
+            remindAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有开启定位", @"") message:NSLocalizedString(@"请去设置中开启app定位功能", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+            [remindAlert show];
+        }
+            break;
         case kCLAuthorizationStatusNotDetermined:
             if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
                 [locationManager requestWhenInUseAuthorization];
             }
             break;
         default:
+            if ([locationManager respondsToSelector:@selector(requestAlwaysAuthorization)]) {
+                [locationManager requestWhenInUseAuthorization];
+            }
             break;
     }
 }
@@ -89,6 +98,7 @@
         NSLog(@"res====%d",res);
         if (res == 0) {
             NSLog(@"上传成功");
+            [locationManager stopUpdatingLocation];
             NSString *nearUrl = [NSString stringWithFormat:@"%@v2/user/nearbyUser?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
             NSLog(@"nearurl====%@",nearUrl);
             [[HttpManager ShareInstance]AFNetGETSupport:nearUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -96,6 +106,10 @@
                 int res=[[nearSource objectForKey:@"res"] intValue];
                 if (res == 0) {
                     dataArray = [nearSource objectForKey:@"users"];
+                    if (dataArray.count == 0 ) {
+                        UIAlertView *tempAlerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"附近战友都藏起来啦", @"") message:NSLocalizedString(@"哎呀，战友们比较害羞，都藏起来了，赶紧通过微信邀请战友吧！", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"这就去", @"") otherButtonTitles:nil, nil];
+                        [tempAlerView show];
+                    }
                     [_nearbyFriendTable reloadData];
                     [[SetupView ShareInstance]hideHUD];
                 }else{
@@ -103,11 +117,134 @@
                     [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
                 }
             } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-                
+                [[SetupView ShareInstance]hideHUD];
+                [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
             }];
+        }else if (res == 49){
+            if ([[user objectForKey:@"userWeChat"] boolValue]) {
+                NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[user objectForKey:@"userWeChatToken"],[user objectForKey:@"userWeChatUID"],0];
+                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    NSLog(@"device activitation source=%@,res=====%d",source,res);
+                    if (res == 0) {
+                        [user setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+                        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+                        [dic setObject:[NSNumber numberWithFloat:oldCoordinate.latitude] forKey:@"latitude"];
+                        [dic setObject:[NSNumber numberWithFloat:oldCoordinate.longitude] forKey:@"longitude"];
+                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            int res=[[source objectForKey:@"res"] intValue];
+                            NSLog(@"res====%d",res);
+                            if (res == 0) {
+                                NSLog(@"上传成功");
+                                [locationManager stopUpdatingLocation];
+                                NSString *nearUrl = [NSString stringWithFormat:@"%@v2/user/nearbyUser?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+                                NSLog(@"nearurl====%@",nearUrl);
+                                [[HttpManager ShareInstance]AFNetGETSupport:nearUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                    NSDictionary *nearSource = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                    int res=[[nearSource objectForKey:@"res"] intValue];
+                                    if (res == 0) {
+                                        dataArray = [nearSource objectForKey:@"users"];
+                                        UIAlertView *tempAlerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"附近战友都藏起来啦", @"") message:NSLocalizedString(@"哎呀，战友们比较害羞，都藏起来了，赶紧通过微信邀请战友吧！", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"这就去", @"") otherButtonTitles:nil, nil];
+                                        [tempAlerView show];
+                                        [_nearbyFriendTable reloadData];
+                                        [[SetupView ShareInstance]hideHUD];
+                                    }else{
+                                        [[SetupView ShareInstance]hideHUD];
+                                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                                    }
+                                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                    [[SetupView ShareInstance]hideHUD];
+                                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                                }];
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                        
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }else{
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+                NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+                [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+                [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+                url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                    int res=[[source objectForKey:@"res"] intValue];
+                    if (res==0) {
+                        [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                        NSString *url = [NSString stringWithFormat:@"%@v2/user/generalInfo?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+                        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+                        [dic setObject:[NSNumber numberWithFloat:oldCoordinate.latitude] forKey:@"latitude"];
+                        [dic setObject:[NSNumber numberWithFloat:oldCoordinate.longitude] forKey:@"longitude"];
+                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                            int res=[[source objectForKey:@"res"] intValue];
+                            NSLog(@"res====%d",res);
+                            if (res == 0) {
+                                NSLog(@"上传成功");
+                                [locationManager stopUpdatingLocation];
+                                NSString *nearUrl = [NSString stringWithFormat:@"%@v2/user/nearbyUser?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
+                                NSLog(@"nearurl====%@",nearUrl);
+                                [[HttpManager ShareInstance]AFNetGETSupport:nearUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                    NSDictionary *nearSource = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                    int res=[[nearSource objectForKey:@"res"] intValue];
+                                    if (res == 0) {
+                                        dataArray = [nearSource objectForKey:@"users"];
+                                        UIAlertView *tempAlerView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"附近战友都藏起来啦", @"") message:NSLocalizedString(@"哎呀，战友们比较害羞，都藏起来了，赶紧通过微信邀请战友吧！", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"这就去", @"") otherButtonTitles:nil, nil];
+                                        [tempAlerView show];
+                                        [_nearbyFriendTable reloadData];
+                                        [[SetupView ShareInstance]hideHUD];
+                                    }else{
+                                        [[SetupView ShareInstance]hideHUD];
+                                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                                    }
+                                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                    [[SetupView ShareInstance]hideHUD];
+                                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                                }];
+                            }else{
+                                [[SetupView ShareInstance]hideHUD];
+                                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                            }
+                        }FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                        }];
+                    }else{
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                    }
+                }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                    [[SetupView ShareInstance]hideHUD];
+                    [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                }];
+            }
+        }else{
+            [[SetupView ShareInstance]hideHUD];
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
+        [[SetupView ShareInstance]hideHUD];
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络", @"") Title:NSLocalizedString(@"网络出错", @"") ViewController:self];
     }];
 }
 
@@ -171,10 +308,14 @@
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-    cpdv.isJIDOrYizhenID = YES;
+    cpdv.isJIDOrYizhenID = NO;
     cpdv.friendJID = [dataArray[indexPath.row] objectForKey:@"jid"];
     [self.navigationController pushViewController:cpdv animated:YES];
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    [self.navigationController popViewControllerAnimated:YES];
 }
 
 -(void)viewWillDisappear:(BOOL)animated{

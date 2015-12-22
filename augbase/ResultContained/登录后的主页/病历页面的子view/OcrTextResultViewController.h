@@ -53,5 +53,7 @@
 @property (nonatomic,strong) NSArray *viewedTimeArray;//预览的时间点
 
 
+@property (nonatomic,assign) NSInteger newResNumber;//新的数据读入数目
+
 @end
 

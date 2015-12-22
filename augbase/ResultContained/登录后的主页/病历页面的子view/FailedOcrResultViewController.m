@@ -54,17 +54,19 @@
     [self.navigationController popToRootViewControllerAnimated:YES];
     _cameraNewReportDele = _caseRootVC;
     [_cameraNewReportDele cameraNewReport:YES];
-    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
-    NSString *urlDelete = [NSString stringWithFormat:@"%@ltr/delete?uid=%@&token=%@&ltrid=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[_detailDic objectForKey:@"id"]];
-    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:urlDelete Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-        int res = [[response objectForKey:@"res"] intValue];
-        if (res == 0) {
-            NSLog(@"删除成功");
-        }
-    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
-    }];
+//    NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+//    NSString *urlDelete = [NSString stringWithFormat:@"%@ltr/delete?uid=%@&token=%@&ltrid=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],[_detailDic objectForKey:@"id"]];
+//    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:urlDelete Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSDictionary *response = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//        int res = [[response objectForKey:@"res"] intValue];
+//        if (res == 0) {
+//            NSLog(@"删除成功");
+//            [[WriteFileSupport ShareInstance]removeCache:yizhenMineReportImage];
+//            [[WriteFileSupport ShareInstance]flushCache];
+//        }
+//    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        
+//    }];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
@@ -77,6 +79,8 @@
             int res = [[response objectForKey:@"res"] intValue];
             if (res == 0) {
                 NSLog(@"删除成功");
+                [[WriteFileSupport ShareInstance]removeCache:yizhenMineReportImage];
+                [[WriteFileSupport ShareInstance]flushCache];
                 [_deleteFailedReportDele deleteReport:YES];
             }
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {

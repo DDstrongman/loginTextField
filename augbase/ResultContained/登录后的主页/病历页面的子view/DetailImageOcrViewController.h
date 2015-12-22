@@ -8,6 +8,8 @@
 
 #import <UIKit/UIKit.h>
 
+#import "OcrTextResultViewController.h"
+
 @interface DetailImageOcrViewController : UIViewController<UIScrollViewDelegate,UIActionSheetDelegate,UIAlertViewDelegate,UIPickerViewDataSource,UIPickerViewDelegate>
 
 @property (nonatomic) BOOL ResultOrING;//判断是显示识别结果还是正在识别的图片,YES是显示结果，NO是正在识别的图片
@@ -28,5 +30,7 @@
 @property (nonatomic,strong) NSString *showImageUrl;
 
 @property (nonatomic,strong) NSDictionary *detailDic;
+
+@property (nonatomic,strong) OcrTextResultViewController *OcrTextViewController;
 
 @end

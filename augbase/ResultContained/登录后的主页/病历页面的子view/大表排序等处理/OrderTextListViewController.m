@@ -56,9 +56,15 @@
         }
     }
     NSString *url = [NSString stringWithFormat:@"%@v2/userIndicator/customizedIdsOrder?uid=%@&token=%@&order=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],order];
+    NSLog(@"排序url＝＝＝＝%@",url);
     [[HttpManager ShareInstance]AFNetPUTSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *userInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res = [[userInfo objectForKey:@"res"] intValue];
+        if (res == 0) {
+            
+        }else{
+            
+        }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
     }];

@@ -23,6 +23,7 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 60;
     url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager GET:url parameters:dic success:sucess failure:failed];
 }
@@ -31,7 +32,7 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-    manager.requestSerializer.timeoutInterval = 8;
+    manager.requestSerializer.timeoutInterval = 60;
     url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager POST:url parameters:dic success:sucess failure:failed];
 }
@@ -40,7 +41,7 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-    manager.requestSerializer.timeoutInterval = 8;
+    manager.requestSerializer.timeoutInterval = 60;
     url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager POST:url parameters:dic constructingBodyWithBlock:bodyblock success:sucess failure:failed];
 }
@@ -49,7 +50,7 @@
     AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
     manager.responseSerializer = [AFHTTPResponseSerializer serializer];
     manager.requestSerializer=[AFHTTPRequestSerializer serializer];
-    manager.requestSerializer.timeoutInterval = 8;
+    manager.requestSerializer.timeoutInterval = 60;
     url = [url stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     [manager PUT:url parameters:dic success:sucess failure:failed];
 }

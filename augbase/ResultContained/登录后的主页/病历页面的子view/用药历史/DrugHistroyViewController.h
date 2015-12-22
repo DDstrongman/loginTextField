@@ -8,10 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-
+#import "OcrTextResultViewController.h"
 
 @interface DrugHistroyViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
 @property (nonatomic,strong) UITableView *drugHistroyTable;//用药历史记录
+
+@property (nonatomic,strong) OcrTextResultViewController *OcrTextViewController;
 
 @end

@@ -21,6 +21,7 @@
     _registViewOne = [[ImageViewLabelTextFieldView alloc]initWithFrame:CGRectMake(48, 74, ViewWidth-120+12, 50)];
     
     _registViewOne.contentTextField.placeholder = NSLocalizedString(@"新密码", @"");
+    _registViewOne.contentTextField.keyboardType = UIKeyboardTypeASCIICapable;
     [_registViewOne.contentTextField addTarget:self action:@selector(ensureMessAndPass:) forControlEvents:UIControlEventEditingChanged];
     
     

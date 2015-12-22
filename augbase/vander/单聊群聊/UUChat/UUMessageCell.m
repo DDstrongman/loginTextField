@@ -14,6 +14,8 @@
 #import "UIButton+AFNetworking.h"
 #import "UUImageAvatarBrowser.h"
 
+#import "WriteFileSupport.h"
+
 @interface UUMessageCell ()<UUAVAudioPlayerDelegate>
 {
     AVAudioPlayer *player;
@@ -79,7 +81,6 @@
                                                      name:UIDeviceProximityStateDidChangeNotification
                                                    object:nil];
         contentVoiceIsPlaying = NO;
-
     }
     return self;
 }
@@ -87,7 +88,7 @@
 //头像点击
 - (void)btnHeadImageClick:(UIButton *)button{
     if ([self.delegate respondsToSelector:@selector(headImageDidClick:userId:)])  {
-        [self.delegate headImageDidClick:self userId:self.messageFrame.message.strId];
+        [self.delegate headImageDidClick:self userId:self.messageFrame.message.from];
     }
 }
 
@@ -107,8 +108,7 @@
         }
     }
     //show the picture
-    else if (self.messageFrame.message.type == UUMessageTypePicture)
-    {
+    else if (self.messageFrame.message.type == UUMessageTypePicture){
         if (self.btnContent.backImageView) {
             [UUImageAvatarBrowser showImage:self.btnContent.backImageView];
         }
@@ -117,27 +117,29 @@
         }
     }
     // show text and gonna copy that
-    else if (self.messageFrame.message.type == UUMessageTypeText)
-    {
+    else if (self.messageFrame.message.type == UUMessageTypeText){
         [self.btnContent becomeFirstResponder];
         UIMenuController *menu = [UIMenuController sharedMenuController];
         [menu setTargetRect:self.btnContent.frame inView:self.btnContent.superview];
         [menu setMenuVisible:YES animated:YES];
     }
+    // show text and gonna copy that
+    else if (self.messageFrame.message.type == UUMessageTypeTable){
+        [self.showWebDele ShowWebView:_messageFrame.message.urlContent MineOrOther:_messageFrame.message.from];
+    }
 }
 
-- (void)UUAVAudioPlayerBeiginLoadVoice
-{
+- (void)UUAVAudioPlayerBeiginLoadVoice{
     [self.btnContent benginLoadVoice];
 }
-- (void)UUAVAudioPlayerBeiginPlay
-{
+
+- (void)UUAVAudioPlayerBeiginPlay{
     //开启红外线感应
     [[UIDevice currentDevice] setProximityMonitoringEnabled:YES];
     [self.btnContent didLoadVoice];
 }
-- (void)UUAVAudioPlayerDidFinishPlay
-{
+
+- (void)UUAVAudioPlayerDidFinishPlay{
     //关闭红外线感应
     [[UIDevice currentDevice] setProximityMonitoringEnabled:NO];
     contentVoiceIsPlaying = NO;
@@ -166,7 +168,7 @@
     // 3、设置下标
     self.labelNum.text = message.strName;
     if (messageFrame.nameF.origin.x > 160) {
-        self.labelNum.frame = CGRectMake(messageFrame.nameF.origin.x - 50, messageFrame.nameF.origin.y + 3, 100, messageFrame.nameF.size.height);
+        self.labelNum.frame = CGRectMake(messageFrame.nameF.origin.x - 55, messageFrame.nameF.origin.y + 3, 100, messageFrame.nameF.size.height);
         self.labelNum.textAlignment = NSTextAlignmentRight;
     }else{
         self.labelNum.frame = CGRectMake(messageFrame.nameF.origin.x, messageFrame.nameF.origin.y + 3, 80, messageFrame.nameF.size.height);
@@ -179,6 +181,7 @@
     [self.btnContent setTitle:@"" forState:UIControlStateNormal];
     self.btnContent.voiceBackView.hidden = YES;
     self.btnContent.backImageView.hidden = YES;
+    self.btnContent.urlContentView.hidden = YES;
 
     self.btnContent.frame = messageFrame.contentF;
     
@@ -195,7 +198,11 @@
     //背景气泡图
     UIImage *normal;
     if (message.from == UUMessageFromMe) {
-        normal = [UIImage imageNamed:@"chatto_bg_normal"];
+        if (message.type == 3) {
+            normal = [UIImage imageNamed:@"chatto_bg_normal2"];
+        }else{
+            normal = [UIImage imageNamed:@"chatto_bg_normal"];
+        }
         normal = [normal resizableImageWithCapInsets:UIEdgeInsetsMake(35, 10, 10, 22)];
     }
     else{
@@ -212,8 +219,13 @@
         case UUMessageTypePicture:
         {
             self.btnContent.backImageView.hidden = NO;
-//            self.btnContent.backImageView.image = message.picture;
-            [self.btnContent.backImageView setImageWithURL:message.picture placeholderImage:[UIImage imageNamed:@"test"]];
+            if ([[WriteFileSupport ShareInstance]isFileExist:[yizhenChatFile stringByAppendingPathComponent:[message.picture absoluteString]]]) {
+                NSData *picData = [[WriteFileSupport ShareInstance]readData:yizhenChatFile FileName:[message.picture absoluteString]];
+                UIImage *pic = [UIImage imageWithData:picData];
+                self.btnContent.backImageView.image = pic;
+            }else{
+                [self.btnContent.backImageView sd_setImageWithURL:message.picture placeholderImage:[UIImage imageNamed:@"yulantu_3"]];
+            }
             self.btnContent.backImageView.frame = CGRectMake(0, 0, self.btnContent.frame.size.width, self.btnContent.frame.size.height);
             [self makeMaskView:self.btnContent.backImageView withImage:normal];
         }
@@ -226,7 +238,11 @@
 //            voiceURL = [NSString stringWithFormat:@"%@%@",RESOURCE_URL_HOST,message.strVoice];
         }
             break;
-            
+        case UUMessageTypeTable:{
+            self.btnContent.urlContentView.hidden = NO;
+            self.btnContent.urlTitleLabel.text = message.urlTitle;
+        }
+            break;
         default:
             break;
     }

@@ -9,7 +9,6 @@
 #import "PrivateSettingViewController.h"
 
 #import "LoginViewController.h"
-#import "RZTransitionsNavigationController.h"
 #import "AppDelegate.h"
 #import "DBManager.h"
 #import "FriendDBManager.h"
@@ -18,12 +17,15 @@
 #import "AdviceViewController.h"
 #import "PrivateRightNoteViewController.h"
 #import "AboutUsViewController.h"
+#import "CleanCacheViewController.h"
 
 @interface PrivateSettingViewController ()
 
 {
     NSMutableArray *firstTitle;//第一大组数据，以下依次
     NSMutableArray *forthTitle;
+    
+    NSString *CacheSize;//缓存的大小
 }
 
 @end
@@ -42,7 +44,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (section == 0) {
-        return 2;
+        return 3;
     }else if(section == 1){
         return 4;
     }else{
@@ -51,11 +53,7 @@
 }
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-//    if (indexPath.section == 3 && indexPath.row == 0) {
-//        return 80;
-//    }else{
-        return 50;
-//    }
+    return 50;
 }
 
 #pragma 此处的cell的具体信息均需要从后端获取
@@ -75,26 +73,30 @@
     
     if (indexPath.section == 0) {
         cell.textLabel.text = firstTitle[indexPath.row];
-        UISwitch *tailSwitch = [[UISwitch alloc]init];
-        cell.accessoryView = tailSwitch;
-        tailSwitch.onTintColor = themeColor;
-        NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
-        if (indexPath.row == 0) {
-            if ([user objectForKey:@"userOpenVoice"] == nil) {
-                [tailSwitch setOn:YES];
-            }else{
-                [tailSwitch setOn:[[user objectForKey:@"userOpenVoice"] boolValue]];
+        if (indexPath.row == 0||indexPath.row == 1) {
+            UISwitch *tailSwitch = [[UISwitch alloc]init];
+            cell.accessoryView = tailSwitch;
+            tailSwitch.onTintColor = themeColor;
+            NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+            if (indexPath.row == 0) {
+                if ([user objectForKey:@"userOpenVoice"] == nil) {
+                    [tailSwitch setOn:YES];
+                }else{
+                    [tailSwitch setOn:[[user objectForKey:@"userOpenVoice"] boolValue]];
+                }
+                [tailSwitch addTarget:self action:@selector(voice:) forControlEvents:UIControlEventValueChanged];
+            }else if(indexPath.row == 1){
+                if ([user objectForKey:@"userOpenShake"] == nil) {
+                    [tailSwitch setOn:YES];
+                }else{
+                    [tailSwitch setOn:[[user objectForKey:@"userOpenShake"] boolValue]];
+                }
+                [tailSwitch addTarget:self action:@selector(shock:) forControlEvents:UIControlEventValueChanged];
             }
-            [tailSwitch addTarget:self action:@selector(voice:) forControlEvents:UIControlEventValueChanged];
-        }else if(indexPath.row == 1){
-            if ([user objectForKey:@"userOpenShake"] == nil) {
-                [tailSwitch setOn:YES];
-            }else{
-                [tailSwitch setOn:[[user objectForKey:@"userOpenShake"] boolValue]];
-            }
-            [tailSwitch addTarget:self action:@selector(shock:) forControlEvents:UIControlEventValueChanged];
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        }else{
+            cell.detailTextLabel.text = CacheSize;
         }
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }else if(indexPath.section == 1){
         cell.textLabel.text = forthTitle[indexPath.row];
         cell.accessoryView = tailImageView;
@@ -120,7 +122,12 @@
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
-    if (indexPath.section == 1) {
+    if (indexPath.section == 0) {
+        if (indexPath.row == 2) {
+            CleanCacheViewController *ccv = [[CleanCacheViewController alloc]init];
+            [self.navigationController pushViewController:ccv animated:YES];
+        }
+    }else if (indexPath.section == 1) {
         if (indexPath.row == 0) {
             PrivateRightNoteViewController *prv = [[PrivateRightNoteViewController alloc]init];
             [self.navigationController pushViewController:prv animated:YES];
@@ -176,8 +183,16 @@
 }
 
 -(void)setupData{
-    firstTitle = [@[NSLocalizedString(@"声音", @""),NSLocalizedString(@"震动", @"")]mutableCopy];
-    forthTitle = [@[NSLocalizedString(@"隐私条款", @""),NSLocalizedString(@"意见反馈", @""),NSLocalizedString(@"给战友点赞", @""),NSLocalizedString(@"关于我们", @""),NSLocalizedString(@"登出", @"")]mutableCopy];
+    firstTitle = [@[NSLocalizedString(@"声音", @""),NSLocalizedString(@"震动", @""),NSLocalizedString(@"清除缓存", @"")]mutableCopy];
+    forthTitle = [@[NSLocalizedString(@"隐私条款", @""),NSLocalizedString(@"意见反馈", @""),NSLocalizedString(@"给易诊点赞", @""),NSLocalizedString(@"关于我们", @""),NSLocalizedString(@"登出", @"")]mutableCopy];
+    float tempSize = [[WriteFileSupport ShareInstance]countAllDirDocuments];
+    if (tempSize < 1.0) {
+        CacheSize = [NSString stringWithFormat:@"%.2f KB",tempSize*1024];
+    }else if (tempSize<1024){
+        CacheSize = [NSString stringWithFormat:@"%.2f MB",tempSize];
+    }else{
+        CacheSize = [NSString stringWithFormat:@"%.2f GB",tempSize/1024];
+    }
 }
 
 -(void)loginOut{
@@ -215,21 +230,31 @@
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"ShowGuide"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userEmail"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userYizhenID"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];
+//    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];登出不清除deviceid
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPhone"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userShareDoctor"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenVoice"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenShake"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenRemind"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userRemindCamera"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChatUID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChatToken"];
     [[DBManager ShareInstance] closeDB];
     [[FriendDBManager ShareInstance] closeDB];
     [[XMPPSupportClass ShareInstance] disconnect];
-#warning 需要加入删除数据库的操作
+    [[WriteFileSupport ShareInstance]removeAllDirDocuments];
+    UIAlertView *remindAlertView = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您将要退出", @"") message:NSLocalizedString(@"2秒后自动退出", @"") delegate:self cancelButtonTitle:nil otherButtonTitles:nil, nil];
+    [remindAlertView show];
+    [self performSelector:@selector(loginOutAndModifyRoot:) withObject:remindAlertView afterDelay:2.0];
+}
+
+-(void)loginOutAndModifyRoot:(UIAlertView *)remindAlert{
+    [remindAlert dismissWithClickedButtonIndex:0 animated:YES];
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
     AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
     
-    appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+    appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
 }
 
 -(void)voice:(UISwitch *)sender{

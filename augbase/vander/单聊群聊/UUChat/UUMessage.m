@@ -27,7 +27,10 @@
             self.voice = dict[@"voice"];
             self.strVoiceTime = dict[@"strVoiceTime"];
             break;
-            
+        case 3:
+            self.type = UUMessageTypeTable;
+            self.urlContent = dict[@"urlContent"];
+            self.urlTitle = dict[@"urlTitle"];
         default:
             break;
     }
@@ -37,7 +40,10 @@
 //"昨天 上午10:09"或者"2012-08-10 凌晨07:09"
 - (NSString *)changeTheDateString:(NSString *)Str
 {
-    NSString *subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    NSString *subString;
+    if (Str.length>18) {
+        subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    }
     NSDate *lastDate = [NSDate dateFromString:subString withFormat:@"yyyy-MM-dd HH:mm:ss"];
 	NSTimeZone *zone = [NSTimeZone systemTimeZone];
 	NSInteger interval = [zone secondsFromGMTForDate:lastDate];

@@ -110,10 +110,11 @@
         cell.descriptionText.text = lastMess;
     }else if ([lastType isEqualToString:@"1"]){
         cell.descriptionText.text = NSLocalizedString(@"[图片]", @"");
-    }else if ([lastType isEqualToString:@"1"]){
+    }else if ([lastType isEqualToString:@"2"]){
         cell.descriptionText.text = NSLocalizedString(@"[语音]", @"");
-    }
-    else{
+    }else if ([lastType isEqualToString:@"3"]){
+        cell.descriptionText.text = NSLocalizedString(@"[识别结果]", @"");
+    }else{
         cell.descriptionText.text = @"";
     }
     if (number == 0) {
@@ -229,9 +230,9 @@
 }
 
 -(void)setupData{
-    dataArray = [@[NSLocalizedString(@"单身汪 亿友佳缘", @""),NSLocalizedString(@"妈妈帮", @""),NSLocalizedString(@"学生党", @""),NSLocalizedString(@"药价 报销", @""),NSLocalizedString(@"药物副作用交流群", @""),NSLocalizedString(@"乙肝战友看这里", @""),NSLocalizedString(@"丙肝战友看这里", @""),NSLocalizedString(@"脂肪肝胖纸看这里", @""),NSLocalizedString(@"用户反馈群", @"")]mutableCopy];
-    groupJidArray = [@[@"g999999",@"g999998",@"g999997",@"g999996",@"g999995",@"g999994",@"g999993",@"g999992",@"g999991"]mutableCopy];
-    groupNoteArray = [@[@"在单身的世界里，你并不是一个人在独舞。要相信缘分！",@"妈妈们和准妈妈们有那么多话题要交流，都是为了娃，一起唠唠",@"学习任务这么繁重，世界上还有这么多要吐槽的事情，学生党速来",@"怎么用药报销划算呢，一起探讨当地行情",@"用药中发生药物副作用了，应该怎么办呢！换药？停药？减药？一起来分享",@"周围很多人都不懂乙肝，战友自己能懂的，到这来尽情诉说吧",@"国内丙肝真不多，找到战友好亲切",@"与脂肪肝战斗，事情可大可小，减肥？饮食？锻炼？快加入群内与大家一起消灭脂肪肝吧",@"用着这个app，爽不爽都来吐槽吧，小易会更好地为大家服务"]mutableCopy];
+    dataArray = [@[NSLocalizedString(@"单身汪 亿友佳缘", @""),NSLocalizedString(@"妈妈帮", @""),NSLocalizedString(@"学生党", @""),NSLocalizedString(@"药价 报销", @"")/*,NSLocalizedString(@"药物副作用交流群", @""),NSLocalizedString(@"乙肝战友看这里", @""),NSLocalizedString(@"丙肝战友看这里", @""),NSLocalizedString(@"脂肪肝胖纸看这里", @""),NSLocalizedString(@"用户反馈群", @"")*/]mutableCopy];
+    groupJidArray = [@[@"g999999",@"g999998",@"g999997",@"g999996"/*,@"g999995",@"g999994",@"g999993",@"g999992",@"g999991"*/]mutableCopy];
+    groupNoteArray = [@[@"在单身的世界里，你并不是一个人在独舞。要相信缘分！",@"妈妈们和准妈妈们有那么多话题要交流，都是为了娃，一起唠唠",@"学习任务这么繁重，世界上还有这么多要吐槽的事情，学生党速来",@"怎么用药报销划算呢，一起探讨当地行情"/*,@"用药中发生药物副作用了，应该怎么办呢！换药？停药？减药？一起来分享",@"周围很多人都不懂乙肝，战友自己能懂的，到这来尽情诉说吧",@"国内丙肝真不多，找到战友好亲切",@"与脂肪肝战斗，事情可大可小，减肥？饮食？锻炼？快加入群内与大家一起消灭脂肪肝吧",@"用着这个app，爽不爽都来吐槽吧，小易会更好地为大家服务"*/]mutableCopy];
     if (!searchResults) {
         searchResults = dataArray;
     }
@@ -246,7 +247,10 @@
 //"昨天 上午10:09"或者"2012-08-10 凌晨07:09"
 - (NSString *)changeTheDateString:(NSString *)Str
 {
-    NSString *subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    NSString *subString;
+    if (Str.length>18) {
+        subString = [Str substringWithRange:NSMakeRange(0, 19)];
+    }
     NSDate *lastDate = [NSDate dateFromString:subString withFormat:@"yyyy-MM-dd HH:mm:ss"];
     NSTimeZone *zone = [NSTimeZone systemTimeZone];
     NSInteger interval = [zone secondsFromGMTForDate:lastDate];

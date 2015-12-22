@@ -44,7 +44,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzdcdb tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messContent TEXT,messTime TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messTableUrl TEXT,messTableTitle TEXT,messContent TEXT,messTime TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
         BOOL success=[self.yzdcdb executeUpdate:sql];
         return success;
     }
@@ -58,7 +58,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzdcdb tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messContent TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,personJID TEXT,personNickName TEXT,personImageUrl TEXT,messTableUrl TEXT,messTableTitle TEXT,messContent TEXT, FromMeOrNot INTEGER,ReadOrNot INTEGER,chatType  INTEGER,messType INTEGER,timeStamp TEXT)",tname];
         BOOL success=[self.yzdcdb executeUpdate:sql];
         return success;
     }
@@ -74,6 +74,8 @@
     NSString *personJID = obj.toPersonJID;
     NSString *personNickName = obj.personNickName;
     NSString *personImageUrl = obj.personImageUrl;
+    NSString *messTableUrl = obj.messTableUrl;
+    NSString *messTableTitle = obj.messTableTitle;
     NSInteger chatType = obj.chatType;
     NSInteger messType = obj.messType;
     NSInteger ReadOrNot = obj.ReadOrNot;
@@ -93,7 +95,7 @@
         }
         if (isReady) {
             //存在表
-            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
+            NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (personJID, personNickName,personImageUrl,messTableTitle,messTableUrl,messContent,messTime,FromMeOrNot,ReadOrNot,chatType,messType,timeStamp) VALUES ('%@','%@','%@','%@','%@','%@','%@',%ld,%ld,%ld,%ld,'%@')",tableName,personJID,personNickName,personImageUrl,messTableTitle,messTableUrl,messContent,messTime,(long)FromMeOrNot,(long)ReadOrNot,(long)chatType,(long)messType,timeStamp];
             if ([self.yzdcdb executeUpdate:insertsql]) {
                 //插入成功
                 NSLog(@"插入成功");
@@ -205,7 +207,7 @@
     [self.yzdcdb close];
 }
 
-#warning 战友旧的数据库操作函数
+#warning 易诊旧的数据库操作函数
 
 
 #warning 此处的创建基本废弃，创建用isExist函数来判断是否存在，不存在自动创建

@@ -36,7 +36,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = NO;
-    self.title = NSLocalizedString(@"添加好友", @"");
+    self.title = NSLocalizedString(@"添加战友", @"");
 }
 
 #pragma mark - Table view data source
@@ -189,7 +189,7 @@
 }
 
 -(void)setupData{
-    titleArray = [@[NSLocalizedString(@"战友号／手机号", @""),NSLocalizedString(@"我的战友号: ", @""),NSLocalizedString(@"相似战友", @""),NSLocalizedString(@"附近战友", @""),NSLocalizedString(@"邀请微信好友", @"")]mutableCopy];
+    titleArray = [@[NSLocalizedString(@"易诊号", @""),NSLocalizedString(@"我的易诊号: ", @""),NSLocalizedString(@"相似战友", @""),NSLocalizedString(@"附近战友", @""),NSLocalizedString(@"邀请微信好友", @"")]mutableCopy];
     imageArray = [@[@"search3",@"",@"similar",@"neighborhood",@"wechat2"]mutableCopy];
     
 }
@@ -212,6 +212,7 @@
                 UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
                 ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
                 cpdv.friendJID = textField.text;
+                cpdv.isJIDOrYizhenID = YES;
                 [self.navigationController pushViewController:cpdv animated:YES];
             }else{
                 [[SetupView ShareInstance]showAlertView:[[userInfo objectForKey:@"res"] intValue] Hud:nil ViewController:self];
@@ -244,8 +245,8 @@
 
 -(void)shareWechatFriend:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"快加入战友！找到和你相似的病友";
-    message.description = @"哪些战友和我用一样的药、有着同样的指标特征和家族史？来战友，扫一扫化验单，轻松加战友！";
+    message.title = @"快加入易诊！找到和你相似的病友";
+    message.description = @"哪些战友和我用一样的药、有着同样的指标特征和家族史？来易诊，扫一扫化验单，轻松加战友！";
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];
@@ -264,8 +265,8 @@
 
 -(void)shareWechatGroup:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = @"快加入战友！找到和你相似的病友";
-    message.description = @"哪些战友和我用一样的药、有着同样的指标特征和家族史？来战友，扫一扫化验单，轻松加战友！";
+    message.title = @"快加入易诊！找到和你相似的病友";
+    message.description = @"哪些战友和我用一样的药、有着同样的指标特征和家族史？来易诊，扫一扫化验单，轻松加战友！";
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];

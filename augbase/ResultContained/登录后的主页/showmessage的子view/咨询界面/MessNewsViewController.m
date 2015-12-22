@@ -72,7 +72,7 @@
 }
 
 -(void)setupShareView{
-    self.title = NSLocalizedString(@"资讯", @"");
+    self.title = NSLocalizedString(@"咨讯", @"");
     shareView = [[UIView alloc]initWithFrame:CGRectMake(0, ViewHeight, ViewWidth, 175)];
     shareView.backgroundColor = [UIColor whiteColor];
     
@@ -134,10 +134,6 @@
     }
 }
 
--(void)countHeight{
-    
-}
-
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return newsDataArray.count;
@@ -150,7 +146,7 @@
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath.row == 0) {
-        return 340;
+        return [self countHeight:indexPath.section];
     }else{
         return 50;
     }
@@ -168,8 +164,7 @@
         [((UIImageView *)[cell.contentView viewWithTag:4]) sd_setImageWithURL:[NSURL URLWithString:[newsDataArray[indexPath.section] objectForKey:@"articleimg"]] placeholderImage:[UIImage imageNamed:@"test"]];
         [cell.contentView viewWithTag:4].clipsToBounds = YES;
         NSString *tempString = [newsDataArray[indexPath.section] objectForKey:@"content"];
-        tempString  = [tempString stringByReplacingOccurrencesOfString:@"<p>"  withString:@""];
-        tempString  = [tempString stringByReplacingOccurrencesOfString:@"</p>"  withString:@""];
+        tempString  = [tempString stringByReplacingOccurrencesOfString:YizhenLineString  withString:@"\n"];
         ((UILabel *)[cell.contentView viewWithTag:5]).text = tempString;
         NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc]initWithString:((UILabel *)[cell.contentView viewWithTag:5]).text];;
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc]init];
@@ -275,8 +270,8 @@
 
 -(void)shareWechatFriend:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = [newsDataArray[sender.superview.superview.tag] objectForKey:@"q"];
-    message.description = [newsDataArray[sender.superview.superview.tag] objectForKey:@"content"];
+    message.title = [newsDataArray[indexSection] objectForKey:@"q"];
+    message.description = [newsDataArray[indexSection] objectForKey:@"content"];
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];
@@ -295,8 +290,8 @@
 
 -(void)shareWechatGroup:(UIButton *)sender{
     WXMediaMessage *message = [WXMediaMessage message];
-    message.title = [newsDataArray[sender.superview.superview.tag] objectForKey:@"q"];
-    message.description = [newsDataArray[sender.superview.superview.tag] objectForKey:@"content"];
+    message.title = [newsDataArray[indexSection] objectForKey:@"q"];
+    message.description = [newsDataArray[indexSection] objectForKey:@"content"];
     [message setThumbImage:[UIImage imageNamed:@"weixinIcon"]];
     
     WXWebpageObject *ext = [WXWebpageObject object];
@@ -372,8 +367,24 @@
     
 }
 
+-(CGFloat)countHeight:(NSInteger )section{
+    CGFloat tempHeight;
+    CGSize tempSize = [self get:[newsDataArray[section] objectForKey:@"content"]];
+    int tempPageNumber = 0;
+    NSString *tempTargetString;
+    for (int i = 0; i<[[newsDataArray[section] objectForKey:@"content"] length]-2; i++) {
+         tempTargetString = [[newsDataArray[section] objectForKey:@"content"] substringWithRange:NSMakeRange(i, 3)];
+        if ([tempTargetString isEqualToString:YizhenLineString]) {
+            tempPageNumber++;
+        }
+    }
+    int tempLineNumber = tempSize.width/(ViewWidth-16)+1+tempPageNumber;
+    tempHeight = tempLineNumber*30+75+ViewWidth/4*3;
+    return tempHeight;
+}
+
 -(CGSize)get:(NSString *)title{
-    NSDictionary* attrs =@{NSFontAttributeName:[UIFont systemFontOfSize:14]};
+    NSDictionary* attrs =@{NSFontAttributeName:[UIFont systemFontOfSize:15]};
     NSAttributedString *newatt=[[NSAttributedString alloc] initWithString:title attributes:attrs];
     CGRect rect=[newatt boundingRectWithSize:CGSizeMake(MAXFLOAT, 18) options:NSStringDrawingTruncatesLastVisibleLine context:nil];
     CGSize titleSize=rect.size;

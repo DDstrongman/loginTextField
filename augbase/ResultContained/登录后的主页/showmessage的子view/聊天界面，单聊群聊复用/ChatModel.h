@@ -18,12 +18,8 @@
 
 @property (nonatomic) BOOL isGroupChat;
 
-- (void)populateRandomDataSource:(NSMutableArray *)messMutableArray;
+@property (nonatomic,strong) UIViewController *rootNavC;
 
-- (void)addRandomItemsToDataSource:(NSMutableArray *)messMutableArray;
-
-- (void)addSpecifiedItem:(NSDictionary *)dic;
 -(void)addCellFromDB:(NSString *)userJID MessNumber:(NSInteger)messNumbe;
-//- (NSArray *)additems:(NSMutableArray *)messArray;
 
 @end

@@ -105,19 +105,20 @@
                 cell.textLabel.text = NSLocalizedString(@"头像", @"");
                 UIImageView *headImgView = [[UIImageView alloc]initWithFrame:CGRectMake(ViewWidth-50-30,70/2-50/2, 50, 50)];
                 [headImgView imageWithRound:NO];
-                headImgView.image = [UIImage imageWithContentsOfFile:[[NSUserDefaults standardUserDefaults] objectForKey:@"userImageUrl"]];
+                NSData *tempImageData = [[WriteFileSupport ShareInstance]readData:yizhenImageFile FileName:[[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"] stringByAppendingString:@".png"]];
+                headImgView.image = [UIImage imageWithData:tempImageData];
                 [cell addSubview:headImgView];
             }
                 break;
             case 1:
             {
-                cell.textLabel.text = NSLocalizedString(@"昵称", @"");
+                cell.textLabel.text = NSLocalizedString(@"用户名", @"");
                 cell.detailTextLabel.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userNickName"];
             }
                 break;
             case 2:
             {
-                cell.textLabel.text = NSLocalizedString(@"战友号", @"");
+                cell.textLabel.text = NSLocalizedString(@"易诊号", @"");
                 cell.detailTextLabel.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"];
                 cell.selectionStyle = UITableViewCellSelectionStyleNone;
             }
@@ -369,6 +370,8 @@
     [picker dismissViewControllerAnimated:YES completion:NULL];
     UIImage *image = [info objectForKey:UIImagePickerControllerEditedImage];
     NSLog(@"image===%@",image);
+    [[WriteFileSupport ShareInstance]removeDirFile:yizhenImageFile FileName:[[[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"] stringByAppendingString:@".png"]];
+    [[WriteFileSupport ShareInstance]flushCache];
     [self updateimg:image];
 }
 

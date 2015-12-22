@@ -33,15 +33,15 @@ static NSString *previousTime = nil;
         UUMessageFrame *messageFrame = [[UUMessageFrame alloc]init];
         UUMessage *message = [[UUMessage alloc] init];
         NSString *personImageUrl;
-//        obj.mycontent = [searchFMSet stringForColumn:@"key"];
         NSString *personJID = [searchFMSet stringForColumn:@"personJID"];
         NSString *personNickName = [searchFMSet stringForColumn:@"personNickName"];
+        NSString *messTableUrl = [searchFMSet stringForColumn:@"messTableUrl"];
+        NSString *messTableTitle = [searchFMSet stringForColumn:@"messTableTitle"];
         NSString *messContent = [searchFMSet stringForColumn:@"messContent"];
         NSString *messTime = [searchFMSet stringForColumn:@"messTime"];
         NSString *FromMeOrNot = [searchFMSet stringForColumn:@"FromMeOrNot"];
         NSString *messType = [searchFMSet stringForColumn:@"messType"];
         NSString *timeStamp = [searchFMSet stringForColumn:@"timeStamp"];
-//        NSString *personImageFriendUrl = [searchFMSet stringForColumn:@"personImageUrl"];
         [dataDic setObject:FromMeOrNot forKey:@"from"];
         [dataDic setObject:timeStamp forKey:@"strTime"];
         [dataDic setObject:personNickName forKey:@"strName"];
@@ -80,39 +80,43 @@ static NSString *previousTime = nil;
         
         if ([messType isEqualToString:@"0"]) {
             [dataDic setObject:messContent forKey:@"strContent"];
-            [message setWithDict:dataDic];
-            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
-            messageFrame.showTime = message.showDateLabel;
-            [messageFrame setMessage:message];
-            
-            if (message.showDateLabel) {
-                previousTime = dataDic[@"strTime"];
-            }
-            [self.dataSource addObject:messageFrame];
         }else if([messType isEqualToString:@"1"]){
-            [dataDic setObject:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]] forKey:@"picture"];
-            [message setWithDict:dataDic];
-            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
-            messageFrame.showTime = message.showDateLabel;
-            [messageFrame setMessage:message];
-            
-            if (message.showDateLabel) {
-                previousTime = dataDic[@"strTime"];
+            if ([[WriteFileSupport ShareInstance]isFileExist:[yizhenChatFile stringByAppendingPathComponent:messContent]]) {
+                [dataDic setObject:[NSURL URLWithString:messContent] forKey:@"picture"];
+            }else{
+                [dataDic setObject:[NSURL URLWithString:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]] forKey:@"picture"];
+                AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                [manager GET:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent] parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                    NSData *picData = responseObject;
+                    [[WriteFileSupport ShareInstance]writeData:picData DirName:yizhenChatFile FileName:messContent];
+                }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                    
+                }];
             }
-            [self.dataSource addObject:messageFrame];
-        }else{
+        }else if([messType isEqualToString:@"2"]){
             [dataDic setObject:messTime forKey:@"strVoiceTime"];
-            NSData *received = [[HttpManager ShareInstance] httpGetSupport:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]];
-            [dataDic setObject:received forKey:@"voice"];
-            [message setWithDict:dataDic];
-            [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
-            messageFrame.showTime = message.showDateLabel;
-            [messageFrame setMessage:message];
-            if (message.showDateLabel) {
-                previousTime = dataDic[@"strTime"];
+            NSData *received;
+            if ([[WriteFileSupport ShareInstance]isFileExist:[yizhenChatFile stringByAppendingPathComponent:messContent]]) {
+                received = [[WriteFileSupport ShareInstance]readData:yizhenChatFile FileName:messContent];
+            }else{
+                received = [[HttpManager ShareInstance] httpGetSupport:[NSString stringWithFormat:@"http://yizhenimg.augbase.com/chat/%@",messContent]];
+                [[WriteFileSupport ShareInstance]writeData:received DirName:yizhenChatFile FileName:messContent];
             }
-            [self.dataSource addObject:messageFrame];
+            [dataDic setObject:received forKey:@"voice"];
+        }else if([messType isEqualToString:@"3"]){
+            [dataDic setObject:messTableUrl forKey:@"urlContent"];
+            [dataDic setObject:messTableTitle forKey:@"urlTitle"];
         }
+        [message setWithDict:dataDic];
+        [message minuteOffSetStart:previousTime end:dataDic[@"strTime"]];
+        messageFrame.showTime = message.showDateLabel;
+        [messageFrame setMessage:message];
+        if (message.showDateLabel) {
+            previousTime = dataDic[@"strTime"];
+        }
+        [self.dataSource addObject:messageFrame];
     }
 }
 

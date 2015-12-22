@@ -52,7 +52,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 
 #pragma collectionview的delegate,section需要网络获取数目
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    if (_SegIndex == 0) {
+    if (_SegIndex == 2) {
         return 1;
     }else if(_SegIndex == 1){
         return 1;
@@ -62,7 +62,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 }
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (_SegIndex == 0) {
+    if (_SegIndex == 2) {
         return ocrFailedDetailArray.count;
     }else if(_SegIndex == 1){
         return ocrProgressArray.count;
@@ -75,7 +75,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     Cell1 *cell=[collectionView dequeueReusableCellWithReuseIdentifier:cellReuseIdOcrResult forIndexPath:indexPath];
     NSString *urlString;
-    if (_SegIndex == 0) {
+    if (_SegIndex == 2) {
         NSArray *tempArray = [ocrFailedDetailArray[indexPath.row] objectForKey:@"picsInfo"];
         if (tempArray.count>0) {
             urlString = [tempArray[0] objectForKey:@"pic"];
@@ -89,7 +89,6 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
         }
     }else{
         if (ocrSucessDetailArray.count>0) {
-//            urlString = [(NSDictionary *)[(NSDictionary *)((NSArray *)ocrSucessDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];
             NSArray *tempArray = [(NSDictionary *)((NSArray *)ocrSucessDetailArray[indexPath.section])[indexPath.row] objectForKey:@"picsInfo"];
             if (tempArray.count>0) {
                 urlString = [tempArray[0] objectForKey:@"pic"];
@@ -105,7 +104,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     NSLog(@"选择了section===%ld,row===%ld",(long)indexPath.section,(long)indexPath.row);
-    if (_SegIndex == 0) {
+    if (_SegIndex == 2) {
         NSString *urlString;
         NSArray *tempArray = [ocrFailedDetailArray[indexPath.row] objectForKey:@"picsInfo"];
         if (tempArray.count>0) {
@@ -144,7 +143,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
     UICollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:
                                             UICollectionElementKindSectionHeader withReuseIdentifier:@"ocrgroupresultheader" forIndexPath:indexPath];
-    if (_SegIndex == 0) {
+    if (_SegIndex == 2) {
         ((UILabel *)[headerView viewWithTag:1]).text = NSLocalizedString(@"识别失败", @"");
     }else if(_SegIndex == 1){
         ((UILabel *)[headerView viewWithTag:1]).text = NSLocalizedString(@"请耐心等待", @"");
@@ -165,7 +164,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
 }
 
 -(void)setupView{
-    self.segmentedControl = [[HYSegmentedControl alloc] initWithOriginY:0 Titles:@[NSLocalizedString(@"识别失败", @""), NSLocalizedString(@"识别中", @""), NSLocalizedString(@"识别成功", @"")] delegate:self] ;
+    self.segmentedControl = [[HYSegmentedControl alloc] initWithOriginY:0 Titles:@[NSLocalizedString(@"识别成功", @""), NSLocalizedString(@"识别中", @""), NSLocalizedString(@"识别失败", @"")] delegate:self] ;
     [self.view addSubview:_segmentedControl];
 
     //my
@@ -194,7 +193,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     
     [_ocrResultCollection registerClass:[Cell1 class]forCellWithReuseIdentifier:cellReuseIdOcrResult];
     
-    ocrGroupTitleArray = [@[@"识别失败",@"识别中",@"识别成功"]mutableCopy];
+    ocrGroupTitleArray = [@[@"识别成功",@"识别中",@"识别失败"]mutableCopy];
     
     backGroudImageView = [[UIImageView alloc]initWithFrame:CGRectMake(ViewWidth/2-60,(ViewHeight)/2-30-44-22-44-44, 120, 120)];
     [_ocrResultCollection addSubview:backGroudImageView];
@@ -222,70 +221,118 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     ocrSucessDetailArray = [NSMutableArray array];
     ocrFailedDetailArray = [NSMutableArray array];
     
-    NSString *url = [NSString stringWithFormat:@"%@v2/user/ltr/all/?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
-    NSLog(@"url====%@",url);
-    [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-        int res=[[source objectForKey:@"res"] intValue];
-        NSDictionary *picSucessList = [source objectForKey:@"successedLtr"];
-        NSDictionary *picFailedList = [source objectForKey:@"failedLtr"];
-        sucessOrderArray = [source objectForKey:@"successedLtrOrder"];
-        failedOrderArray = [source objectForKey:@"failedLtrOrder"];
-        ocrSucessArray = [NSMutableArray arrayWithArray:sucessOrderArray];
-        ocrFailedArray = [NSMutableArray arrayWithArray:failedOrderArray];
-        ocrProgressArray = [source objectForKey:@"onProgressLtr"];
-        if (res == 0) {
-            for (int i = 0;i<failedOrderArray.count;i++) {
-                NSString *failDate = failedOrderArray[i];
-                for (NSDictionary *dic in [picFailedList objectForKey:failDate]) {
-                    [ocrFailedDetailArray addObject:dic];
+    if (_LocalOrNet||![[WriteFileSupport ShareInstance]isFileExist:yizhenMineReportImage]) {
+        NSString *url = [NSString stringWithFormat:@"%@v2/user/ltr/all/?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+        NSLog(@"url====%@",url);
+        [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            NSDictionary *picSucessList = [source objectForKey:@"successedLtr"];
+            NSDictionary *picFailedList = [source objectForKey:@"failedLtr"];
+            sucessOrderArray = [source objectForKey:@"successedLtrOrder"];
+            failedOrderArray = [source objectForKey:@"failedLtrOrder"];
+            ocrSucessArray = [NSMutableArray arrayWithArray:sucessOrderArray];
+            ocrFailedArray = [NSMutableArray arrayWithArray:failedOrderArray];
+            ocrProgressArray = [source objectForKey:@"onProgressLtr"];
+            if (res == 0) {
+                for (int i = 0;i<failedOrderArray.count;i++) {
+                    NSString *failDate = failedOrderArray[i];
+                    for (NSDictionary *dic in [picFailedList objectForKey:failDate]) {
+                        [ocrFailedDetailArray addObject:dic];
+                    }
                 }
-            }
-            for (int i = 0;i<sucessOrderArray.count;i++) {
-                NSString *sucessDate = sucessOrderArray[i];
-                [ocrSucessDetailArray addObject:[picSucessList objectForKey:sucessDate]];
-            }
-            if (ocrFailedArray.count == 0) {
-                backGroudImageView.hidden = NO;
-                remindLabel.hidden = NO;
-                backGroudImageView.image = [UIImage imageNamed:@"no_hyd2"];
-                remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
+                for (int i = 0;i<sucessOrderArray.count;i++) {
+                    NSString *sucessDate = sucessOrderArray[i];
+                    [ocrSucessDetailArray addObject:[picSucessList objectForKey:sucessDate]];
+                }
+                NSData *tempSuccessDetailData = [NSKeyedArchiver archivedDataWithRootObject:ocrSucessDetailArray];
+                NSData *tempFailedDetailData = [NSKeyedArchiver archivedDataWithRootObject:ocrFailedDetailArray];
+                [[WriteFileSupport ShareInstance]writeArray:ocrSucessArray DirName:yizhenMineReportImage FileName:yizhenMineSucessReport];
+                [[WriteFileSupport ShareInstance]writeArray:ocrProgressArray DirName:yizhenMineReportImage FileName:yizhenMineProgressReport];
+                [[WriteFileSupport ShareInstance]writeArray:ocrFailedArray DirName:yizhenMineReportImage FileName:yizhenMineFailedReport];
+                [[WriteFileSupport ShareInstance]writeData:tempSuccessDetailData DirName:yizhenMineReportImage FileName:yizhenMineSucessDetailReport];
+                [[WriteFileSupport ShareInstance]writeData:tempFailedDetailData DirName:yizhenMineReportImage FileName:yizhenMineFailedDetailReport];
+                
+                if (ocrSucessArray.count == 0) {
+                    backGroudImageView.hidden = NO;
+                    remindLabel.hidden = NO;
+                    backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
+                    remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
+                }else{
+                    backGroudImageView.hidden = YES;
+                }
+                if (ocrSucessArray.count == 0&& _SegIndex == 0) {
+                    backGroudImageView.hidden = NO;
+                    remindLabel.hidden = NO;
+                    remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
+                    backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
+                }else if (ocrProgressArray.count == 0&& _SegIndex == 1){
+                    backGroudImageView.hidden = NO;
+                    remindLabel.hidden = NO;
+                    remindLabel.text = NSLocalizedString(@"您还没有识别中的报告\n请先上传报告", @"");
+                    backGroudImageView.image = [UIImage imageNamed:@"no_hyd3"];
+                }else if (ocrFailedArray.count == 0&& _SegIndex == 2){
+                    backGroudImageView.hidden = NO;
+                    remindLabel.hidden = NO;
+                    remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
+                    backGroudImageView.image = [UIImage imageNamed:@"no_hyd2"];
+                }else{
+                    backGroudImageView.hidden = YES;
+                    remindLabel.hidden = YES;
+                }
+                [_ocrResultCollection reloadData];
+                [hud hide:YES];
             }else{
-                backGroudImageView.hidden = YES;
+                
             }
-            if (ocrSucessArray.count == 0&& _SegIndex == 2) {
-                backGroudImageView.hidden = NO;
-                remindLabel.hidden = NO;
-                remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
-                backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
-            }else if (ocrProgressArray.count == 0&& _SegIndex == 1){
-                backGroudImageView.hidden = NO;
-                remindLabel.hidden = NO;
-                remindLabel.text = NSLocalizedString(@"您还没有识别中的报告\n请先上传报告", @"");
-                backGroudImageView.image = [UIImage imageNamed:@"no_hyd3"];
-            }else if (ocrFailedArray.count == 0&& _SegIndex == 0){
-                backGroudImageView.hidden = NO;
-                remindLabel.hidden = NO;
-                remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
-                backGroudImageView.image = [UIImage imageNamed:@"no_hyd2"];
-            }else{
-                backGroudImageView.hidden = YES;
-                remindLabel.hidden = YES;
-            }
-            [_ocrResultCollection reloadData];
-            [hud hide:YES];
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"WEB获取成功失败列表失败%@",error);
+        }];
+    }else{
+        ocrSucessArray = [[WriteFileSupport ShareInstance]readArray:yizhenMineReportImage FileName:yizhenMineSucessReport];
+        ocrProgressArray = [[WriteFileSupport ShareInstance]readArray:yizhenMineReportImage FileName:yizhenMineProgressReport];
+        ocrFailedArray = [[WriteFileSupport ShareInstance]readArray:yizhenMineReportImage FileName:yizhenMineFailedReport];
+        NSData *tempSucDetailData = [[WriteFileSupport ShareInstance]readData:yizhenMineReportImage FileName:yizhenMineSucessDetailReport];
+        NSData *tempFailDetailData = [[WriteFileSupport ShareInstance]readData:yizhenMineReportImage FileName:yizhenMineFailedDetailReport];
+        ocrSucessDetailArray = [NSKeyedUnarchiver unarchiveObjectWithData:tempSucDetailData];
+        ocrFailedDetailArray = [NSKeyedUnarchiver unarchiveObjectWithData:tempFailDetailData];
+        
+        if (ocrSucessArray.count == 0) {
+            backGroudImageView.hidden = NO;
+            remindLabel.hidden = NO;
+            backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
+            remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
         }else{
-            
+            backGroudImageView.hidden = YES;
         }
-    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"WEB获取成功失败列表失败%@",error);
-    }];
+        if (ocrSucessArray.count == 0&& _SegIndex == 0) {
+            backGroudImageView.hidden = NO;
+            remindLabel.hidden = NO;
+            remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
+            backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
+        }else if (ocrProgressArray.count == 0&& _SegIndex == 1){
+            backGroudImageView.hidden = NO;
+            remindLabel.hidden = NO;
+            remindLabel.text = NSLocalizedString(@"您还没有识别中的报告\n请先上传报告", @"");
+            backGroudImageView.image = [UIImage imageNamed:@"no_hyd3"];
+        }else if (ocrFailedArray.count == 0&& _SegIndex == 2){
+            backGroudImageView.hidden = NO;
+            remindLabel.hidden = NO;
+            remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
+            backGroudImageView.image = [UIImage imageNamed:@"no_hyd2"];
+        }else{
+            backGroudImageView.hidden = YES;
+            remindLabel.hidden = YES;
+        }
+        [_ocrResultCollection reloadData];
+        [hud hide:YES];
+    }
 }
 
 - (void)hySegmentedControlSelectAtIndex:(NSInteger)index{
     NSLog(@"%ld",(long)index);
     _SegIndex = index;
-    if (ocrSucessArray.count == 0&& _SegIndex == 2) {
+    if (ocrSucessArray.count == 0&& _SegIndex == 0) {
         backGroudImageView.hidden = NO;
         remindLabel.hidden = NO;
         remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
@@ -295,7 +342,7 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
         remindLabel.hidden = NO;
         remindLabel.text = NSLocalizedString(@"您还没有识别中的报告\n请先上传报告", @"");
         backGroudImageView.image = [UIImage imageNamed:@"no_hyd3"];
-    }else if (ocrFailedArray.count == 0&& _SegIndex == 0){
+    }else if (ocrFailedArray.count == 0&& _SegIndex == 2){
         backGroudImageView.hidden = NO;
         remindLabel.hidden = NO;
         remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
@@ -306,29 +353,5 @@ NSString * const cellReuseIdOcrResult = @"ocrGroupCell";
     }
     [_ocrResultCollection reloadData];
 }
-
-//- (void)segmentCtrlValuechange: (VOSegmentedControl *)segmentCtrl{
-//    _SegIndex = segmentCtrl.selectedSegmentIndex;
-//    if (ocrSucessArray.count == 0&& _SegIndex == 2) {
-//        backGroudImageView.hidden = NO;
-//        remindLabel.hidden = NO;
-//        remindLabel.text = NSLocalizedString(@"您还没有识别完成的报告\n请先上传报告", @"");
-//        backGroudImageView.image = [UIImage imageNamed:@"no_hyd"];
-//    }else if (ocrProgressArray.count == 0&& _SegIndex == 1){
-//        backGroudImageView.hidden = NO;
-//        remindLabel.hidden = NO;
-//        remindLabel.text = NSLocalizedString(@"您还没有识别中的报告\n请先上传报告", @"");
-//        backGroudImageView.image = [UIImage imageNamed:@"no_hyd3"];
-//    }else if (ocrFailedArray.count == 0&& _SegIndex == 0){
-//        backGroudImageView.hidden = NO;
-//        remindLabel.hidden = NO;
-//        remindLabel.text = NSLocalizedString(@"没有识别失败的报告", @"");
-//        backGroudImageView.image = [UIImage imageNamed:@"no_hyd2"];
-//    }else{
-//        backGroudImageView.hidden = YES;
-//        remindLabel.hidden = YES;
-//    }
-//    [_ocrResultCollection reloadData];
-//}
 
 @end

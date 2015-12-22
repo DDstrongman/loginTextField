@@ -10,8 +10,8 @@
 
 #import "UserItem.h"
 #import "AppDelegate.h"
-
 #import "WriteFileSupport.h"
+#import <AdSupport/ASIdentifierManager.h>
 
 @interface FirstTimeUserInfoViewController ()<ConnectXMPPDelegate,UIActionSheetDelegate>
 {
@@ -39,7 +39,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.navigationItem.title = NSLocalizedString(@"完善个人信息", @"");
+    self.title = NSLocalizedString(@"完善资料", @"");
     [_userImageView setImage:[UIImage imageNamed:@"default_avatar4"]];
     [XMPPSupportClass ShareInstance].connectXMPPDelegate = self;
     
@@ -330,6 +330,20 @@
     if (result) {
         [[NSUserDefaults standardUserDefaults] setObject:@YES forKey:@"NotFirstTime"];
         NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
+        NSString *recordString = [NSString stringWithFormat:@"%@user/record",Baseurl];
+        NSMutableDictionary *recordDic = [NSMutableDictionary dictionary];
+        [recordDic setObject:[user objectForKey:@"userUID"] forKey:@"uid"];
+        [recordDic setObject:[user objectForKey:@"userToken"] forKey:@"token"];
+        [recordDic setObject:@0 forKey:@"clientType"];
+        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:recordString Parameters:recordDic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            if (res == 0) {
+                NSLog(@"记录成功");
+            }
+        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            
+        }];
         NSString *nameUrl = [NSString stringWithFormat:@"%@v2/user/generalInfo",Baseurl];
         nameUrl = [NSString stringWithFormat:@"%@?uid=%@&token=%@&username=%@",nameUrl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"],_nameView.contentTextField.text];
         [[HttpManager ShareInstance] AFNetPOSTNobodySupport:nameUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -349,7 +363,7 @@
         UIViewController *tabbarController = [story instantiateViewControllerWithIdentifier:@"tabbarmainview"];
         AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
         
-        appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:tabbarController];
+        appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:tabbarController];
     }else{
         NSLog(@"XMPP服务器登陆失败");
         UIAlertView *xmppFailedAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"聊天服务器登陆失败", @"") message:NSLocalizedString(@"聊天服务器登陆失败,请联系管理员", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
@@ -527,6 +541,43 @@
         _finishRegistButton.userInteractionEnabled = YES;
         _finishRegistButton.backgroundColor = themeColor;
     }
+}
+
+- (void) activiteSpread{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    //doing domob
+#pragma doing domob
+    NSString *ifa = [[ASIdentifierManager sharedManager].advertisingIdentifier UUIDString];
+    if ([[userDefaults valueForKey:@"userDomob"] isEqualToString:@"1"]) {
+        //do nothing
+        NSLog(@"already activite domob");
+    } else {
+        NSString *url = [NSString stringWithFormat:@"%@spread/devicereport", Baseurl];
+        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+        manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+        NSDictionary *dic=[NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:kAppId,WIFIMAC, WIFIMAC_MD5, ifa, nil] forKeys:[NSArray arrayWithObjects:@"appId",@"mac", @"md5", @"ifa", nil]];
+        [manager POST:url parameters:dic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            //NSLog(@"responseObject=%@",responseObject);
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            NSLog(@"device activitation res=%d",res);
+            if (res==0) {
+                //请求完成
+                NSLog(@"记录登录时间成功");
+                [userDefaults setValue:@"1" forKey:@"userDomob"];
+                [userDefaults synchronize];
+            }
+            else{
+                //服务端出错
+                [[SetupView ShareInstance]hideHUD];
+            }
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            [[SetupView ShareInstance]hideHUD];
+        }];
+    }
+    //end domob
+#pragma end doing domob
 }
 
 @end

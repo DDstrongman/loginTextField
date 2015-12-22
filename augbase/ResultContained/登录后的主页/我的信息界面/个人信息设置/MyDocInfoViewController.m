@@ -49,7 +49,8 @@
     if (indexPath.row == 0) {
         UIImageView *tailImageView = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"goin"]];
         inputName = [[UITextField alloc]initWithFrame:CGRectMake(ViewWidth-100-40, 10, 100, 30)];
-        inputName.placeholder = NSLocalizedString(@"请输入姓名", @"");
+//        inputName.placeholder = NSLocalizedString(@"请输入姓名", @"");
+        inputName.text = [[NSUserDefaults standardUserDefaults] objectForKey:@"userRealName"];
         inputName.textAlignment = NSTextAlignmentRight;
         [cell addSubview:inputName];
         cell.accessoryView = tailImageView;

@@ -37,6 +37,9 @@
 //为声音，同上
 @property (nonatomic,strong) NSData *messVoice;
 @property (nonatomic,strong) NSString *messVoiceTime;
+//为大表，同上
+@property (nonatomic,strong) NSString *messTableUrl;
+@property (nonatomic,strong) NSString *messTableTitle;
 
 //聊天分类，区分是私聊还是群聊:0私聊，1群聊
 @property (nonatomic,assign) NSInteger chatType;

@@ -7,6 +7,7 @@
 //
 
 #import "DetailImageOcrViewController.h"
+#import "OcrTextResultViewController.h"
 
 @interface DetailImageOcrViewController ()
 
@@ -80,7 +81,7 @@
 -(void)deleteResult{
     UIActionSheet *deleteAction;
     if (_ResultOrING) {
-        deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"删除", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
+        deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"帮助", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
     }else{
         deleteAction = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"放弃识别会被扣除积分", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:NSLocalizedString(@"取消", @"") otherButtonTitles:NSLocalizedString(@"删除", @""), NSLocalizedString(@"举报出错", @""),nil];
     }
@@ -125,8 +126,10 @@
     [cancelButton setTitle:NSLocalizedString(@"取消", @"") forState:UIControlStateNormal];
     [cancelButton setTitleColor:themeColor forState:UIControlStateNormal];
     [cancelButton addTarget:self action:@selector(cancelTime:) forControlEvents:UIControlEventTouchUpInside];
+    NSDate *maxDate = [NSDate date];
     UIDatePicker *datePicker = [[UIDatePicker alloc]initWithFrame:CGRectMake(0, 45, ViewWidth, ViewHeight/2-45)];
     [datePicker setDatePickerMode:UIDatePickerModeDate];
+    datePicker.maximumDate = maxDate;
     datePicker.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"zh_CN"];
     [datePicker addTarget:self action:@selector(datePick:) forControlEvents:UIControlEventValueChanged];
     [bottomEditTimeView addSubview:datePicker];
@@ -138,7 +141,7 @@
     [confirmHButton setTitle:NSLocalizedString(@"确定", @"") forState:UIControlStateNormal];
     [confirmHButton setTitleColor:themeColor forState:UIControlStateNormal];
     [confirmHButton addTarget:self action:@selector(confirmHospital:) forControlEvents:UIControlEventTouchUpInside];
-    titleHLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 150, 44)];
+    titleHLabel = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 180, 44)];
     titleHLabel.numberOfLines = 2;
     titleHLabel.center = CGPointMake(ViewWidth/2, 22);
     if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userSystemVersion"] floatValue]>8.0) {
@@ -186,6 +189,9 @@
         int res = [[response objectForKey:@"res"] intValue];
         if (res == 0) {
             NSLog(@"修改成功");
+            [[WriteFileSupport ShareInstance]removeCache:yizhenMineReportImage];
+            [[WriteFileSupport ShareInstance]flushCache];
+            _OcrTextViewController.newResNumber = 1;
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         
@@ -204,6 +210,9 @@
         int res = [[response objectForKey:@"res"] intValue];
         if (res == 0) {
             NSLog(@"修改成功");
+            [[WriteFileSupport ShareInstance]removeCache:yizhenMineReportImage];
+            [[WriteFileSupport ShareInstance]flushCache];
+            _OcrTextViewController.newResNumber = 1;
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"修改失败");
@@ -385,9 +394,17 @@
         } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
             
         }];
+        UIAlertView *remindAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"报告成功", @"") message:NSLocalizedString(@"易诊将会尽快处理您的报告", @"") delegate:self cancelButtonTitle:nil otherButtonTitles:nil, nil];
+        [remindAlert show];
+        [self performSelector:@selector(hideRemindAlert:) withObject:remindAlert afterDelay:2.0];
     }else{
-#warning 添加取消的网络交互
         NSLog(@"取消");
+    }
+}
+
+-(void)hideRemindAlert:(UIAlertView *)sender{
+    if (sender) {
+        [sender dismissWithClickedButtonIndex:0 animated:YES];
     }
 }
 
@@ -421,6 +438,7 @@
 
 -(void)viewWillAppear:(BOOL)animated{
     self.navigationController.navigationBarHidden = YES;
+    _OcrTextViewController.newResNumber = 0;
 }
 
 -(void)viewWillDisappear:(BOOL)animated{

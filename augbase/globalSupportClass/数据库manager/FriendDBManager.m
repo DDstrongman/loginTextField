@@ -45,7 +45,7 @@
     if (![self isDBReady])
         return NO;
     if(![self.yzFriendDB tableExists:tname]){
-        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,friendJID TEXT,friendName TEXT,friendRealName TEXT,friendImageUrl TEXT,friendDescribe TEXT,friendAge TEXT,friendGender TEXT,friendSimilarity TEXT,friendOnlineOrNot TEXT)",tname];
+        NSString *sql=[NSString stringWithFormat:@"create table %@(chatid INTEGER PRIMARY KEY AUTOINCREMENT,friendJID TEXT,friendName TEXT,friendRealName TEXT,friendImageUrl TEXT,friendDescribe TEXT,friendMedicineInfo TEXT,friendMedicinePrivacySetting TEXT,friendDisCurrentInfo TEXT,friendDiseasePrivacySetting TEXT,friendAge TEXT,friendGender TEXT,friendAddress TEXT,friendSimilarity TEXT,friendOnlineOrNot TEXT)",tname];
         BOOL success=[self.yzFriendDB executeUpdate:sql];
         return success;
     }
@@ -62,8 +62,15 @@
     NSString *firendRealName = obj.friendRealName;
     NSString *friendImageUrl = obj.friendImageUrl;
     NSString *friendDescribe = obj.friendDescribe;
+    
+    NSString *friendMedicineInfo = obj.friendMedicineInfo;
+    NSString *friendMedicinePrivacySetting = obj.friendMedicinePrivacySetting;
+    NSString *friendDisCurrentInfo = obj.friendDisCurrentInfo;
+    NSString *friendDiseasePrivacySetting = obj.friendDiseasePrivacySetting;
+    
     NSString *friendAge = obj.friendAge;
     NSString *friendGender = obj.friendGender;
+    NSString *friendAddress = obj.friendAddress;
     NSString *friendSimilarity = obj.friendSimilarity;
     NSString *friendOnlineOrNot = obj.friendOnlineOrNot;
     FMResultSet *searchResult = [self SearchOneFriend:tableName FriendJID:friendJid];
@@ -73,18 +80,18 @@
     }
     if (tempNumber == 0) {
         //不存在重复
-        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (friendJID, friendName,friendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendOnlineOrNot) VALUES ('%@','%@','%@','%@','%@','%@','%@','%@','%@')",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendOnlineOrNot];
-        NSLog(@"insertsql===%@",insertsql);
+        NSString *insertsql = [NSString stringWithFormat:@"INSERT INTO %@ (friendJID, friendName,friendRealName,friendImageUrl,friendDescribe,friendMedicineInfo,friendMedicinePrivacySetting,friendDisCurrentInfo,friendDiseasePrivacySetting,friendAge,friendGender,friendAddress,friendSimilarity,friendOnlineOrNot) VALUES ('%@','%@','%@','%@','%@','%@','%@','%@','%@','%@','%@','%@','%@','%@')",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendMedicineInfo,friendMedicinePrivacySetting,friendDisCurrentInfo,friendDiseasePrivacySetting,friendAge,friendGender,friendAddress,friendSimilarity,friendOnlineOrNot];
+//        NSLog(@"insertsql===%@",insertsql);
         if ([self.yzFriendDB executeUpdate:insertsql]) {
             //插入成功
-            NSLog(@"插入成功");
+//            NSLog(@"插入成功");
             return YES;
         }
         else{
             return NO;
         }
     }else{
-        NSString *updatesql=[NSString stringWithFormat:@"UPDATE %@ set friendJID = '%@',friendName = '%@' ,friendRealName = '%@',friendImageUrl = '%@' ,friendDescribe = '%@' ,friendAge = '%@',friendGender = '%@',friendSimilarity = '%@' where friendJID = '%@'",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendAge,friendGender,friendSimilarity,friendJid];
+        NSString *updatesql=[NSString stringWithFormat:@"UPDATE %@ set friendJID = '%@',friendName = '%@' ,friendRealName = '%@',friendImageUrl = '%@' ,friendDescribe = '%@',friendMedicineInfo = '%@',friendMedicinePrivacySetting = '%@',friendDisCurrentInfo = '%@',friendDiseasePrivacySetting = '%@' ,friendAge = '%@',friendGender = '%@',friendAddress = '%@',friendSimilarity = '%@' where friendJID = '%@'",tableName,friendJid,firendName,firendRealName,friendImageUrl,friendDescribe,friendMedicineInfo,friendMedicinePrivacySetting,friendDisCurrentInfo,friendDiseasePrivacySetting,friendAge,friendGender,friendAddress,friendSimilarity,friendJid];
         
         if ([self.yzFriendDB executeUpdate:updatesql]) {
             return YES;
@@ -134,7 +141,7 @@
 -(FMResultSet *)SearchAllFriend:(NSString *)tableNameJID{
     FMResultSet *messWithNumber;
 #warning 此处的limit 0,%ld表示从第一台哦开始，取％ld条数据，0可以自己修改为想要的数据或是传入
-    NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@",tableNameJID];
+    NSString *searchsql=[NSString stringWithFormat:@"SELECT * FROM %@ order by friendSimilarity DESC",tableNameJID];
     if ([self isFriendTableExist:tableNameJID]) {
         messWithNumber = [self.yzFriendDB executeQuery:searchsql];
     }

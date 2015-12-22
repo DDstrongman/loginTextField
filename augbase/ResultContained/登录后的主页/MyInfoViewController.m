@@ -78,7 +78,8 @@
     if (indexPath.section == 0 &&indexPath.row == 0) {
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"myinfo" forIndexPath:indexPath];
         [[cell.contentView viewWithTag:1] imageWithRound:NO];
-        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithContentsOfFile:[[NSUserDefaults standardUserDefaults] objectForKey:@"userImageUrl"]];
+        NSData *tempData = [[WriteFileSupport ShareInstance]readData:yizhenImageFile FileName:[[[NSUserDefaults standardUserDefaults]objectForKey:@"userJID"] stringByAppendingString:@".png"]];
+        ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithData:tempData];
         if ([((NSString *)[[NSUserDefaults standardUserDefaults] objectForKey:@"userNickName"]) isEqualToString:@""]) {
             ((UILabel *)[cell.contentView viewWithTag:2]).text = defaultUserName;
         }else{
@@ -86,7 +87,7 @@
         }
         
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"userJID"] != nil) {
-            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"战友号: ", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]];
+            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSLocalizedString(@"易诊号: ", @"") stringByAppendingString:[[NSUserDefaults standardUserDefaults] objectForKey:@"userYizhenID"]];
         }
         cell.layer.borderColor = lightGrayBackColor.CGColor;
         cell.layer.borderWidth = 0.5;
@@ -106,7 +107,7 @@
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageandlabelcell" forIndexPath:indexPath];
         if (indexPath.section == 1) {
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"collect"];
-            ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"我收藏的资讯", @"");
+            ((UILabel *)[cell.contentView viewWithTag:2]).text = NSLocalizedString(@"我收藏的咨讯", @"");
             ((UILabel *)[cell.contentView viewWithTag:3]).text = NSLocalizedString(@"", @"");
         }else{
             ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageNamed:@"set_up"];
@@ -121,8 +122,6 @@
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section{
     UIView *headerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
     headerView.backgroundColor = [UIColor clearColor];
-//    headerView.layer.borderColor = lightGrayBackColor.CGColor;
-//    headerView.layer.borderWidth = 0.5;
     return headerView;
 }
 

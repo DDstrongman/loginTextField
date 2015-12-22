@@ -78,7 +78,7 @@
 }
 
 -(void)setupView{
-    self.title = NSLocalizedString(@"确诊疾病", @"");
+    self.title = NSLocalizedString(@"确诊病情", @"");
     _confirmDiseaseTable = [[UITableView alloc]init];
     _confirmDiseaseTable.delegate = self;
     _confirmDiseaseTable.dataSource = self;

@@ -71,7 +71,7 @@
         if (res == 0) {
             searchResults = [source objectForKey:@"matchedDoctors"];
             if (searchResults.count == 0) {
-                [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"邀请医生加入战友", @"") Title:NSLocalizedString(@"您搜索的医生不存在", @"") ViewController:self];
+                [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"邀请医生加入易诊", @"") Title:NSLocalizedString(@"您搜索的医生不存在", @"") ViewController:self];
             }
             [_addDoctorListTable reloadData];
         }

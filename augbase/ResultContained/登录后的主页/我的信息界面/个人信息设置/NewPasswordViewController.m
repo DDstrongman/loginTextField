@@ -15,6 +15,7 @@
 
 {
     UIButton *confirmButton;//下方确认按钮
+    UIAlertView *remindLogOutAlert;//提醒登出
 }
 
 @end
@@ -82,28 +83,59 @@
 }
 
 -(void)confirmNewPass:(UIButton *)sender{
-    NSString *url = [NSString stringWithFormat:@"%@user/edit",Baseurl];
+    NSString *url = [NSString stringWithFormat:@"%@v2/user/password",Baseurl];
     NSUserDefaults *users = [NSUserDefaults standardUserDefaults];
     NSString *yzuid = [users objectForKey:@"userUID"];
     
     NSString *yztoken = [users objectForKey:@"userToken"];
-    
-    url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&password=%@",url,yzuid,yztoken,_editPass.contentTextField.text];
-    [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:yzuid forKey:@"uid"];
+    [dic setObject:yztoken forKey:@"token"];
+    [dic setObject:_editPass.contentTextField.text forKey:@"password"];
+    [dic setObject:_oldPass.contentTextField.text forKey:@"oldPassword"];
+    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:url Parameters:dic SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
         int res = [[source objectForKey:@"res"] intValue];
         if (res == 0) {
             [users setObject:_editPass.contentTextField.text forKey:@"userPassword"];
+            remindLogOutAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"修改成功", @"")  message:NSLocalizedString(@"请重新登录", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+            [remindLogOutAlert show];
+            [self performSelector:@selector(hideRemindAlertView) withObject:nil afterDelay:2.0];
             [self loginOut];
             NSLog(@"密码修改成功");
         }else{
-            UIAlertView *showMess = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"修改失败", @"") message:NSLocalizedString(@"修改密码失败", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
-            [showMess show];
+            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
         }
     } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
         UIAlertView *showMess = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"网络错误", @"") message:NSLocalizedString(@"请检查网络", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
         [showMess show];
     }];
+    
+//    NSString *url = [NSString stringWithFormat:@"%@user/edit",Baseurl];
+//    NSUserDefaults *users = [NSUserDefaults standardUserDefaults];
+//    NSString *yzuid = [users objectForKey:@"userUID"];
+//    
+//    NSString *yztoken = [users objectForKey:@"userToken"];
+//    
+//    url = [NSString stringWithFormat:@"%@?uid=%@&token=%@&password=%@",url,yzuid,yztoken,_editPass.contentTextField.text];
+//    [[HttpManager ShareInstance]AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+//        int res = [[source objectForKey:@"res"] intValue];
+//        if (res == 0) {
+//            [users setObject:_editPass.contentTextField.text forKey:@"userPassword"];
+//            remindLogOutAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"修改成功", @"")  message:NSLocalizedString(@"请重新登录", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+//            [remindLogOutAlert show];
+//            [self performSelector:@selector(hideRemindAlertView) withObject:nil afterDelay:2.0];
+//            [self loginOut];
+//            NSLog(@"密码修改成功");
+//        }else{
+//            UIAlertView *showMess = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"修改失败", @"") message:NSLocalizedString(@"修改密码失败", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+//            [showMess show];
+//        }
+//    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        UIAlertView *showMess = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"网络错误", @"") message:NSLocalizedString(@"请检查网络", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+//        [showMess show];
+//    }];
 }
 
 -(void)setupView{
@@ -148,6 +180,10 @@
     
 }
 
+-(void)hideRemindAlertView{
+    [remindLogOutAlert dismissWithClickedButtonIndex:0 animated:YES];
+}
+
 -(void)loginOut{
     NSString *deleUrl = [NSString stringWithFormat:@"%@unm/remove?uid=%@&token=%@&clienttype=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],0];
     [[HttpManager ShareInstance]AFNetGETSupport:deleUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -183,12 +219,15 @@
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"ShowGuide"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userEmail"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userYizhenID"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];
+//    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userDeviceID"];登出不清除deviceid
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userPhone"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userShareDoctor"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenVoice"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenShake"];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userOpenRemind"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userRemindCamera"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChatUID"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"userWeChatToken"];
     [[DBManager ShareInstance] closeDB];
     [[FriendDBManager ShareInstance] closeDB];
     [[XMPPSupportClass ShareInstance] disconnect];
@@ -197,7 +236,7 @@
     LoginViewController *loginViewController = [story instantiateViewControllerWithIdentifier:@"loginview"];
     AppDelegate *appDelegate=(AppDelegate *)[[UIApplication sharedApplication] delegate];
     
-    appDelegate.window.rootViewController = [[RZTransitionsNavigationController alloc] initWithRootViewController:loginViewController];
+    appDelegate.window.rootViewController = [[ControlAllNavigationViewController alloc] initWithRootViewController:loginViewController];
 }
 
 #pragma 滑动scrollview取消输入

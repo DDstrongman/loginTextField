@@ -80,7 +80,7 @@
 }
 
 -(void)setupView{
-    self.title = NSLocalizedString(@"地区", @"");
+    self.title = NSLocalizedString(@"性别", @"");
     _setUserGenderTable = [[UITableView alloc]init];
     _setUserGenderTable.delegate = self;
     _setUserGenderTable.dataSource = self;

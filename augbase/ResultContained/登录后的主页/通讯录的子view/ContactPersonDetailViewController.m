@@ -27,6 +27,9 @@
     BOOL darkMenu;//加入黑名单否
     int cellMedicHeightNumber;//cell加入的button的行数
     int cellDiseaseHeightNumber;//cell加入的button的行数
+    
+    BOOL LocalOrNet;//本地读取还是网络更新或读取
+    NSString *searchUserJID;//用户的jid，传入的jid不一定是jid，需要验证
 }
 
 @end
@@ -46,7 +49,11 @@
 
 -(void)setFriendRight:(UIButton *)sender{
     FriendsSetViewController *fsv = [[FriendsSetViewController alloc]init];
-    fsv.friendJID = _friendJID;
+    if (_isJIDOrYizhenID) {
+        fsv.friendJID = searchUserJID;
+    }else{
+        fsv.friendJID = _friendJID;
+    }
     [self.navigationController pushViewController:fsv animated:YES];
 }
 
@@ -91,12 +98,20 @@
         if (indexPath.row == 0) {
             cell = [tableView dequeueReusableCellWithIdentifier:@"showinfocell" forIndexPath:indexPath];
             [((UIImageView *)[cell.contentView viewWithTag:1]) imageWithRound];
-            [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:_friendImageUrl] placeholderImage:[UIImage imageNamed:@"test"]];
+            if (LocalOrNet) {
+                [((UIImageView *)[cell.contentView viewWithTag:1]) sd_setImageWithURL:[NSURL URLWithString:_friendImageUrl] placeholderImage:[UIImage imageNamed:@"test"]];
+            }else{
+                NSData *tempData = [[WriteFileSupport ShareInstance]readData:yizhenImageFile FileName:[_friendJID stringByAppendingString:@".png"]];
+                ((UIImageView *)[cell.contentView viewWithTag:1]).image = [UIImage imageWithData:tempData];
+            }
             ((UILabel *)[cell.contentView viewWithTag:2]).text = _friendName;
             ((UILabel *)[cell.contentView viewWithTag:3]).text = [NSString stringWithFormat:@"相似度: %ld%@",(long)_similar,@"%"];
-            ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ / %d",_friendGender,_friendAge];
+            if (_friendAge == 9999) {
+                ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ / -",_friendGender];
+            }else{
+                ((UILabel *)[cell.contentView viewWithTag:4]).text = [NSString stringWithFormat:@"%@ / %d",_friendGender,_friendAge];
+            }
             [((UIButton *)[cell.contentView viewWithTag:5]) setTitle:_friendLocation forState:UIControlStateNormal];
-            
         }else{
             cell = [tableView dequeueReusableCellWithIdentifier:@"privatenotecell" forIndexPath:indexPath];
             if ([_friendNote isEqualToString:@""]||_friendNote == nil) {
@@ -189,7 +204,11 @@
 -(void)addStrangerFriend:(UIButton *)sender{
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     SendAddMessViewController *smc = [main instantiateViewControllerWithIdentifier:@"sendaddmessage"];
-    smc.addFriendJID = _friendJID;
+    if (_isJIDOrYizhenID) {
+        smc.addFriendJID = searchUserJID;
+    }else{
+        smc.addFriendJID = _friendJID;
+    }
     [self.navigationController pushViewController:smc animated:YES];
 }
 
@@ -198,14 +217,22 @@
     //需要加入搜索结果的判断，最好在cell中加入tag
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     if (indexPath.section == 1&&indexPath.row == 2) {
-        if (showOcrText == 0||(showOcrText == 1&&_isFriend)) {
-            UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-            OcrTextResultViewController *otrv = [story instantiateViewControllerWithIdentifier:@"ocrtextresult"];
-            otrv.isMine = NO;
-            otrv.personJID = _friendJID;
-            [self.navigationController pushViewController:otrv animated:YES];
+        if (LocalOrNet) {
+            if (showOcrText == 0||(showOcrText == 1&&_isFriend)) {
+                UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+                OcrTextResultViewController *otrv = [story instantiateViewControllerWithIdentifier:@"ocrtextresult"];
+                otrv.isMine = NO;
+                if (_isJIDOrYizhenID) {
+                    otrv.personJID = searchUserJID;
+                }else{
+                    otrv.personJID = _friendJID;
+                }
+                [self.navigationController pushViewController:otrv animated:YES];
+            }else{
+                [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"对方未向您开放权限", @"") Title:NSLocalizedString(@"权限不足", @"") ViewController:self];
+            }
         }else{
-            [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"对方未向您开放权限", @"") Title:NSLocalizedString(@"权限不足", @"") ViewController:self];
+            [[SetupView ShareInstance]showAlertViewOneButton:NSLocalizedString(@"请耐心等待", @"") Title:NSLocalizedString(@"正在验证权限", @"") ViewController:self];
         }
     }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
@@ -214,7 +241,11 @@
 #pragma 添加头和尾
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
     UIView *footerView = [[UIView alloc]initWithFrame:CGRectMake(0, 0, ViewWidth, 22)];
-    footerView.backgroundColor = [UIColor colorWithRed:248.0/255.0 green:248.0/255.0 blue:248.0/255.0 alpha:1.0];
+    if (section == 2) {
+        footerView.backgroundColor = [UIColor clearColor];
+    }else{
+        footerView.backgroundColor = [UIColor colorWithRed:248.0/255.0 green:248.0/255.0 blue:248.0/255.0 alpha:1.0];
+    }
     return footerView;
 }
 
@@ -230,11 +261,80 @@
     //jid获取用户信息
     cellMedicHeightNumber = 0;
     cellDiseaseHeightNumber = 0;
+    LocalOrNet = NO;//本地读取
+    
+    int isfriendInt = 0;
+    FMResultSet *isFriendArray = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:_friendJID];
+    while ([isFriendArray next]){
+        isfriendInt++;
+        NSString *friendName = [isFriendArray stringForColumn:@"friendName"];
+        NSString *friendImageUrl = [isFriendArray stringForColumn:@"friendImageUrl"];
+        NSString *friendDescribe = [isFriendArray stringForColumn:@"friendDescribe"];
+        NSString *friendMedicineInfo = [isFriendArray stringForColumn:@"friendMedicineInfo"];
+        NSString *friendMedicinePrivacySetting = [isFriendArray stringForColumn:@"friendMedicinePrivacySetting"];
+        NSString *friendDisCurrentInfo = [isFriendArray stringForColumn:@"friendDisCurrentInfo"];
+        NSString *friendDiseasePrivacySetting = [isFriendArray stringForColumn:@"friendDiseasePrivacySetting"];
+        NSString *friendAge = [isFriendArray stringForColumn:@"friendAge"];
+        NSString *friendGender = [isFriendArray stringForColumn:@"friendGender"];
+        NSString *friendSimilarity = [isFriendArray stringForColumn:@"friendSimilarity"];
+        NSString *friendAddress = [isFriendArray stringForColumn:@"friendAddress"];
+        int genderNumber = [friendGender intValue];
+        if (genderNumber == 0) {
+            _friendGender = NSLocalizedString(@"男", @"");
+        }else{
+            _friendGender = NSLocalizedString(@"女", @"");
+        }
+        if (friendAge != [NSNull class]) {
+            _friendAge = [friendAge intValue];
+        }else{
+            _friendAge = 9999;
+        }
+        _friendName = friendName;
+        NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,friendImageUrl];
+        imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+        _friendImageUrl = imageurl;
+        
+        if ([friendAddress isEqualToString:@""]) {
+            _friendLocation = NSLocalizedString(@"--", @"");
+        }else{
+            _friendLocation = friendAddress;
+        }
+        if ([friendDescribe isEqualToString:@""]) {
+            
+        }else{
+            _friendNote = friendDescribe;
+        }
+        _similar = [friendSimilarity intValue];
+        if (friendMedicineInfo == nil) {
+            _friendMedicalArray = [friendMedicineInfo componentsSeparatedByString:@";"];
+        }
+        if (friendDisCurrentInfo == nil) {
+            _friendDiseaseArray = [friendDisCurrentInfo componentsSeparatedByString:@";"];
+        }
+        showDisease = [friendDiseasePrivacySetting intValue];
+        showMedic = [friendMedicinePrivacySetting intValue];
+        [[SetupView ShareInstance]hideHUD];
+        [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    }
+    if (isfriendInt == 0) {
+        _isFriend = NO;
+    }else{
+        _isFriend = YES;
+        if (![_friendJID isEqualToString:@"p22142"]) {
+            UIButton *setFrindButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
+            [setFrindButton setImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
+            setFrindButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+            [setFrindButton addTarget:self action:@selector(setFriendRight:) forControlEvents:UIControlEventTouchUpInside];
+            [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:setFrindButton]];
+        }
+    }
+    
+    
     NSString *jidurl;
     if (_isJIDOrYizhenID) {
-        jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,_friendJID,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
-    }else{
         jidurl = [NSString stringWithFormat:@"%@v2/user/yizhen_id/%@?uid=%@&token=%@",Baseurl,_friendJID,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
+    }else{
+        jidurl = [NSString stringWithFormat:@"%@v2/user/jid/%@?uid=%@&token=%@",Baseurl,_friendJID,[defaults objectForKey:@"userUID"],[defaults objectForKey:@"userToken"]];
     }
     NSLog(@"jidurl===%@",jidurl);
     jidurl = [jidurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
@@ -254,8 +354,9 @@
             if ([userInfo objectForKey:@"age"] != [NSNull class]) {
                 _friendAge = [[userInfo objectForKey:@"age"] intValue];
             }else{
-                _friendAge = @"-";
+                _friendAge = 9999;
             }
+            searchUserJID = [userInfo objectForKey:@"jid"];
             NSString *imageurl = [NSString stringWithFormat:@"%@%@",PersonImageUrl,[userInfo objectForKey:@"picture"]];
             imageurl = [imageurl stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
             _friendImageUrl = imageurl;
@@ -265,24 +366,6 @@
                 _friendLocation = NSLocalizedString(@"--", @"");
             }else{
                 _friendLocation = [userInfo objectForKey:@"address"];
-            }
-            
-            FMResultSet *isFriendArray = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:_friendJID];
-            int isfriendInt = 0;
-            while ([isFriendArray next]){
-                isfriendInt++;
-            }
-            if (isfriendInt == 0) {
-                _isFriend = NO;
-            }else{
-                _isFriend = YES;
-                if (![_friendJID isEqualToString:@"p22142"]) {
-                    UIButton *setFrindButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
-                    [setFrindButton setImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
-                    setFrindButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-                    [setFrindButton addTarget:self action:@selector(setFriendRight:) forControlEvents:UIControlEventTouchUpInside];
-                    [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:setFrindButton]];
-                }
             }
             if ([[userInfo objectForKey:@"introduction"] isEqualToString:@""]) {
                 
@@ -295,15 +378,37 @@
             showMedic = [[userInfo objectForKey:@"medicinePrivacySetting"] integerValue];
             showOcrText = [[userInfo objectForKey:@"ltrPrivacySetting"] integerValue];
             _similar = [[userInfo objectForKey:@"similarity"] integerValue];
-            _friendJID = [userInfo objectForKey:@"jid"];
+            LocalOrNet = YES;
+            if (!_isFriend) {
+                FMResultSet *isFriendArray = [[FriendDBManager ShareInstance] SearchOneFriend:YizhenFriendName FriendJID:searchUserJID];
+                int isfriendInt = 0;
+                while ([isFriendArray next]){
+                    isfriendInt++;
+                }
+                if (isfriendInt == 0) {
+                    _isFriend = NO;
+                }else{
+                    _isFriend = YES;
+                    if (![_friendJID isEqualToString:@"p22142"]) {
+                        UIButton *setFrindButton = [[UIButton alloc]initWithFrame:CGRectMake(0, 0, 60, 22)];
+                        [setFrindButton setImage:[UIImage imageNamed:@"friends_set"] forState:UIControlStateNormal];
+                        setFrindButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                        [setFrindButton addTarget:self action:@selector(setFriendRight:) forControlEvents:UIControlEventTouchUpInside];
+                        [self.navigationItem setRightBarButtonItem:[[UIBarButtonItem alloc] initWithCustomView:setFrindButton]];
+                    }
+                }
+            }
             [_contactPersonTable reloadData];
             [[SetupView ShareInstance]hideHUD];
+            [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         }else{
             [[SetupView ShareInstance]hideHUD];
             [[SetupView ShareInstance]showAlertView:[[userInfo objectForKey:@"res"] intValue] Hud:nil ViewController:self];
         }
     }failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"获取jid信息失败");
+        [[SetupView ShareInstance]hideHUD];
+        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络", @"") Title:NSLocalizedString(@"网络出错", @"") ViewController:self];
     }];
 }
 
@@ -317,8 +422,47 @@
     int xxxx = 10;
     int newrows = 0;
     NSString *temptitle;
-    if (array.count>0&&(showDisease == 0||(showDisease == 1&&_isFriend))) {
-        
+    if (array.count>0&&(showMedic == 0||(showMedic == 1&&_isFriend))) {
+        NSLog(@"显示用药");
+        for (int i = 0; i<array.count; i++) {
+            NSString *title;
+            if (LocalOrNet) {
+                title = [array[i] objectForKey:@"medicineBrandname"];
+            }else{
+                title = array[i];
+            }
+            CGSize size = [self get:title];
+            CGSize size2;
+            if (i!=array.count-1) {
+                NSString *title2;
+                if (LocalOrNet) {
+                    title2 = [array[i+1] objectForKey:@"medicineBrandname"];
+                }else{
+                    title2 = array[i+1];
+                }
+                size2 = [self get:title2];
+            }
+            int nextw = size2.width+20;
+            UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+            [btn setTitleColor:[UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0] forState:UIControlStateNormal];
+            btn.backgroundColor = lightGrayBackColor;
+            [btn setTitle:title forState:UIControlStateNormal];
+            btn.layer.cornerRadius = 5;
+            btn.tag = i;
+            btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
+            [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
+            [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
+            [view addSubview:btn];
+            int  ppppp = size.width+20 +10+xxxx+nextw  ;
+            if (ppppp>ViewWidth-10) {
+                xxxx = 10;
+                newrows++;
+            }
+            else{
+                xxxx = size.width+20 +10+xxxx;
+            }
+            
+        }
     }else{
         temptitle = NSLocalizedString(@"暂无", @"");
         CGSize size = [self get:temptitle];
@@ -331,36 +475,6 @@
         [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
         [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
         [view addSubview:btn];
-    }
-    for (int i = 0; i<array.count; i++) {
-        NSString *title;
-        title = [array[i] objectForKey:@"medicineBrandname"];
-        CGSize size = [self get:title];
-        CGSize size2;
-        if (i!=array.count-1) {
-            NSString *title2 = [array[i+1] objectForKey:@"medicineBrandname"];
-            size2 = [self get:title2];
-        }
-        int nextw = size2.width+20;
-        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-        [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        btn.backgroundColor = lightGrayBackColor;
-        [btn setTitle:title forState:UIControlStateNormal];
-        btn.layer.cornerRadius = 5;
-        btn.tag = i;
-        btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
-        [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
-        [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
-        [view addSubview:btn];
-        int  ppppp = size.width+20 +10+xxxx+nextw  ;
-        if (ppppp>ViewWidth-10) {
-            xxxx = 10;
-            newrows++;
-        }
-        else{
-            xxxx = size.width+20 +10+xxxx;
-        }
-        
     }
     cellMedicHeightNumber = newrows+1;
 }
@@ -377,7 +491,45 @@
     
     NSString *temptitle;
     if (array.count>0&&(showDisease == 0||(showDisease == 1&&_isFriend))) {
-        
+        NSLog(@"显示疾病");
+        for (int i = 0; i<array.count; i++) {
+            NSString *title;
+            if (LocalOrNet) {
+                title = [array[i] objectForKey:@"name"];
+            }else{
+                title = array[i];
+            }
+            CGSize size = [self get:title];
+            CGSize size2;
+            if (i!=array.count-1) {
+                NSString *title2;
+                if (LocalOrNet) {
+                    title2 = [array[i+1] objectForKey:@"name"];
+                }else{
+                    title2 = array[i+1];
+                }
+                size2 = [self get:title2];
+            }
+            int nextw = size2.width+20;
+            UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
+            [btn setTitleColor:[UIColor colorWithRed:80.0/255.0 green:80.0/255.0 blue:80.0/255.0 alpha:1.0] forState:UIControlStateNormal];
+            btn.backgroundColor = lightGrayBackColor;
+            [btn setTitle:title forState:UIControlStateNormal];
+            btn.layer.cornerRadius = 5;
+            btn.tag = i;
+            btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
+            [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
+            [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
+            [view addSubview:btn];
+            int  ppppp = size.width+20 +10+xxxx+nextw  ;
+            if (ppppp>ViewWidth-10) {
+                xxxx = 10;
+                newrows++;
+            }
+            else{
+                xxxx = size.width+20 +10+xxxx;
+            }
+        }
     }else{
         temptitle = NSLocalizedString(@"暂无", @"");
         CGSize size = [self get:temptitle];
@@ -390,38 +542,6 @@
         [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
         [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
         [view addSubview:btn];
-    }
-    
-    for (int i = 0; i<array.count; i++) {
-        
-        NSString *title;
-        title = [array[i] objectForKey:@"name"];
-        CGSize size = [self get:title];
-        CGSize size2;
-        if (i!=array.count-1) {
-            NSString *title2 = [array[i+1] objectForKey:@"name"];
-            size2 = [self get:title2];
-        }
-        int nextw = size2.width+20;
-        UIButton *btn = [UIButton buttonWithType:UIButtonTypeCustom];
-        [btn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        btn.backgroundColor = lightGrayBackColor;
-        [btn setTitle:title forState:UIControlStateNormal];
-        btn.layer.cornerRadius = 5;
-        btn.tag = i;
-        btn.frame = CGRectMake(xxxx, 10+45*newrows, size.width+20, 35);
-        [btn addTarget:self action:@selector(setDrugName:) forControlEvents:UIControlEventTouchUpInside];
-        [btn.titleLabel setFont:[UIFont systemFontOfSize:14]];
-        [view addSubview:btn];
-        int  ppppp = size.width+20 +10+xxxx+nextw  ;
-        if (ppppp>ViewWidth-10) {
-            xxxx = 10;
-            newrows++;
-        }
-        else{
-            xxxx = size.width+20 +10+xxxx;
-        }
-        
     }
     cellDiseaseHeightNumber = newrows+1;
 }
@@ -448,7 +568,7 @@
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
-    [self.navigationController popViewControllerAnimated:YES];
+    
 }
 
 -(void)viewWillDisappear:(BOOL)animated{

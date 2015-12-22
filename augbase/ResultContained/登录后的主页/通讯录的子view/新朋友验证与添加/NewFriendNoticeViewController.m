@@ -140,6 +140,7 @@
 
 -(void)addFriendYes:(UIButton *)sender{
     [[XMPPSupportClass ShareInstance] confirmAddFriend:strangerJIDArray[sender.tag]];
+    NSLog(@"sender====%d,strangerJID====%@",sender.tag,strangerJIDArray[sender.tag]);
     [self setupData];
     [_addFriendNotictTable reloadData];
 }
@@ -148,7 +149,7 @@
     NSLog(@"选中了%ld消息,执行跳转",(long)indexPath.row);
     UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     ContactPersonDetailViewController *cpdv = [main instantiateViewControllerWithIdentifier:@"contactpersondetail"];
-    cpdv.isJIDOrYizhenID = YES;
+    cpdv.isJIDOrYizhenID = NO;
     cpdv.isConfirm = YES;
     cpdv.friendJID = strangerJIDArray[indexPath.row];
     [self.navigationController pushViewController:cpdv animated:YES];

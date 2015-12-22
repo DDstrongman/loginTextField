@@ -19,6 +19,11 @@
 @property (nonatomic, retain) UIImageView *voice;
 @property (nonatomic, retain) UIActivityIndicatorView *indicator;
 
+@property (nonatomic, retain) UIView *urlContentView;//大表格背景白色view
+@property (nonatomic, retain) UIImageView *urlTitleImageView;//大表格背景白色view
+@property (nonatomic, retain) UILabel *urlTitleLabel;
+
+
 @property (nonatomic, assign) BOOL isMyMessage;
 
 

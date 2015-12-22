@@ -9,26 +9,22 @@
 #import "CaseViewController.h"
 
 #import "MyDoctorRootViewController.h"
-#import "HttpManager.h"
-
 #import "ConfirmDiseaseRootViewController.h"
 #import "DrugHistroyViewController.h"
 #import "UserDiseaseTraitViewController.h"
 #import "YizhenClassroomViewController.h"
-
 #import "PhotoTweaksViewController.h"
 #import "ConfirmPictureResultViewController.h"
-
 #import "ShowWebviewViewController.h"
-
 #import "KRLCollectionViewGridLayout.h"
 #import "OcrResultGroupViewController.h"
-
 #import "OcrTextResultViewController.h"
-
 #import "MyCaseRightsViewController.h"
+#import "RemindCameraViewController.h"
 
-@interface CaseViewController ()<PhotoTweaksViewControllerDelegate,OpenCameraDele,CameraNewReportDele>
+#import "LabRootViewViewController.h"
+
+@interface CaseViewController ()<PhotoTweaksViewControllerDelegate,OpenCameraDele,CameraNewReportDele,RemindCameraDele>
 
 {
     KRLCollectionViewGridLayout *lineLayout;
@@ -41,6 +37,7 @@
     NSString *lastDate;//最后一张化验单日期
     NSArray *diseaseArray;//疾病数组
     NSArray *medicArray;//用药数组
+    BOOL LabOrResult;//no为上传化验单，否则为lab
 }
 
 @end
@@ -109,7 +106,7 @@
 
 #pragma 上方两个大按钮的响应函数
 -(void)cameRaNewResult:(UIButton *)sender{
-    UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+    UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍摄教程", @""),NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
     [sheet showInView:self.view];
 }
 
@@ -117,6 +114,7 @@
     UIStoryboard *story = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
     OcrTextResultViewController *otrv = [story instantiateViewControllerWithIdentifier:@"ocrtextresult"];
     otrv.isMine = YES;
+    otrv.newResNumber = doneCount;
     [self.navigationController pushViewController:otrv animated:YES];
 }
 
@@ -196,6 +194,8 @@
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }else if (indexPath.row == 6){
         ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
+    }else if (indexPath.row == 7){
+        ((UILabel *)[cell.contentView viewWithTag:3]).text = @"";
     }
     cell.layer.borderWidth = 0.5;
     cell.layer.borderColor = [UIColor colorWithRed:240.0/255.0 green:240.0/255.0 blue:240.0/255.0 alpha:1.0].CGColor;
@@ -209,6 +209,9 @@
         UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
         OcrResultGroupViewController *orgv = [main instantiateViewControllerWithIdentifier:@"ocrgroupresult"];
         orgv.caseRootVC = self;
+        if (doingCount != 0||failedCount != 0||doneCount != 0) {
+            orgv.LocalOrNet = YES;//需要网络更新
+        }
         [self.navigationController pushViewController:orgv animated:YES];
     }else if (indexPath.row == 1){
         ConfirmDiseaseRootViewController *cdrv = [[ConfirmDiseaseRootViewController alloc]init];
@@ -235,12 +238,16 @@
         MyCaseRightsViewController *mcv = [[MyCaseRightsViewController alloc]init];
         [self.navigationController pushViewController:mcv animated:YES];
     }
+//    else if (indexPath.row == 7){
+//        LabRootViewViewController *lrv = [[LabRootViewViewController alloc]init];
+//        [self.navigationController pushViewController:lrv animated:YES];
+//    }
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
 }
 
 -(void)setupData{
-    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"百科", @""),NSLocalizedString(@"病历权限", @"")]mutableCopy];
-    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class1",@"set_up"]mutableCopy];
+    titleDataArray = [@[NSLocalizedString(@"原始报告", @""),NSLocalizedString(@"确诊病情", @""),NSLocalizedString(@"用药记录", @""),NSLocalizedString(@"我的医生", @""),NSLocalizedString(@"主诉", @""),NSLocalizedString(@"百科", @""),NSLocalizedString(@"病历权限", @"")/*,NSLocalizedString(@"实验室", @"")*/]mutableCopy];
+    imageNameArray = [@[@"reports2",@"diagnose2",@"medication2",@"my_doc",@"patients_c2",@"class1",@"set_up",@"laboratory"]mutableCopy];
     NSUserDefaults *user = [NSUserDefaults standardUserDefaults];
     NSString *url = [NSString stringWithFormat:@"%@v2/user/overview?uid=%@&token=%@",Baseurl,[user objectForKey:@"userUID"],[user objectForKey:@"userToken"]];
     NSLog(@"病历显示url====%@",url);
@@ -256,7 +263,7 @@
             diseaseArray = [source objectForKey:@"diseaseDetailList"];
             lastDate = [source objectForKey:@"latestDoneLtrDate"];
             if (doneCount == 0) {
-                
+                [_checkResultButton imageRemoveRedNumber];
             }else{
                 [_checkResultButton imageWithRedNumberUp:doneCount];
             }
@@ -270,19 +277,29 @@
 
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
     NSLog(@"点击了===%ld",(long)buttonIndex);
-    if (buttonIndex == 0||buttonIndex == 1) {
-        UIImagePickerControllerSourceType type = UIImagePickerControllerSourceTypePhotoLibrary;
-        if (buttonIndex == 0) {
-            type = UIImagePickerControllerSourceTypeCamera;
+    if (buttonIndex == 0) {
+        RemindCameraViewController *rcv = [[RemindCameraViewController alloc]init];
+        rcv.remindCameraDele = self;
+        [self.navigationController pushViewController:rcv animated:YES];
+    }else if (buttonIndex == 1||buttonIndex == 2) {
+        BOOL remind = [[[NSUserDefaults standardUserDefaults]objectForKey:@"userRemindCamera"] boolValue];
+        if (buttonIndex == 1 && !remind) {
+            RemindCameraViewController *rcv = [[RemindCameraViewController alloc]init];
+            rcv.remindCameraDele = self;
+            [self.navigationController pushViewController:rcv animated:YES];
         }else{
-            type = UIImagePickerControllerSourceTypePhotoLibrary;
+            UIImagePickerControllerSourceType type = UIImagePickerControllerSourceTypePhotoLibrary;
+            if (buttonIndex == 1) {
+                type = UIImagePickerControllerSourceTypeCamera;
+            }else{
+                type = UIImagePickerControllerSourceTypePhotoLibrary;
+            }
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.allowsEditing = NO;
+            picker.delegate   = self;
+            picker.sourceType = type;
+            [self presentViewController:picker animated:YES completion:nil];
         }
-        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
-        picker.allowsEditing = NO;
-        picker.delegate   = self;
-        picker.sourceType = type;
-        
-        [self presentViewController:picker animated:YES completion:nil];
     }else{
         
     }
@@ -292,6 +309,7 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         dispatch_async(dispatch_get_main_queue(), ^{
             UIImage * image = [info objectForKey:UIImagePickerControllerOriginalImage];
+            
             [picker dismissViewControllerAnimated:YES completion:^{}];
             PhotoTweaksViewController *photoTweaksViewController = [[PhotoTweaksViewController alloc] initWithImage:image];
             photoTweaksViewController.delegate = self;
@@ -312,7 +330,7 @@
 
 -(void)openCamera:(BOOL)openBool{
     if (openBool) {
-        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"准备识别化验单", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"准备识别化验单", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍摄教程", @""),NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
         [sheet showInView:self.view];
     }
 }
@@ -329,8 +347,21 @@
 #pragma 重新拍摄的delegate
 -(void)cameraNewReport:(BOOL)result{
     if (result) {
-//        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"拍报告", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
-//        [sheet showInView:self.view];
+        UIActionSheet *sheet = [[UIActionSheet alloc]initWithTitle:NSLocalizedString(@"准备识别化验单", @"") delegate:self cancelButtonTitle:NSLocalizedString(@"取消", @"") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"拍摄教程", @""),NSLocalizedString(@"拍照", @""),NSLocalizedString(@"相册", @""), nil];
+        [sheet showInView:self.view];
+    }
+}
+
+#pragma 提醒完了之后打开摄像机
+-(void)RemindCameraResult:(BOOL)result{
+    if (result) {
+        UIImagePickerControllerSourceType type = UIImagePickerControllerSourceTypePhotoLibrary;
+        type = UIImagePickerControllerSourceTypeCamera;
+        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        picker.allowsEditing = NO;
+        picker.delegate   = self;
+        picker.sourceType = type;
+        [self presentViewController:picker animated:YES completion:nil];
     }
 }
 

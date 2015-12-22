@@ -10,7 +10,7 @@
 
 @interface ShareINGViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 
-@property (nonatomic,strong) IBOutlet UITableView *yizhenProgressDoctorTablel;//战友医生的表格
+@property (nonatomic,strong) IBOutlet UITableView *yizhenProgressDoctorTablel;//易诊医生的表格
 
 @property (nonatomic,strong) NSString *doctorJID;//医生jid
 

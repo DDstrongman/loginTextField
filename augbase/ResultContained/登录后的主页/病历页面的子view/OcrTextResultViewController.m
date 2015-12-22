@@ -15,7 +15,7 @@
 
 #import "SetShareContentRootViewController.h"
 
-#import "SetupView.h"
+#import "WriteFileSupport.h"
 
 @interface OcrTextResultViewController ()
 
@@ -23,7 +23,6 @@
     CGFloat cellHeight;
     
     NSMutableArray *bottomArray;//底部工具条的数据dataArray
-    NSMutableArray *tableViewArray;//保存tableview的数组，实现缓存
     UIView *bottomMessView;//底部显示详细信息的view
     UITableView *bottomTable;//底部显示用的tableview
     UIView *visualEffectView;//提供高斯模糊的view
@@ -247,12 +246,10 @@
                 detailTextView.text = tempString;
                 NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
                 paragraphStyle.lineSpacing = 8; //行距
-                
                 NSDictionary *attributes = @{ NSFontAttributeName:[UIFont systemFontOfSize:15], NSParagraphStyleAttributeName:paragraphStyle};
                 
                 detailTextView.attributedText = [[NSAttributedString alloc]initWithString: detailTextView.text attributes:attributes];
                 NSDictionary *valuestempDic = [lineDetailDic objectForKey:@"values"];
-                
                 valuesDetailDic = [valuestempDic objectForKey:customizedIdsTempOrder[tableTag-100-1]];
             }
             cell.textLabel.text = bottomValueArray[indexPath.row];
@@ -445,7 +442,6 @@
                 }else{
                     if ([[finalValues objectForKey:@"calmethod"]intValue] != 0) {
                         contentLabel.text = [NSString stringWithFormat:@"%g %@",[[finalValues objectForKey:@"value"] doubleValue],[finalValues objectForKey:@"unit"]];
-                        NSLog(@"text=====%@",[NSString stringWithFormat:@"%g %@",[[finalValues objectForKey:@"value"] doubleValue],[finalValues objectForKey:@"unit"]]);
                     }else{
                         contentLabel.text = [NSString stringWithFormat:@"%@ %@",[finalValues objectForKey:@"value"],[finalValues objectForKey:@"unit"]];
                     }
@@ -484,12 +480,12 @@
             if ([[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"type"] intValue] == 1) {
                 UIStoryboard *main = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
                 DetailImageOcrViewController *div = [main instantiateViewControllerWithIdentifier:@"detailocrimage"];
-                
                 NSString *urlString = [[[ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0] objectForKey:@"picsInfo"][0] objectForKey:@"pic"];;
                 NSMutableDictionary *dic = [ocrDetailValueArray[indexPath.row] objectForKey:@"ltrList"][0];
                 div.showImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString];
                 div.detailDic = dic;
                 div.ResultOrING = YES;
+                div.OcrTextViewController = self;
                 [self.navigationController pushViewController:div animated:YES];
             }
         }
@@ -514,11 +510,15 @@
     if (tableView.tag == 100) {
         [bottomMessView viewWithTag:123].hidden = YES;
         [bottomButton setTitle:NSLocalizedString(@"用药记录", @"") forState:UIControlStateNormal];
-    }else{
+    }else if(tableView.tag != 3){
         [bottomMessView viewWithTag:123].hidden = NO;
         [bottomButton setTitle:NSLocalizedString(@"对应化验单", @"") forState:UIControlStateNormal];
+    }else{
+        
     }
-    tableIndexRow = indexPath.row;
+    if (tableView.tag != 3) {
+        tableIndexRow = indexPath.row;
+    }
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
@@ -534,30 +534,10 @@
     if ([scrollView isKindOfClass:[UITableView class]]&&scrollView.tag != 3) {
         _nameTable.contentOffset = scrollView.contentOffset;
 #warning 改成动态加载tableview之后需要改变同步运动方式,主要的卡吨集中在这里
-//        for (int i = 100; i<111; i++) {
-//            if ([_resultScroller viewWithTag:i] != nil) {
-//                ((UITableView *)[_resultScroller viewWithTag:i]).contentOffset = scrollView.contentOffset;
-//            }
-//        }
-        bChaoTable.contentOffset = scrollView.contentOffset;
-        _firstResultTable.contentOffset = scrollView.contentOffset;
-        _secondResultTable.contentOffset = scrollView.contentOffset;
-        _thirdsultTable.contentOffset = scrollView.contentOffset;
-        _forthsultTable.contentOffset = scrollView.contentOffset;
-        _fifthsultTable.contentOffset = scrollView.contentOffset;
-        _sixthsultTable.contentOffset = scrollView.contentOffset;
-        _sevensultTable.contentOffset = scrollView.contentOffset;
-        _eightsultTable.contentOffset = scrollView.contentOffset;
-        _ninesultTable.contentOffset = scrollView.contentOffset;
-        _tensultTable.contentOffset = scrollView.contentOffset;
-        _elevensultTable.contentOffset = scrollView.contentOffset;
-        if (scrollView.contentOffset.x<260) {
-            _firstResultTable.contentOffset = scrollView.contentOffset;
-            _secondResultTable.contentOffset = scrollView.contentOffset;
-            _thirdsultTable.contentOffset = scrollView.contentOffset;
-            _forthsultTable.contentOffset = scrollView.contentOffset;
-        }else{
-            
+        for (UIView *temp in [_resultScroller subviews]) {
+            if ([temp isKindOfClass:[UITableView class]]) {
+                ((UITableView*)temp).contentOffset = scrollView.contentOffset;
+            }
         }
     }
     else if(scrollView == _titleScroller||scrollView == _resultScroller){
@@ -600,12 +580,10 @@
     pageNumber = (int)(ViewWidth - 120)/120+1;
     //初始化两个scrollerview
     _titleScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 0, ViewWidth-100, 50)];
-    _titleScroller.contentSize = CGSizeMake(190+50+120*10, 50-20);
     _titleScroller.delegate = self;
     _titleScroller.backgroundColor = [UIColor blackColor];
     _titleScroller.scrollEnabled = YES;
     _resultScroller = [[UIScrollView alloc]initWithFrame:CGRectMake(100, 50, ViewWidth-100, ViewHeight-50-49)];
-    _resultScroller.contentSize = CGSizeMake(190+50+120*10, ViewHeight-50-49-20);
     _resultScroller.backgroundColor = grayBackgroundLightColor;
     _resultScroller.scrollEnabled = YES;
     _resultScroller.delegate = self;
@@ -619,82 +597,19 @@
     _secondTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_firstTitleButton.frame.origin.x+_firstTitleButton.bounds.size.width, 0, 50, 50)];
     [_secondTitleButton setTitle:NSLocalizedString(@"B超", @"") forState:UIControlStateNormal];
     _secondTitleButton.backgroundColor = [UIColor blackColor];
-    [_titleScroller addSubview:_secondTitleButton];
-    
-    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
-    _thirdTitleButton.backgroundColor = [UIColor blackColor];
-    _thirdTitleButton.tag = 901;
-    _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_thirdTitleButton];
-    _forthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_thirdTitleButton.frame.origin.x+_thirdTitleButton.bounds.size.width, 0, 120, 50)];
-    _forthTitleButton.backgroundColor = [UIColor blackColor];
-    _forthTitleButton.tag = 902;
-    _forthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_forthTitleButton];
-    _fifthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_forthTitleButton.frame.origin.x+_forthTitleButton.bounds.size.width, 0, 120, 50)];
-    _fifthTitleButton.backgroundColor = [UIColor blackColor];
-    _fifthTitleButton.tag = 903;
-    _fifthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_fifthTitleButton];
-    _sixthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_fifthTitleButton.frame.origin.x+_fifthTitleButton.bounds.size.width, 0, 120, 50)];
-    _sixthTitleButton.backgroundColor = [UIColor blackColor];
-    _sixthTitleButton.tag = 904;
-    _sixthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_sixthTitleButton];
-    _sevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sixthTitleButton.frame.origin.x+_sixthTitleButton.bounds.size.width, 0, 120, 50)];
-    _sevenTitleButton.backgroundColor = [UIColor blackColor];
-    _sevenTitleButton.tag = 905;
-    _sevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_sevenTitleButton];
-    _eightTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_sevenTitleButton.frame.origin.x+_sevenTitleButton.bounds.size.width, 0, 120, 50)];
-    _eightTitleButton.backgroundColor = [UIColor blackColor];
-    _eightTitleButton.tag = 906;
-    _eightTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_eightTitleButton];
-    _nineTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_eightTitleButton.frame.origin.x+_eightTitleButton.bounds.size.width, 0, 120, 50)];
-    _nineTitleButton.backgroundColor = [UIColor blackColor];
-    _nineTitleButton.tag = 907;
-    _nineTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_nineTitleButton];
-    _tenthTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_nineTitleButton.frame.origin.x+_nineTitleButton.bounds.size.width, 0, 120, 50)];
-    _tenthTitleButton.backgroundColor = [UIColor blackColor];
-    _tenthTitleButton.tag = 908;
-    _tenthTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_tenthTitleButton];
-    _elevenTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_tenthTitleButton.frame.origin.x+_tenthTitleButton.bounds.size.width, 0, 120, 50)];
-    _elevenTitleButton.backgroundColor = [UIColor blackColor];
-    _elevenTitleButton.tag = 909;
-    _elevenTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_elevenTitleButton];
-    _twelveTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_elevenTitleButton.frame.origin.x+_elevenTitleButton.bounds.size.width, 0, 120, 50)];
-    _twelveTitleButton.backgroundColor = [UIColor blackColor];
-    _twelveTitleButton.tag = 910;
-    _twelveTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
-    [_titleScroller addSubview:_twelveTitleButton];
-    
-    
     _firstTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
     _secondTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _forthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _fifthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _sixthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _sevenTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _eightTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _nineTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _tenthTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _elevenTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
-    _twelveTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+    [_titleScroller addSubview:_secondTitleButton];
     
-    UITableView *firstTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, 190, ViewHeight-50-49)];
-    firstTable.delegate = self;
-    firstTable.dataSource = self;
-    firstTable.tag = 100;
-    firstTable.showsVerticalScrollIndicator = NO;
-    firstTable.separatorStyle = UITableViewCellSelectionStyleNone;
-    [_resultScroller addSubview:firstTable];
+    _firstResultTable = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, 190, ViewHeight-50-49)];
+    _firstResultTable.delegate = self;
+    _firstResultTable.dataSource = self;
+    _firstResultTable.tag = 100;
+    _firstResultTable.showsVerticalScrollIndicator = NO;
+    _firstResultTable.separatorStyle = UITableViewCellSelectionStyleNone;
+    [_resultScroller addSubview:_firstResultTable];
     
-    bChaoTable = [[UITableView alloc]initWithFrame:CGRectMake(firstTable.frame.origin.x+firstTable.bounds.size.width, 0, 50, ViewHeight-50-49)];
+    bChaoTable = [[UITableView alloc]initWithFrame:CGRectMake(_firstResultTable.frame.origin.x+_firstResultTable.bounds.size.width, 0, 50, ViewHeight-50-49)];
     bChaoTable.dataSource = self;
     bChaoTable.delegate = self;
     bChaoTable.tag = 555;
@@ -702,30 +617,9 @@
     bChaoTable.separatorStyle = UITableViewCellSelectionStyleNone;
     [_resultScroller addSubview:bChaoTable];
     
-    for (int i = 101; i<111; i++) {
-        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
-        tempTable.delegate = self;
-        tempTable.dataSource = self;
-        tempTable.tag = i;
-        tempTable.showsVerticalScrollIndicator = NO;
-        tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
-        [_resultScroller addSubview:tempTable];
-    }
     
-    _firstResultTable = (UITableView *)[_resultScroller viewWithTag:100];
-    _secondResultTable = (UITableView *)[_resultScroller viewWithTag:101];
-    _thirdsultTable = (UITableView *)[_resultScroller viewWithTag:102];
-    _forthsultTable = (UITableView *)[_resultScroller viewWithTag:103];
-    _fifthsultTable = (UITableView *)[_resultScroller viewWithTag:104];
-    _sixthsultTable = (UITableView *)[_resultScroller viewWithTag:105];
-    _sevensultTable = (UITableView *)[_resultScroller viewWithTag:106];
-    _eightsultTable = (UITableView *)[_resultScroller viewWithTag:107];
-    _ninesultTable = (UITableView *)[_resultScroller viewWithTag:108];
-    _tensultTable = (UITableView *)[_resultScroller viewWithTag:109];
-    _elevensultTable = (UITableView *)[_resultScroller viewWithTag:110];
-    tableViewArray = [NSMutableArray array];
     
-    bottomArray = [@[NSLocalizedString(@"置顶指标", @""),NSLocalizedString(@"分享表格", @"")]mutableCopy];
+    bottomArray = [@[NSLocalizedString(@"指标排序", @""),NSLocalizedString(@"分享表格", @"")]mutableCopy];
     //底部工具条
     UIView *bottomToolBar = [[UIView alloc]initWithFrame:CGRectMake(0, ViewHeight-49, ViewWidth, 49)];
     bottomToolBar.backgroundColor = [UIColor whiteColor];
@@ -793,8 +687,6 @@
     bottomTable.separatorColor = lightGrayBackColor;
     bottomTable.tag = 3;
     bottomTable.showsVerticalScrollIndicator = NO;
-//    bottomTable.layer.borderColor = lightGrayBackColor.CGColor;
-//    bottomTable.layer.borderWidth = 1;
     bottomTable.tableFooterView = [[UIView alloc]init];
     [bottomMessView addSubview:bottomTable];
     
@@ -846,6 +738,7 @@
     detailTextView = [[UITextView alloc]init];
     detailTextView.text = @"";
     detailTextView.scrollEnabled = YES;
+    detailTextView.layoutManager.allowsNonContiguousLayout = NO;
     detailTextView.editable = NO;
     detailTextView.font = [UIFont systemFontOfSize:15.0];
     
@@ -874,7 +767,6 @@
     bottomValueArray = [@[NSLocalizedString(@"参考范围", @""),NSLocalizedString(@"指标数值", @""),NSLocalizedString(@"指标类别", @""),NSLocalizedString(@"检测医院", @"")]mutableCopy];
     tableIndexRow = 0;
     tableTag = 100;
-//    [UIColor colorWithCGColor:]
     [colorArray addObject:[UIColor colorWithRed:255.0/255 green:210.0/255 blue:72.0/255 alpha:1.0]];
     [colorArray addObject:[UIColor colorWithRed:246.0/255 green:147.0/255 blue:111.0/255 alpha:1.0]];
     [colorArray addObject:[UIColor colorWithRed:242.0/255 green:111.0/255 blue:122.0/255 alpha:1.0]];
@@ -886,132 +778,545 @@
     [colorArray addObject:[UIColor colorWithRed:127.0/255 green:197.0/255 blue:110.0/255 alpha:1.0]];
     [colorArray addObject:[UIColor colorWithRed:189.0/255 green:186.0/255 blue:50.0/255 alpha:1.0]];
     NSString *url;
-    if (_isMine) {
-        url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+    
+    if (_isMine&&[[WriteFileSupport ShareInstance]isFileExist:yizhenMineTable]&&_newResNumber == 0) {
+        
+        picList = [[WriteFileSupport ShareInstance]readDictionary:yizhenMineTable FileName:yizhenindicator];
+        medicineArray = [[WriteFileSupport ShareInstance]readArray:yizhenMineTable FileName:yizhenmedcine];
+        NSArray *keysOrder = [[WriteFileSupport ShareInstance]readArray:yizhenMineTable FileName:yizhenkeysOrder];
+        
+        if (keysOrder.count == 0) {
+            UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+            [showNoticeAlert show];
+        }
+        allCodeDetails = [[WriteFileSupport ShareInstance]readDictionary:yizhenMineTable FileName:yizhenallCodeDetails];
+        
+        if (_isReView) {
+            customizedIdsOrder = _viewedTitleArray;
+            titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
+            firstButton.hidden = YES;
+            secondButton.hidden = YES;
+            bottomButton.hidden = YES;
+        }else{
+            customizedIdsOrder = [[WriteFileSupport ShareInstance]readArray:yizhenMineTable FileName:yizhencustomizedIdsOrder];
+            titleArray = [NSMutableArray arrayWithArray:keysOrder];
+            firstButton.hidden = NO;
+            secondButton.hidden = NO;
+            bottomButton.hidden = NO;
+        }
+        for (int i = 0; i<keysOrder.count; i++) {
+            NSString *temp = keysOrder[i];
+            if ([picList objectForKey:temp] != nil) {
+                NSDictionary *tempValueDic = [picList objectForKey:temp];
+                [ocrDetailValueArray addObject:tempValueDic];
+            }
+        }
+        ocrDetailTempValueArray = ocrDetailValueArray;
+        for (int i = 0; i<customizedIdsOrder.count ; i++) {
+            NSString *resultIndex = customizedIdsOrder[i];
+            if ([allCodeDetails objectForKey:resultIndex] != nil) {
+                [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
+            }
+        }
+        _titleScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, 50-20);
+        _resultScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, ViewHeight-50-49-20);
+        
+        _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
+        _thirdTitleButton.backgroundColor = [UIColor blackColor];
+        _thirdTitleButton.tag = 901;
+        _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+        _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+        [_titleScroller addSubview:_thirdTitleButton];
+        for (int i = 101; i<100+customizedIdsOrder.count+1; i++) {
+            UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
+            tempTable.delegate = self;
+            tempTable.dataSource = self;
+            tempTable.tag = i;
+            tempTable.showsVerticalScrollIndicator = NO;
+            tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
+            [_resultScroller addSubview:tempTable];
+        }
+        _secondResultTable = (UITableView *)[_resultScroller viewWithTag:101];
+        _thirdsultTable = (UITableView *)[_resultScroller viewWithTag:102];
+        
+        for (int i = 1; i<showNameArray.count+1; i++) {
+            NSDictionary *tempDic = showNameArray[i-1];
+            UIButton *tempButton = [[UIButton alloc]initWithFrame:CGRectMake(190+50+i*120-120, 0, 120, 50)];
+            [_titleScroller addSubview:tempButton];
+            tempButton.tag = i+900;
+            if (tempDic != nil && tempButton != nil) {
+                [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+                tempButton.backgroundColor = [UIColor blackColor];
+                tempButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                tempButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+            }
+        }
+        showNameTempArray = showNameArray;
+        customizedIdsTempOrder = customizedIdsOrder;
+        
+        [_nameTable reloadData];
+        
+        for (UIView *temp in [_resultScroller subviews]) {
+            if ([temp isKindOfClass:[UITableView class]]) {
+                [((UITableView*)temp) reloadData];
+            }
+        }
+        [[SetupView ShareInstance]hideHUD];
     }else{
-        url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@&userJId=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],_personJID];
-    }
-    NSLog(@"url===%@",url);
-    [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-        int res=[[source objectForKey:@"res"] intValue];
-        if (res == 0) {
-            //请求完成
-            picList = [source objectForKey:@"indicator"];
-            medicineArray = [source objectForKey:@"medcine"];
-            NSArray *keysOrder = [source objectForKey:@"keysOrder"];
-            if (keysOrder.count == 0) {
-                if (_isMine) {
-                    UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
-                    [showNoticeAlert show];
+        if (_isMine) {
+            url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+        }else{
+            url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@&userJId=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],_personJID];
+            firstButton.hidden = YES;
+            secondButton.hidden = YES;
+            bottomButton.hidden = YES;
+        }
+        NSLog(@"url===%@",url);
+        [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+            int res=[[source objectForKey:@"res"] intValue];
+            if (res == 0) {
+                //请求完成
+                picList = [source objectForKey:@"indicator"];
+                medicineArray = [source objectForKey:@"medcine"];
+                NSArray *keysOrder = [source objectForKey:@"keysOrder"];
+                
+                if (keysOrder.count == 0) {
+                    if (_isMine) {
+                        UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                        [showNoticeAlert show];
+                    }else{
+                        UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"TA没有病历数据", @"") message:NSLocalizedString(@"请提醒TA上传化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                        [showNoticeAlert show];
+                    }
+                }
+                allCodeDetails = [source objectForKey:@"allCodeDetails"];
+                if (_isReView) {
+                    customizedIdsOrder = _viewedTitleArray;
+                    titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
+                    firstButton.hidden = YES;
+                    secondButton.hidden = YES;
+                    bottomButton.hidden = YES;
                 }else{
-                    UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"TA没有病历数据", @"") message:NSLocalizedString(@"请提醒TA上传化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
-                    [showNoticeAlert show];
+                    customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
+                    titleArray = [NSMutableArray arrayWithArray:keysOrder];
+                    if (_isMine) {
+                        firstButton.hidden = NO;
+                        secondButton.hidden = NO;
+                        bottomButton.hidden = NO;
+                    }
                 }
-            }
-            allCodeDetails = [source objectForKey:@"allCodeDetails"];
-            if (_isReView) {
-                customizedIdsOrder = _viewedTitleArray;
-                titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
-                firstButton.hidden = YES;
-                secondButton.hidden = YES;
-                bottomButton.hidden = YES;
-            }else{
-                customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
-                titleArray = [NSMutableArray arrayWithArray:keysOrder];
-                firstButton.hidden = NO;
-                secondButton.hidden = NO;
-                bottomButton.hidden = NO;
-            }
-            if (!_isMine) {
-                firstButton.hidden = YES;
-                secondButton.hidden = YES;
-                bottomButton.hidden = YES;
-            }
-            
-            for (int i = 0; i<customizedIdsOrder.count ; i++) {
-                NSString *resultIndex = customizedIdsOrder[i];
-                if ([allCodeDetails objectForKey:resultIndex] != nil) {
-                    [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
+                if (_isMine&&!_isReView) {
+                    [[WriteFileSupport ShareInstance]writeDictionary:picList DirName:yizhenMineTable FileName:yizhenindicator];
+                    [[WriteFileSupport ShareInstance]writeArray:keysOrder DirName:yizhenMineTable FileName:yizhenkeysOrder];
+                    [[WriteFileSupport ShareInstance]writeArray:medicineArray DirName:yizhenMineTable FileName:yizhenmedcine];
+                    [[WriteFileSupport ShareInstance]writeDictionary:allCodeDetails DirName:yizhenMineTable FileName:yizhenallCodeDetails];
+                    [[WriteFileSupport ShareInstance]writeArray:customizedIdsOrder DirName:yizhenMineTable FileName:yizhencustomizedIdsOrder];
                 }
-            }
-            for (int i = 0; i<keysOrder.count; i++) {
-                NSString *temp = keysOrder[i];
-                if ([picList objectForKey:temp] != nil) {
-                    NSDictionary *tempValueDic = [picList objectForKey:temp];
-                    if (![[tempValueDic objectForKey:@"isViewedByMe"] boolValue]) {
-                        if (changeStatus == nil) {
-                            changeStatus = [[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue];
-                        }else{
-                            changeStatus = [NSString stringWithFormat:@"%@,%@",changeStatus,[[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue]];
-                        }
-                        NSString *changeStatusUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus/uid=%@&token=%@&isDoctor=false&ltrIds=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],changeStatus];
-                        NSLog(@"changestatusulr===%@",changeStatusUrl);
-                        [[HttpManager ShareInstance]AFNetPOSTNobodySupport:changeStatusUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
-                            NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
-                            int res=[[source objectForKey:@"res"] intValue];
-                            NSLog(@"修改res===%d",res);
-                            if (res == 0) {
-                                NSLog(@"修改观察状态成功");
+                
+                for (int i = 0; i<keysOrder.count; i++) {
+                    NSString *temp = keysOrder[i];
+                    if ([picList objectForKey:temp] != nil) {
+                        NSDictionary *tempValueDic = [picList objectForKey:temp];
+                        if (![[tempValueDic objectForKey:@"isViewedByMe"] boolValue]) {
+                            if (changeStatus == nil) {
+                                changeStatus = [[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue];
+                            }else{
+                                changeStatus = [NSString stringWithFormat:@"%@,%@",changeStatus,[[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue]];
                             }
-                        } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-                            
-                        }];
+                            NSString *changeStatusUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus?uid=%@&token=%@&isDoctor=false&ltrIds=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],changeStatus];
+                            NSLog(@"changestatusulr===%@",changeStatusUrl);
+                            [[HttpManager ShareInstance]AFNetPOSTNobodySupport:changeStatusUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                int res=[[source objectForKey:@"res"] intValue];
+                                NSLog(@"修改res===%d",res);
+                                if (res == 0) {
+                                    NSLog(@"修改观察状态成功");
+                                }
+                            } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                
+                            }];
+                        }
+                        [ocrDetailValueArray addObject:tempValueDic];
                     }
-                    [ocrDetailValueArray addObject:tempValueDic];
                 }
-            }
-            if (showNameArray.count>10) {
-                for (int i = 1; i<11; i++) {
-                    NSDictionary *tempDic = showNameArray[i-1];
-                    UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900)];
-                    if (tempDic != nil && tempButton != nil) {
-                        [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+                ocrDetailTempValueArray = ocrDetailValueArray;
+                for (int i = 0; i<customizedIdsOrder.count ; i++) {
+                    NSString *resultIndex = customizedIdsOrder[i];
+                    if ([allCodeDetails objectForKey:resultIndex] != nil) {
+                        [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
                     }
                 }
-            }else{
+                _titleScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, 50-20);
+                _resultScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, ViewHeight-50-49-20);
+                
+                _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
+                _thirdTitleButton.backgroundColor = [UIColor blackColor];
+                _thirdTitleButton.tag = 901;
+                _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                [_titleScroller addSubview:_thirdTitleButton];
+                for (int i = 101; i<100+customizedIdsOrder.count+1; i++) {
+                    UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
+                    tempTable.delegate = self;
+                    tempTable.dataSource = self;
+                    tempTable.tag = i;
+                    tempTable.showsVerticalScrollIndicator = NO;
+                    tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
+                    [_resultScroller addSubview:tempTable];
+                }
+                _secondResultTable = (UITableView *)[_resultScroller viewWithTag:101];
+                _thirdsultTable = (UITableView *)[_resultScroller viewWithTag:102];
+                
                 for (int i = 1; i<showNameArray.count+1; i++) {
                     NSDictionary *tempDic = showNameArray[i-1];
-                    UIButton *tempButton = (UIButton *)[_titleScroller viewWithTag:(i+900)];
+                    UIButton *tempButton = [[UIButton alloc]initWithFrame:CGRectMake(190+50+i*120-120, 0, 120, 50)];
+                    [_titleScroller addSubview:tempButton];
+                    tempButton.tag = i+900;
                     if (tempDic != nil && tempButton != nil) {
                         [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+                        tempButton.backgroundColor = [UIColor blackColor];
+                        tempButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                        tempButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
                     }
                 }
-            }
-            
-            NSRange range = NSMakeRange(0, 10);
-            if (showNameArray.count>10) {
-                showNameTempArray = [NSMutableArray arrayWithArray:[showNameArray subarrayWithRange:range]];
-            }else{
                 showNameTempArray = showNameArray;
-            }
-            ocrDetailTempValueArray = ocrDetailValueArray;
-            if (customizedIdsOrder.count>10) {
-                customizedIdsTempOrder = [NSMutableArray arrayWithArray:[customizedIdsOrder subarrayWithRange:range]];
-            }else{
                 customizedIdsTempOrder = customizedIdsOrder;
+                
+                [_nameTable reloadData];
+                
+                for (UIView *temp in [_resultScroller subviews]) {
+                    if ([temp isKindOfClass:[UITableView class]]) {
+                        [((UITableView*)temp) reloadData];
+                    }
+                }
+                [[SetupView ShareInstance]hideHUD];
+            }else if (res == 49){
+                if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChat"] boolValue]) {
+                    NSString *thirdPartyUrl = [NSString stringWithFormat:@"%@v2/user/login/thirdPartyAccount?token=%@&uuid=%@&third_party_type=%d",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatToken"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userWeChatUID"],0];
+                    [[HttpManager ShareInstance]AFNetPOSTNobodySupport:thirdPartyUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        NSLog(@"device activitation source=%@,res=====%d",source,res);
+                        if (res == 0) {
+                            [[NSUserDefaults standardUserDefaults] setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                            NSString *url;
+                            if (_isMine) {
+                                url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+                            }else{
+                                url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@&userJId=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],_personJID];
+                            }
+                            NSLog(@"url===%@",url);
+                            [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                int res=[[source objectForKey:@"res"] intValue];
+                                if (res == 0) {
+                                    //请求完成
+                                    picList = [source objectForKey:@"indicator"];
+                                    medicineArray = [source objectForKey:@"medcine"];
+                                    NSArray *keysOrder = [source objectForKey:@"keysOrder"];
+                                    if (keysOrder.count == 0) {
+                                        if (_isMine) {
+                                            UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                                            [showNoticeAlert show];
+                                        }else{
+                                            UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"TA没有病历数据", @"") message:NSLocalizedString(@"请提醒TA上传化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                                            [showNoticeAlert show];
+                                        }
+                                    }
+                                    allCodeDetails = [source objectForKey:@"allCodeDetails"];
+                                    if (_isReView) {
+                                        customizedIdsOrder = _viewedTitleArray;
+                                        titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
+                                        firstButton.hidden = YES;
+                                        secondButton.hidden = YES;
+                                        bottomButton.hidden = YES;
+                                    }else{
+                                        customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
+                                        titleArray = [NSMutableArray arrayWithArray:keysOrder];
+                                        firstButton.hidden = NO;
+                                        secondButton.hidden = NO;
+                                        bottomButton.hidden = NO;
+                                    }
+                                    if (!_isMine) {
+                                        firstButton.hidden = YES;
+                                        secondButton.hidden = YES;
+                                        bottomButton.hidden = YES;
+                                    }
+                                    [[WriteFileSupport ShareInstance]writeDictionary:picList DirName:yizhenMineTable FileName:yizhenindicator];
+                                    [[WriteFileSupport ShareInstance]writeArray:keysOrder DirName:yizhenMineTable FileName:yizhenkeysOrder];
+                                    [[WriteFileSupport ShareInstance]writeArray:medicineArray DirName:yizhenMineTable FileName:yizhenmedcine];
+                                    [[WriteFileSupport ShareInstance]writeDictionary:allCodeDetails DirName:yizhenMineTable FileName:yizhenallCodeDetails];
+                                    [[WriteFileSupport ShareInstance]writeArray:customizedIdsOrder DirName:yizhenMineTable FileName:yizhencustomizedIdsOrder];
+                                    
+                                    for (int i = 0; i<keysOrder.count; i++) {
+                                        NSString *temp = keysOrder[i];
+                                        if ([picList objectForKey:temp] != nil) {
+                                            NSDictionary *tempValueDic = [picList objectForKey:temp];
+                                            if (![[tempValueDic objectForKey:@"isViewedByMe"] boolValue]) {
+                                                if (changeStatus == nil) {
+                                                    changeStatus = [[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue];
+                                                }else{
+                                                    changeStatus = [NSString stringWithFormat:@"%@,%@",changeStatus,[[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue]];
+                                                }
+                                                NSString *changeStatusUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus?uid=%@&token=%@&isDoctor=false&ltrIds=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],changeStatus];
+                                                NSLog(@"changestatusulr===%@",changeStatusUrl);
+                                                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:changeStatusUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                                    int res=[[source objectForKey:@"res"] intValue];
+                                                    NSLog(@"修改res===%d",res);
+                                                    if (res == 0) {
+                                                        NSLog(@"修改观察状态成功");
+                                                    }
+                                                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                                    
+                                                }];
+                                            }
+                                            [ocrDetailValueArray addObject:tempValueDic];
+                                        }
+                                    }
+                                    ocrDetailTempValueArray = ocrDetailValueArray;
+                                    for (int i = 0; i<customizedIdsOrder.count ; i++) {
+                                        NSString *resultIndex = customizedIdsOrder[i];
+                                        if ([allCodeDetails objectForKey:resultIndex] != nil) {
+                                            [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
+                                        }
+                                    }
+                                    
+                                    for (int i= 0; i<customizedIdsOrder.count; i++) {
+                                        
+                                    }
+                                    _titleScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, 50-20);
+                                    _resultScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, ViewHeight-50-49-20);
+                                    
+                                    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
+                                    _thirdTitleButton.backgroundColor = [UIColor blackColor];
+                                    _thirdTitleButton.tag = 901;
+                                    _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                                    _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                                    [_titleScroller addSubview:_thirdTitleButton];
+                                    for (int i = 101; i<100+customizedIdsOrder.count+1; i++) {
+                                        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
+                                        tempTable.delegate = self;
+                                        tempTable.dataSource = self;
+                                        tempTable.tag = i;
+                                        tempTable.showsVerticalScrollIndicator = NO;
+                                        tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
+                                        [_resultScroller addSubview:tempTable];
+                                    }
+                                    _secondResultTable = (UITableView *)[_resultScroller viewWithTag:101];
+                                    _thirdsultTable = (UITableView *)[_resultScroller viewWithTag:102];
+                                    
+                                    for (int i = 1; i<showNameArray.count+1; i++) {
+                                        NSDictionary *tempDic = showNameArray[i-1];
+                                        UIButton *tempButton = [[UIButton alloc]initWithFrame:CGRectMake(190+50+i*120-120, 0, 120, 50)];
+                                        [_titleScroller addSubview:tempButton];
+                                        tempButton.tag = i+900;
+                                        if (tempDic != nil && tempButton != nil) {
+                                            [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+                                            tempButton.backgroundColor = [UIColor blackColor];
+                                            tempButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                                            tempButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                                        }
+                                    }
+                                    showNameTempArray = showNameArray;
+                                    customizedIdsTempOrder = customizedIdsOrder;
+                                    
+                                    [_nameTable reloadData];
+                                    
+                                    for (UIView *temp in [_resultScroller subviews]) {
+                                        if ([temp isKindOfClass:[UITableView class]]) {
+                                            [((UITableView*)temp) reloadData];
+                                        }
+                                    }
+                                    [[SetupView ShareInstance]hideHUD];
+                                }else{
+                                    NSLog(@"web获取数据失败＝＝＝%d",res);
+                                    [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                                    [[SetupView ShareInstance]hideHUD];
+                                }
+                            }  FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                NSLog(@"WEB端登录失败：%@",error);
+                                [[SetupView ShareInstance]hideHUD];
+                            }];
+                            
+                        }else{
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                        }
+                    } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                    }];
+                }else{
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    NSString *url = [NSString stringWithFormat:@"%@v2/user/login",Baseurl];
+                    NSMutableDictionary *loginDic = [NSMutableDictionary dictionary];
+                    [loginDic setValue:[defaults objectForKey:@"userName"] forKey:@"username"];
+                    [loginDic setValue:[defaults objectForKey:@"userPassword"] forKey:@"password"];
+                    url = [url stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding];
+                    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+                    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+                    manager.requestSerializer=[AFHTTPRequestSerializer serializer];
+                    [manager POST:url parameters:loginDic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                        NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                        int res=[[source objectForKey:@"res"] intValue];
+                        if (res==0) {
+                            [defaults setObject:[source objectForKey:@"token"] forKey:@"userToken"];
+                            
+                            NSString *url;
+                            if (_isMine) {
+                                url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"]];
+                            }else{
+                                url = [NSString stringWithFormat:@"%@v2/indicator/listall?uid=%@&token=%@&userJId=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],_personJID];
+                            }
+                            NSLog(@"url===%@",url);
+                            [[HttpManager ShareInstance] AFNetGETSupport:url Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                int res=[[source objectForKey:@"res"] intValue];
+                                if (res == 0) {
+                                    //请求完成
+                                    picList = [source objectForKey:@"indicator"];
+                                    medicineArray = [source objectForKey:@"medcine"];
+                                    NSArray *keysOrder = [source objectForKey:@"keysOrder"];
+                                    if (keysOrder.count == 0) {
+                                        if (_isMine) {
+                                            UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"您没有病历数据", @"") message:NSLocalizedString(@"请上传您的化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                                            [showNoticeAlert show];
+                                        }else{
+                                            UIAlertView *showNoticeAlert = [[UIAlertView alloc]initWithTitle:NSLocalizedString(@"TA没有病历数据", @"") message:NSLocalizedString(@"请提醒TA上传化验单",@"") delegate:self cancelButtonTitle:NSLocalizedString(@"确定", @"") otherButtonTitles:nil, nil];
+                                            [showNoticeAlert show];
+                                        }
+                                    }
+                                    allCodeDetails = [source objectForKey:@"allCodeDetails"];
+                                    if (_isReView) {
+                                        customizedIdsOrder = _viewedTitleArray;
+                                        titleArray = [NSMutableArray arrayWithArray:_viewedTimeArray];
+                                        firstButton.hidden = YES;
+                                        secondButton.hidden = YES;
+                                        bottomButton.hidden = YES;
+                                    }else{
+                                        customizedIdsOrder = [source objectForKey:@"customizedIdsOrder"];
+                                        titleArray = [NSMutableArray arrayWithArray:keysOrder];
+                                        firstButton.hidden = NO;
+                                        secondButton.hidden = NO;
+                                        bottomButton.hidden = NO;
+                                    }
+                                    if (!_isMine) {
+                                        firstButton.hidden = YES;
+                                        secondButton.hidden = YES;
+                                        bottomButton.hidden = YES;
+                                    }
+                                    for (int i = 0; i<keysOrder.count; i++) {
+                                        NSString *temp = keysOrder[i];
+                                        if ([picList objectForKey:temp] != nil) {
+                                            NSDictionary *tempValueDic = [picList objectForKey:temp];
+                                            if (![[tempValueDic objectForKey:@"isViewedByMe"] boolValue]) {
+                                                if (changeStatus == nil) {
+                                                    changeStatus = [[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue];
+                                                }else{
+                                                    changeStatus = [NSString stringWithFormat:@"%@,%@",changeStatus,[[[tempValueDic objectForKey:@"ltrList"][0] objectForKey:@"id"] stringValue]];
+                                                }
+                                                NSString *changeStatusUrl = [NSString stringWithFormat:@"%@v2/indicator/viewedStatus?uid=%@&token=%@&isDoctor=false&ltrIds=%@",Baseurl,[[NSUserDefaults standardUserDefaults] objectForKey:@"userUID"],[[NSUserDefaults standardUserDefaults] objectForKey:@"userToken"],changeStatus];
+                                                NSLog(@"changestatusulr===%@",changeStatusUrl);
+                                                [[HttpManager ShareInstance]AFNetPOSTNobodySupport:changeStatusUrl Parameters:nil SucessBlock:^(AFHTTPRequestOperation *operation, id responseObject) {
+                                                    NSDictionary *source = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableLeaves error:nil];
+                                                    int res=[[source objectForKey:@"res"] intValue];
+                                                    NSLog(@"修改res===%d",res);
+                                                    if (res == 0) {
+                                                        NSLog(@"修改观察状态成功");
+                                                    }
+                                                } FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                                    
+                                                }];
+                                            }
+                                            [ocrDetailValueArray addObject:tempValueDic];
+                                        }
+                                    }
+                                    ocrDetailTempValueArray = ocrDetailValueArray;
+                                    for (int i = 0; i<customizedIdsOrder.count ; i++) {
+                                        NSString *resultIndex = customizedIdsOrder[i];
+                                        if ([allCodeDetails objectForKey:resultIndex] != nil) {
+                                            [showNameArray addObject:[allCodeDetails objectForKey:resultIndex]];
+                                        }
+                                    }
+                                    
+                                    for (int i= 0; i<customizedIdsOrder.count; i++) {
+                                        
+                                    }
+                                    _titleScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, 50-20);
+                                    _resultScroller.contentSize = CGSizeMake(190+50+120*showNameArray.count, ViewHeight-50-49-20);
+                                    
+                                    _thirdTitleButton = [[UIButton alloc]initWithFrame:CGRectMake(_secondTitleButton.frame.origin.x+_secondTitleButton.bounds.size.width, 0, 120, 50)];
+                                    _thirdTitleButton.backgroundColor = [UIColor blackColor];
+                                    _thirdTitleButton.tag = 901;
+                                    _thirdTitleButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                                    _thirdTitleButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                                    [_titleScroller addSubview:_thirdTitleButton];
+                                    for (int i = 101; i<100+customizedIdsOrder.count+1; i++) {
+                                        UITableView *tempTable = [[UITableView alloc]initWithFrame:CGRectMake((120*(i - 100+1)), 0, 120, ViewHeight-50-49)];
+                                        tempTable.delegate = self;
+                                        tempTable.dataSource = self;
+                                        tempTable.tag = i;
+                                        tempTable.showsVerticalScrollIndicator = NO;
+                                        tempTable.separatorStyle = UITableViewCellSelectionStyleNone;
+                                        [_resultScroller addSubview:tempTable];
+                                    }
+                                    _secondResultTable = (UITableView *)[_resultScroller viewWithTag:101];
+                                    _thirdsultTable = (UITableView *)[_resultScroller viewWithTag:102];
+                                    
+                                    for (int i = 1; i<showNameArray.count+1; i++) {
+                                        NSDictionary *tempDic = showNameArray[i-1];
+                                        UIButton *tempButton = [[UIButton alloc]initWithFrame:CGRectMake(190+50+i*120-120, 0, 120, 50)];
+                                        [_titleScroller addSubview:tempButton];
+                                        tempButton.tag = i+900;
+                                        if (tempDic != nil && tempButton != nil) {
+                                            [tempButton setTitle:[tempDic objectForKey:@"showname"] forState:UIControlStateNormal];
+                                            tempButton.backgroundColor = [UIColor blackColor];
+                                            tempButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+                                            tempButton.titleLabel.font = [UIFont systemFontOfSize:15.0];
+                                        }
+                                    }
+                                    showNameTempArray = showNameArray;
+                                    customizedIdsTempOrder = customizedIdsOrder;
+                                    
+                                    [_nameTable reloadData];
+                                    
+                                    for (UIView *temp in [_resultScroller subviews]) {
+                                        if ([temp isKindOfClass:[UITableView class]]) {
+                                            [((UITableView*)temp) reloadData];
+                                        }
+                                    }
+                                    [[SetupView ShareInstance]hideHUD];
+                                }else{
+                                    NSLog(@"web获取数据失败＝＝＝%d",res);
+                                    [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                                    [[SetupView ShareInstance]hideHUD];
+                                }
+                            }  FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+                                NSLog(@"WEB端登录失败：%@",error);
+                                [[SetupView ShareInstance]hideHUD];
+                            }];
+                            
+                        }else{
+                            [[SetupView ShareInstance]hideHUD];
+                            [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                        }
+                    }failure:^(AFHTTPRequestOperation * _Nullable operation, NSError * _Nonnull error) {
+                        [[SetupView ShareInstance]hideHUD];
+                        [[SetupView ShareInstance]showAlertView:NSLocalizedString(@"请检查您的网络和定位是否打开", @"") Title:NSLocalizedString(@"不能获取附近战友", @"") ViewController:self];
+                    }];
+                }
+            }else{
+                NSLog(@"web获取数据失败＝＝＝%d",res);
+                [[SetupView ShareInstance]showAlertView:res Hud:nil ViewController:self];
+                [[SetupView ShareInstance]hideHUD];
             }
-            
-            [_nameTable reloadData];
-            [_firstResultTable reloadData];
-            [_secondResultTable reloadData];
-            [_thirdsultTable reloadData];
-            [_forthsultTable reloadData];
-            [_fifthsultTable reloadData];
-            [_sixthsultTable reloadData];
-            [_sevensultTable reloadData];
-            [_eightsultTable reloadData];
-            [_ninesultTable reloadData];
-            [_tensultTable reloadData];
-            [_elevensultTable reloadData];
-            [bChaoTable reloadData];
+        }  FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"WEB端登录失败：%@",error);
             [[SetupView ShareInstance]hideHUD];
-        }else{
-            NSLog(@"web获取数据失败＝＝＝%d",res);
-        }
-    }  FailedBlock:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"WEB端登录失败：%@",error);
-    }];
+        }];
+    }
 }
 
 #pragma 分享
@@ -1118,11 +1423,13 @@
     
     anim.completionBlock = ^(POPAnimation *anim, BOOL finished) {
         if (finished) {
-            
+            NSRange range = NSMakeRange(0, 1);
+            [detailTextView scrollRangeToVisible:range];
         }
     };
     
     [targetView pop_addAnimation:anim forKey:@"slider"];
+    
 }
 
 -(void)hideRightSpringAnimationHidden:(UIView *)targetView{
@@ -1166,9 +1473,11 @@
         div.showImageUrl = [NSString stringWithFormat:@"http://yizhenimg.augbase.com/origin/%@",urlString];
         div.detailDic = dic;
         div.ResultOrING = YES;
+        div.OcrTextViewController = self;
         [self.navigationController pushViewController:div animated:YES];
     }else{
         DrugHistroyViewController *dhv = [[DrugHistroyViewController alloc]init];
+        dhv.OcrTextViewController = self;
         [self.navigationController pushViewController:dhv animated:YES];
     }
     [self popSpringAnimationHidden:bottomMessView];

@@ -12,7 +12,8 @@
 
 @property (nonatomic,strong) IBOutlet UITableView *contactPersonTable;//查看和设置的tableview
 
-@property (nonatomic,strong) NSString *friendJID;//好友的jid
+@property (nonatomic,strong) NSString *friendJID;//好友的jid或是其他,如易诊号，或手机号
+@property (nonatomic,assign) BOOL isJIDOrYizhenID;//判断是否是jid，yes代表不是，no是，是JID
 
 
 //网络获取的各个个人数据
@@ -28,7 +29,5 @@
 @property (nonatomic) NSInteger similar;//患者相似度
 @property (nonatomic,strong) NSArray *friendMedicalArray;//用药数组
 @property (nonatomic,strong) NSArray *friendDiseaseArray;//患病数组
-
-@property (nonatomic) BOOL isJIDOrYizhenID;//判断是否是jid，yes代表是，no不是，是YizhenID
 
 @end
