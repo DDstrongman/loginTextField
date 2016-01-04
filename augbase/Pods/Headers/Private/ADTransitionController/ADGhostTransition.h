@@ -1,1 +1,0 @@
-../../../ADTransitionController/ADTransitionController/ADGhostTransition.h
